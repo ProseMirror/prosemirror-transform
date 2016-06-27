@@ -3,11 +3,12 @@
 ;({joinPoint: exports.joinPoint, joinable: exports.joinable, canSplit: exports.canSplit,
    insertPoint: exports.insertPoint, liftTarget: exports.liftTarget, findWrapping: exports.findWrapping} = require("./structure"))
 ;({PosMap: exports.PosMap, MapResult: exports.MapResult, Remapping: exports.Remapping,
-   mapThrough: exports.mapThrough, mapThroughResult: exports.mapThroughResult} = require("./map"))
+   mapThrough: exports.mapThrough, mapThroughResult: exports.mapThroughResult,
+   MapThrough: exports.MapThrough} = require("./map"))
 ;({AddMarkStep: exports.AddMarkStep, RemoveMarkStep: exports.RemoveMarkStep} = require("./mark_step"))
 ;({ReplaceStep: exports.ReplaceStep, ReplaceAroundStep: exports.ReplaceAroundStep} = require("./replace_step"))
 require("./mark")
-require("./replace")
+;({replaceStep: exports.replaceStep} = require("./replace"))
 
 // !! This module defines a way to transform documents. Transforming
 // happens in `Step`s, which are atomic, well-defined modifications to

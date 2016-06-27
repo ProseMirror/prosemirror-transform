@@ -233,3 +233,19 @@ function mapThroughResult(mappables, pos, bias, start) {
   return new MapResult(pos, deleted)
 }
 exports.mapThroughResult = mapThroughResult
+
+class MapThrough {
+  constructor(mappables, start) {
+    this.mappables = mappables
+    this.start = start || 0
+  }
+
+  map(pos, bias) {
+    return mapThrough(this.mappables, pos, bias, this.start)
+  }
+
+  mapResult(pos, bias) {
+    return mapThroughResult(this.mappables, pos, bias, this.start)
+  }
+}
+exports.MapThrough = MapThrough

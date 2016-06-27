@@ -9,26 +9,34 @@ Transform.prototype.delete = function(from, to) {
   return this.replace(from, to, Slice.empty)
 }
 
-// :: (number, ?number, ?Slice) → Transform
-// Replace the part of the document between `from` and `to` with the
-// part of the `source` between `start` and `end`.
-Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
-  if (from == to && !slice.size) return this
+// :: (Node, number, ?number, ?Slice) → ?Step
+function replaceStep(doc, from, to = from, slice = Slice.empty) {
+  if (from == to && !slice.size) return null
 
-  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  let $from = doc.resolve(from), $to = doc.resolve(to)
   let placed = placeSlice($from, slice)
 
   let fittedLeft = fitLeft($from, placed)
   let fitted = fitRight($from, $to, fittedLeft)
-  if (!fitted) return this
+  if (!fitted) return null
   if (fittedLeft.size != fitted.size && canMoveText($from, $to, fittedLeft)) {
     let d = $to.depth, after = $to.after(d)
     while (d > 1 && after == $to.end(--d)) ++after
-    let fittedAfter = fitRight($from, this.doc.resolve(after), fittedLeft)
+    let fittedAfter = fitRight($from, doc.resolve(after), fittedLeft)
     if (fittedAfter)
-      return this.step(new ReplaceAroundStep(from, after, to, $to.end(), fittedAfter, fittedLeft.size))
+      return new ReplaceAroundStep(from, after, to, $to.end(), fittedAfter, fittedLeft.size)
   }
-  return this.step(new ReplaceStep(from, to, fitted))
+  return new ReplaceStep(from, to, fitted)
+}
+exports.replaceStep = replaceStep
+
+// :: (number, ?number, ?Slice) → Transform
+// Replace the part of the document between `from` and `to` with the
+// part of the `source` between `start` and `end`.
+Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
+  let step = replaceStep(this.doc, from, to, slice)
+  if (step) this.step(step)
+  return this
 }
 
 // :: (number, number, union<Fragment, Node, [Node]>) → Transform
