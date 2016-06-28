@@ -213,8 +213,8 @@ exports.Remapping = Remapping
 // :: ([Mappable], number, ?number, ?number) → number
 // Map the given position through an array of mappables. When `start`
 // is given, the mapping is started at that array position.
-function mapThrough(mappables, pos, bias, start) {
-  for (let i = start || 0; i < mappables.length; i++)
+function mapThrough(mappables, pos, bias, start = 0, end = mappables.length) {
+  for (let i = start; i < end; i++)
     pos = mappables[i].map(pos, bias)
   return pos
 }
@@ -223,9 +223,9 @@ exports.mapThrough = mapThrough
 // :: ([Mappable], number, ?number, ?number) → MapResult
 // Map the given position through an array of mappables, returning a
 // `MapResult` object.
-function mapThroughResult(mappables, pos, bias, start) {
+function mapThroughResult(mappables, pos, bias, start = 0, end = mappables.length) {
   let deleted = false
-  for (let i = start || 0; i < mappables.length; i++) {
+  for (let i = start; i < end; i++) {
     let result = mappables[i].mapResult(pos, bias)
     pos = result.pos
     if (result.deleted) deleted = true
@@ -235,17 +235,18 @@ function mapThroughResult(mappables, pos, bias, start) {
 exports.mapThroughResult = mapThroughResult
 
 class MapThrough {
-  constructor(mappables, start) {
+  constructor(mappables, start = 0, end = mappables.length) {
     this.mappables = mappables
-    this.start = start || 0
+    this.start = start
+    this.end = end
   }
 
   map(pos, bias) {
-    return mapThrough(this.mappables, pos, bias, this.start)
+    return mapThrough(this.mappables, pos, bias, this.start, this.end)
   }
 
   mapResult(pos, bias) {
-    return mapThroughResult(this.mappables, pos, bias, this.start)
+    return mapThroughResult(this.mappables, pos, bias, this.start, this.end)
   }
 }
 exports.MapThrough = MapThrough
