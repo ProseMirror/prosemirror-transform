@@ -131,18 +131,24 @@ PosMap.empty = new PosMap([])
 // collaboration or history management.) This class implements
 // `Mappable`.
 class Remapping {
-  // :: (?[PosMap], ?number)
+  // :: (?[PosMap])
   // Create a new remapping with the given position maps, with its
   // current start index pointing at `mapFrom`.
-  constructor(maps, mapFrom = 0, mirror) {
+  constructor(maps, mirror, from, to) {
     // :: [PosMap]
     this.maps = maps || []
     // :: number
     // The current starting position in the `maps` array, used when
     // `map` or `mapResult` is called.
-    this.mapFrom = mapFrom
-    this.mapTo = this.maps.length
+    this.from = from || 0
+    this.to = to == null ? this.maps.length : to
     this.mirror = mirror
+  }
+
+  // :: (?number, ?number) → Remapping
+  // Create a remapping that maps only through a part of this one.
+  slice(from = 0, to = this.maps.length) {
+    return new Remapping(this.maps, this.mirror, from, to)
   }
 
   getMirror(n) {
@@ -160,8 +166,7 @@ class Remapping {
   // should be the index of the map that is the mirror image of this
   // one.
   appendMap(map, mirrors) {
-    this.maps.push(map)
-    this.mapTo++
+    this.to = this.maps.push(map)
     if (mirrors != null) this.setMirror(this.maps.length - 1, mirrors)
   }
 
@@ -181,7 +186,7 @@ class Remapping {
   // Map a position through this remapping.
   map(pos, bias) {
     if (this.mirror) return this._map(pos, bias, true)
-    for (let i = this.mapFrom; i < this.mapTo; i++)
+    for (let i = this.from; i < this.to; i++)
       pos = this.maps[i].map(pos, bias)
     return pos
   }
@@ -189,7 +194,7 @@ class Remapping {
   _map(pos, bias, simple) {
     let deleted = false, recoverables = null
 
-    for (let i = this.mapFrom; i < this.mapTo; i++) {
+    for (let i = this.from; i < this.to; i++) {
       let map = this.maps[i], rec = recoverables && recoverables[i]
       if (rec != null && map.touches(pos, rec)) {
         pos = map.recover(rec)
@@ -199,7 +204,7 @@ class Remapping {
       let result = map.mapResult(pos, bias)
       if (result.recover != null) {
         let corr = this.getMirror(i)
-        if (corr != null && corr > i && corr < this.mapTo) {
+        if (corr != null && corr > i && corr < this.to) {
           if (result.deleted) {
             i = corr
             pos = this.maps[corr].recover(result.recover)
