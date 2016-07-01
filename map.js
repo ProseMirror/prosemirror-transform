@@ -141,6 +141,7 @@ class Remapping {
     // The current starting position in the `maps` array, used when
     // `map` or `mapResult` is called.
     this.mapFrom = mapFrom
+    this.mapTo = this.maps.length
     this.mirror = mirror
   }
 
@@ -160,7 +161,15 @@ class Remapping {
   // one.
   appendMap(map, mirrors) {
     this.maps.push(map)
+    this.mapTo++
     if (mirrors != null) this.setMirror(this.maps.length - 1, mirrors)
+  }
+
+  appendMapping(mapping) {
+    for (let i = 0, startSize = this.maps.length; i < mapping.maps.length; i++) {
+      let mirr = mapping.getMirror(i)
+      this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : null)
+    }
   }
 
   // :: (number, ?number) → MapResult
@@ -172,7 +181,7 @@ class Remapping {
   // Map a position through this remapping.
   map(pos, bias) {
     if (this.mirror) return this._map(pos, bias, true)
-    for (let i = this.mapFrom; i < this.maps.length; i++)
+    for (let i = this.mapFrom; i < this.mapTo; i++)
       pos = this.maps[i].map(pos, bias)
     return pos
   }
@@ -180,7 +189,7 @@ class Remapping {
   _map(pos, bias, simple) {
     let deleted = false, recoverables = null
 
-    for (let i = this.mapFrom; i < this.maps.length; i++) {
+    for (let i = this.mapFrom; i < this.mapTo; i++) {
       let map = this.maps[i], rec = recoverables && recoverables[i]
       if (rec != null && map.touches(pos, rec)) {
         pos = map.recover(rec)
@@ -190,7 +199,7 @@ class Remapping {
       let result = map.mapResult(pos, bias)
       if (result.recover != null) {
         let corr = this.getMirror(i)
-        if (corr != null && corr > i) {
+        if (corr != null && corr > i && corr < this.mapTo) {
           if (result.deleted) {
             i = corr
             pos = this.maps[corr].recover(result.recover)
