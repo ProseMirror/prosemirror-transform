@@ -151,6 +151,10 @@ class Remapping {
     return new Remapping(this.maps, this.mirror, from, to)
   }
 
+  copy() {
+    return new Remapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to)
+  }
+
   getMirror(n) {
     if (this.mirror) for (let i = 0; i < this.mirror.length; i++)
       if (this.mirror[i] == n) return this.mirror[i + (i % 2 ? -1 : 1)]
