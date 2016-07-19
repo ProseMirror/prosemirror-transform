@@ -130,7 +130,7 @@ PosMap.empty = new PosMap([])
 // versions of the same step. (This comes up when ‘rebasing’ steps for
 // collaboration or history management.) This class implements
 // `Mappable`.
-class Remapping {
+class Mapping {
   // :: (?[PosMap])
   // Create a new remapping with the given position maps, with its
   // current start index pointing at `mapFrom`.
@@ -145,14 +145,14 @@ class Remapping {
     this.mirror = mirror
   }
 
-  // :: (?number, ?number) → Remapping
+  // :: (?number, ?number) → Mapping
   // Create a remapping that maps only through a part of this one.
   slice(from = 0, to = this.maps.length) {
-    return new Remapping(this.maps, this.mirror, from, to)
+    return new Mapping(this.maps, this.mirror, from, to)
   }
 
   copy() {
-    return new Remapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to)
+    return new Mapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to)
   }
 
   getMirror(n) {
@@ -226,4 +226,4 @@ class Remapping {
     return simple ? pos : new MapResult(pos, deleted)
   }
 }
-exports.Remapping = Remapping
+exports.Mapping = Mapping

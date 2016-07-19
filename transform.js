@@ -1,6 +1,6 @@
 const {ProseMirrorError} = require("../util/error")
 
-const {Remapping} = require("./map")
+const {Mapping} = require("./map")
 
 class TransformError extends ProseMirrorError {}
 exports.TransformError = TransformError
@@ -27,7 +27,7 @@ class Transform {
     this.docs = []
     // :: [PosMap]
     // The position maps for each of the steps in this transform.
-    this.mapping = new Remapping
+    this.mapping = new Mapping
   }
 
   // :: Node The document at the start of the transformation.
