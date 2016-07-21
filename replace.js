@@ -52,13 +52,6 @@ Transform.prototype.insert = function(pos, content) {
   return this.replaceWith(pos, pos, content)
 }
 
-// :: (number, string) → Transform
-// Insert the given text at `pos`, inheriting the marks of the
-// existing content at that position.
-Transform.prototype.insertText = function(pos, text) {
-  return this.insert(pos, this.doc.type.schema.text(text, this.doc.marksAt(pos)))
-}
-
 // :: (number, Node) → Transform
 // Insert the given node at `pos`, inheriting the marks of the
 // existing content at that position.
