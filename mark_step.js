@@ -41,6 +41,14 @@ class AddMarkStep extends Step {
     return new AddMarkStep(from.pos, to.pos, this.mark)
   }
 
+  merge(other) {
+    if (other instanceof AddMarkStep &&
+        other.mark.eq(this.mark) &&
+        this.from <= other.to && this.to >= other.from)
+      return new AddMarkStep(Math.min(this.from, other.from),
+                             Math.max(this.to, other.to), this.mark)
+  }
+
   static fromJSON(schema, json) {
     return new AddMarkStep(json.from, json.to, schema.markFromJSON(json.mark))
   }
@@ -75,6 +83,14 @@ class RemoveMarkStep extends Step {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     if (from.deleted && to.deleted || from.pos >= to.pos) return null
     return new RemoveMarkStep(from.pos, to.pos, this.mark)
+  }
+
+  merge(other) {
+    if (other instanceof RemoveMarkStep &&
+        other.mark.eq(this.mark) &&
+        this.from <= other.to && this.to >= other.from)
+      return new RemoveMarkStep(Math.min(this.from, other.from),
+                                Math.max(this.to, other.to), this.mark)
   }
 
   static fromJSON(schema, json) {

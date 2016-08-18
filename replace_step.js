@@ -42,9 +42,8 @@ class ReplaceStep extends Step {
   }
 
   merge(other) {
-    if (other.structure != this.structure) return null
+    if (!(other instanceof ReplaceStep) || other.structure != this.structure) return null
 
-    let end = this.from + this.slice.size
     if (this.from + this.slice.size == other.from && !this.slice.openRight && !other.slice.openLeft) {
       let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
           : new Slice(this.slice.content.append(other.slice.content), this.slice.openLeft, other.slice.openRight)
