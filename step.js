@@ -38,6 +38,12 @@ class Step {
   // the step was entirely deleted by the mapping.
   map(_mapping) { return mustOverride() }
 
+  // :: (other: Step) → ?Step
+  // Try to merge this step with another one, to be applied directly
+  // after it. Returns the merged step when possible, null if the
+  // steps can't be merged.
+  merge(_other) { return null }
+
   // :: () → Object
   // Create a JSON-serializeable representation of this step. By
   // default, it'll create an object with the step's [JSON

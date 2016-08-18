@@ -41,6 +41,23 @@ class ReplaceStep extends Step {
     return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice)
   }
 
+  merge(other) {
+    if (other.structure != this.structure) return null
+
+    let end = this.from + this.slice.size
+    if (this.from + this.slice.size == other.from && !this.slice.openRight && !other.slice.openLeft) {
+      let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
+          : new Slice(this.slice.content.append(other.slice.content), this.slice.openLeft, other.slice.openRight)
+      return new ReplaceStep(this.from, this.to + (other.to - other.from), slice, this.structure)
+    } else if (other.to == this.from && !this.slice.openLeft && !other.slice.openRight) {
+      let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
+          : new Slice(other.slice.content.append(this.slice.content), other.slice.openLeft, this.slice.openRight)
+      return new ReplaceStep(other.from, this.to, slice, this.structure)
+    } else {
+      return null
+    }
+  }
+
   toJSON() {
     let json = {stepType: "replace", from: this.from, to: this.to}
     if (this.slice.size) json.slice = this.slice.toJSON()
