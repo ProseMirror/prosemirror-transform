@@ -41,8 +41,15 @@ class ReplaceStep extends Step {
     return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice)
   }
 
+  toJSON() {
+    let json = {stepType: "replace", from: this.from, to: this.to}
+    if (this.slice.size) json.slice = this.slice.toJSON()
+    if (this.structure) json.structure = true
+    return json
+  }
+
   static fromJSON(schema, json) {
-    return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice))
+    return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
   }
 }
 exports.ReplaceStep = ReplaceStep
@@ -102,9 +109,16 @@ class ReplaceAroundStep extends Step {
     return new ReplaceAroundStep(from.pos, to.pos, gapFrom, gapTo, this.slice, this.insert, this.structure)
   }
 
+  static toJSON() {
+    let json = {stepType: "replaceAround", from: this.from, to: this.to,
+                gapFrom: this.gapFrom, gapTo: this.gapTo, slice: this.slice.toJSON()}
+    if (this.structure) json.structure = true
+    return true
+  }
+
   static fromJSON(schema, json) {
     return new ReplaceAroundStep(json.from, json.to, json.gapFrom, json.gapTo,
-                                 Slice.fromJSON(schema, json.slice), json.insert, json.structure)
+                                 Slice.fromJSON(schema, json.slice), json.insert, !!json.structure)
   }
 }
 exports.ReplaceAroundStep = ReplaceAroundStep
