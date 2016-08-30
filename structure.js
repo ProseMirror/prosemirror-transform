@@ -133,7 +133,7 @@ Transform.prototype.setNodeType = function(pos, type, attrs) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
   if (!type) type = node.type
-  if (node.type.isLeaf)
+  if (node.isLeaf)
     return this.replaceWith(pos, pos + node.nodeSize, type.create(attrs, null, node.marks))
 
   if (!type.validContent(node.content, attrs))
@@ -191,7 +191,7 @@ function joinable(doc, pos) {
 exports.joinable = joinable
 
 function canJoin(a, b) {
-  return a && b && !a.type.isLeaf && a.canAppend(b)
+  return a && b && !a.isLeaf && a.canAppend(b)
 }
 
 // :: (Node, number, ?number) → ?number

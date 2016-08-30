@@ -150,7 +150,7 @@ function contentBetween(doc, from, to) {
   if (dist > 0) {
     let next = $from.node(depth).maybeChild($from.indexAfter(depth))
     while (dist > 0) {
-      if (!next || next.type.isLeaf) return true
+      if (!next || next.isLeaf) return true
       next = next.firstChild
       dist--
     }
