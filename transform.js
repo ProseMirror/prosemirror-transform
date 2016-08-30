@@ -1,8 +1,6 @@
-const {ProseMirrorError} = require("../util/error")
-
 const {Mapping} = require("./map")
 
-class TransformError extends ProseMirrorError {}
+class TransformError extends Error {}
 exports.TransformError = TransformError
 
 // ;; A change to a document often consists of a series of
