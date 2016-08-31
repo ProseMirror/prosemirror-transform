@@ -96,7 +96,7 @@ function findWrappingInside(range, wrap) {
 }
 
 // :: (NodeRange, [{type: NodeType, attrs: ?Object}]) → Transform
-// Wrap the given [range](#NodeRange) in the given set of wrappers.
+// Wrap the given [range](#model.NodeRange) in the given set of wrappers.
 // The wrappers are assumed to be valid in this position, and should
 // probably be computed with `findWrapping`.
 Transform.prototype.wrap = function(range, wrappers) {

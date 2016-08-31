@@ -47,7 +47,7 @@ class Step {
   // :: () → Object
   // Create a JSON-serializeable representation of this step. By
   // default, it'll create an object with the step's [JSON
-  // id](#Step.jsonID), and each of the steps's own properties,
+  // id](#transform.Step.jsonID), and each of the steps's own properties,
   // automatically calling `toJSON` on the property values that have
   // such a method.
   toJSON() {
@@ -80,7 +80,7 @@ class Step {
 }
 exports.Step = Step
 
-// ::- The result of [applying](#Step.apply) a step. Contains either a
+// ::- The result of [applying](#transform.Step.apply) a step. Contains either a
 // new document or a failure value.
 class StepResult {
   // : (?Node, ?string)
