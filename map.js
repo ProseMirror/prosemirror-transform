@@ -1,18 +1,18 @@
-// ;; #path=Mappable #kind=interface
+// Mappable:: interface
 // There are various things that positions can be mapped through.
 // We'll denote those as 'mappable'. This is not an actual class in
 // the codebase, only an agreed-on interface.
-
-// :: (pos: number, bias: ?number) → number #path=Mappable.map
-// Map a position through this object. When given, `bias` (should be
-// -1 or 1) determines in which direction to move when a chunk of
-// content is inserted at or around the mapped position.
-
-// :: (pos: number, bias: ?number) → MapResult #path=Mappable.mapResult
-// Map a position, and return an object containing additional
-// information about the mapping. The result's `deleted` field tells
-// you whether the position was deleted (completely enclosed in a
-// replaced range) during the mapping.
+//
+//   map:: (pos: number, bias: ?number) → number
+//   Map a position through this object. When given, `bias` (should be
+//   -1 or 1) determines in which direction to move when a chunk of
+//   content is inserted at or around the mapped position.
+//
+//   mapResult:: (pos: number, bias: ?number) → MapResult
+//   Map a position, and return an object containing additional
+//   information about the mapping. The result's `deleted` field tells
+//   you whether the position was deleted (completely enclosed in a
+//   replaced range) during the mapping.
 
 // Recovery values encode a range index and an offset. They are
 // represented as numbers, because tons of them will be created when
@@ -31,7 +31,7 @@ function makeRecover(index, offset) { return index + offset * factor16 }
 function recoverIndex(value) { return value & lower16 }
 function recoverOffset(value) { return (value - (value & lower16)) / factor16 }
 
-// ;; An object representing a mapped position with some extra
+// ::- An object representing a mapped position with some extra
 // information.
 class MapResult {
   constructor(pos, deleted = false, recover = null) {
@@ -45,7 +45,7 @@ class MapResult {
 }
 exports.MapResult = MapResult
 
-// ;; A position map, holding information about the way positions in
+// ::- A position map, holding information about the way positions in
 // the pre-step version of a document correspond to positions in the
 // post-step version. This class implements `Mappable`.
 class PosMap {
@@ -138,7 +138,7 @@ exports.PosMap = PosMap
 
 PosMap.empty = new PosMap([])
 
-// ;; A remapping represents a pipeline of zero or more mappings. It
+// ::- A remapping represents a pipeline of zero or more mappings. It
 // is a specialized data structured used to manage mapping through a
 // series of steps, typically including inverted and non-inverted
 // versions of the same step. (This comes up when ‘rebasing’ steps for

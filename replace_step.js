@@ -3,7 +3,7 @@ const {Slice} = require("../model")
 const {Step, StepResult} = require("./step")
 const {PosMap} = require("./map")
 
-// ;; Replace a part of the document with a slice of new content.
+// ::- Replace a part of the document with a slice of new content.
 class ReplaceStep extends Step {
   // :: (number, number, Slice, bool)
   // The given `slice` should fit the 'gap' between `from` and
@@ -72,7 +72,7 @@ exports.ReplaceStep = ReplaceStep
 
 Step.jsonID("replace", ReplaceStep)
 
-// ;; Replace a part of the document with a slice of content, but
+// ::- Replace a part of the document with a slice of content, but
 // preserve a range of the replaced content by moving it into the
 // slice.
 class ReplaceAroundStep extends Step {

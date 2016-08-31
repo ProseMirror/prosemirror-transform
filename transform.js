@@ -3,7 +3,7 @@ const {Mapping} = require("./map")
 class TransformError extends Error {}
 exports.TransformError = TransformError
 
-// ;; A change to a document often consists of a series of
+// ::- A change to a document often consists of a series of
 // [steps](#Step). This class provides a convenience abstraction to
 // build up and track such an array of steps.
 //

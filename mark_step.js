@@ -12,7 +12,7 @@ function mapFragment(fragment, f, parent) {
   return Fragment.fromArray(mapped)
 }
 
-// ;; Add a mark to all inline content between two positions.
+// ::- Add a mark to all inline content between two positions.
 class AddMarkStep extends Step {
   // :: (number, number, Mark)
   constructor(from, to, mark) {
@@ -57,7 +57,7 @@ exports.AddMarkStep = AddMarkStep
 
 Step.jsonID("addMark", AddMarkStep)
 
-// ;; Remove a mark from all inline content between two positions.
+// ::- Remove a mark from all inline content between two positions.
 class RemoveMarkStep extends Step {
   // :: (number, number, Mark)
   constructor(from, to, mark) {

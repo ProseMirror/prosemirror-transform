@@ -6,7 +6,7 @@ function mustOverride() { throw new Error("Override me") }
 
 const stepsByID = Object.create(null)
 
-// ;; A step object wraps an atomic operation. It generally applies
+// ::- A step object wraps an atomic operation. It generally applies
 // only to the document it was created for, since the positions
 // associated with it will only make sense for that document.
 //
@@ -80,7 +80,7 @@ class Step {
 }
 exports.Step = Step
 
-// ;; The result of [applying](#Step.apply) a step. Contains either a
+// ::- The result of [applying](#Step.apply) a step. Contains either a
 // new document or a failure value.
 class StepResult {
   // : (?Node, ?string)
