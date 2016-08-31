@@ -10,6 +10,8 @@ Transform.prototype.delete = function(from, to) {
 }
 
 // :: (Node, number, ?number, ?Slice) → ?Step
+// "Fit" a slice into a given position in the document, producing a
+// [step](#transform.Step) that inserts it.
 function replaceStep(doc, from, to = from, slice = Slice.empty) {
   if (from == to && !slice.size) return null
 
