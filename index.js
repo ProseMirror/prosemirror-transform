@@ -14,7 +14,7 @@ require("./mark")
 // document.
 //
 // Each step provides a [position map](#transform.PosMap) that maps positions in
-// the old document to position in the new document. Steps can be
+// the old document to position in the transformed document. Steps can be
 // [inverted](#transform.Step.invert) to create a step that undoes their effect,
 // and chained together in a convenience object called a `Transform`.
 //
