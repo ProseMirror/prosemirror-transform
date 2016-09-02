@@ -1,5 +1,3 @@
-// !! ### Position Mapping
-
 // Mappable:: interface
 // There are various things that positions can be mapped through.
 // We'll denote those as 'mappable'. This is not an actual class in
