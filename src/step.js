@@ -1,4 +1,4 @@
-const {ReplaceError} = require("../model")
+const {ReplaceError} = require("prosemirror-model")
 
 const {PosMap} = require("./map")
 

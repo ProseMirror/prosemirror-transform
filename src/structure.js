@@ -1,4 +1,4 @@
-const {Slice, Fragment} = require("../model")
+const {Slice, Fragment} = require("prosemirror-model")
 
 const {Transform} = require("./transform")
 const {ReplaceStep, ReplaceAroundStep} = require("./replace_step")

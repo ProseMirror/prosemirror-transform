@@ -1,4 +1,4 @@
-const {Fragment, Slice} = require("../model")
+const {Fragment, Slice} = require("prosemirror-model")
 const {Step, StepResult} = require("./step")
 
 function mapFragment(fragment, f, parent) {

@@ -1,4 +1,4 @@
-const {Slice} = require("../model")
+const {Slice} = require("prosemirror-model")
 
 const {Step, StepResult} = require("./step")
 const {PosMap} = require("./map")

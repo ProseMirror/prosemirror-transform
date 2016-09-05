@@ -1,4 +1,4 @@
-const {MarkType, Slice} = require("../model")
+const {MarkType, Slice} = require("prosemirror-model")
 
 const {Transform} = require("./transform")
 const {AddMarkStep, RemoveMarkStep} = require("./mark_step")
