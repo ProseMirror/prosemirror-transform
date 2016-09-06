@@ -1,7 +1,7 @@
 const {Transform, Step, Mapping, TransformError, liftTarget, findWrapping} = require("../src")
 const {Node} = require("prosemirror-model")
 const {sameDoc} = require("prosemirror-model/test/build")
-const assert = require("assert")
+const ist = require("ist")
 
 function invert(transform) {
   let out = new Transform(transform.doc)
@@ -10,29 +10,29 @@ function invert(transform) {
   return out
 }
 
-function testMapping(mapping, pos, newPos, label) {
+function testMapping(mapping, pos, newPos) {
   let mapped = mapping.map(pos, 1)
-  assert.equal(mapped, newPos, label)
+  ist(mapped, newPos)
 
   let remap = new Mapping(mapping.maps.map(m => m.invert()))
   for (let i = mapping.maps.length - 1, mapFrom = mapping.maps.length; i >= 0; i--)
     remap.appendMap(mapping.maps[i], --mapFrom)
-  assert.equal(remap.map(pos, 1), pos, label + " round trip")
+  ist(remap.map(pos, 1), pos)
 }
 
 function testStepJSON(tr) {
   let newTR = new Transform(tr.before)
   tr.steps.forEach(step => newTR.step(Step.fromJSON(tr.doc.type.schema, step.toJSON())))
-  sameDoc(tr.doc, newTR.doc, "survived JSON serialization")
+  ist(tr.doc, newTR.doc, sameDoc)
 }
 
 function testTransform(tr, expect) {
-  sameDoc(tr.doc, expect, "expected result")
-  sameDoc(invert(tr).doc, tr.before, "inverted")
+  ist(tr.doc, expect, sameDoc)
+  ist(invert(tr).doc, tr.before, sameDoc)
 
   testStepJSON(tr)
 
   for (let tag in expect.tag)
-    testMapping(tr.mapping, tr.before.tag[tag], expect.tag[tag], tag)
+    testMapping(tr.mapping, tr.before.tag[tag], expect.tag[tag])
 }
 exports.testTransform = testTransform

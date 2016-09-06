@@ -1,7 +1,7 @@
 const {Schema, Block, Text, MarkType, Attribute, Slice} = require("prosemirror-model")
 const {canSplit, liftTarget, findWrapping, Transform} = require("../src")
 const {sameDoc} = require("prosemirror-model/test/build")
-const assert = require("assert")
+const ist = require("ist")
 
 const schema = new Schema({
   nodes: {
@@ -60,10 +60,10 @@ function range(pos, end) {
 
 describe("canSplit", () => {
   function yes(pos, depth, after) {
-    return () => assert(canSplit(doc, pos, depth, after && schema.nodes[after]))
+    return () => ist(canSplit(doc, pos, depth, after && schema.nodes[after]))
   }
   function no(pos, depth, after) {
-    return () => assert(!canSplit(doc, pos, depth, after && schema.nodes[after]))
+    return () => ist(!canSplit(doc, pos, depth, after && schema.nodes[after]))
   }
 
   it("can't at start", no(0))
@@ -90,10 +90,10 @@ describe("canSplit", () => {
 
 describe("liftTarget", () => {
   function yes(pos) {
-    return () => { let r = range(pos); assert(r && liftTarget(r)) }
+    return () => { let r = range(pos); ist(r && liftTarget(r)) }
   }
   function no(pos) {
-    return () => { let r = range(pos); assert(!(r && liftTarget(r))) }
+    return () => { let r = range(pos); ist(!(r && liftTarget(r))) }
   }
 
   it("can't at the start of the doc", no(0))
@@ -107,10 +107,10 @@ describe("liftTarget", () => {
 
 describe("findWrapping", () => {
   function yes(pos, end, type) {
-    return () => { let r = range(pos, end); assert(findWrapping(r, schema.nodes[type])) }
+    return () => { let r = range(pos, end); ist(findWrapping(r, schema.nodes[type])) }
   }
   function no(pos, end, type) {
-    return () => { let r = range(pos, end); assert(!findWrapping(r, schema.nodes[type])) }
+    return () => { let r = range(pos, end); ist(!findWrapping(r, schema.nodes[type])) }
   }
 
   it("can wrap the whole doc in a section", yes(0, 110, "sect"))
@@ -129,7 +129,7 @@ describe("Transform", () => {
       return () => {
         let slice = content ? new Slice(content.content, openLeft, openRight) : Slice.empty
         let tr = new Transform(doc).replace(from, to, slice)
-        sameDoc(tr.doc, result)
+        ist(tr.doc, result, sameDoc)
       }
     }
 

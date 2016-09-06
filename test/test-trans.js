@@ -3,7 +3,7 @@ const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../src")
 const {Slice} = require("prosemirror-model")
-const assert = require("assert")
+const ist = require("ist")
 
 describe("Transform", () => {
   describe("addMark", () => {
@@ -170,7 +170,7 @@ describe("Transform", () => {
   describe("split", () => {
     function split(doc, expect, ...args) {
       if (expect == "fail")
-        assert.throws(() => new Transform(doc).split(doc.tag.a, ...args))
+        ist.throws(() => new Transform(doc).split(doc.tag.a, ...args))
       else
         testTransform(new Transform(doc).split(doc.tag.a, ...args), expect)
     }

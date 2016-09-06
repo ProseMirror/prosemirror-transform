@@ -1,6 +1,6 @@
 const {Slice, Fragment} = require("prosemirror-model")
 const {ReplaceStep, AddMarkStep, RemoveMarkStep} = require("../src")
-const assert = require("assert")
+const ist = require("ist")
 const {sameDoc, schema, doc, p} = require("prosemirror-model/test/build")
 
 const testDoc = doc(p("foobar"))
@@ -20,14 +20,14 @@ describe("Step", () => {
       return () => {
         let step1 = mkStep(from1, to1, val1), step2 = mkStep(from2, to2, val2)
         let merged = step1.merge(step2)
-        assert(merged)
-        sameDoc(merged.apply(testDoc).doc, step2.apply(step1.apply(testDoc).doc).doc)
+        ist(merged)
+        ist(merged.apply(testDoc).doc, step2.apply(step1.apply(testDoc).doc).doc, sameDoc)
       }
     }
     function no(from1, to1, val1, from2, to2, val2) {
       return () => {
         let step1 = mkStep(from1, to1, val1), step2 = mkStep(from2, to2, val2)
-        assert(!step1.merge(step2))
+        ist(!step1.merge(step2))
       }
     }
 
