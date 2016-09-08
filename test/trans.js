@@ -1,6 +1,6 @@
 const {Transform, Step, Mapping, TransformError, liftTarget, findWrapping} = require("../src")
 const {Node} = require("prosemirror-model")
-const {sameDoc} = require("prosemirror-model/test/build")
+const {eq} = require("prosemirror-model/test/build")
 const ist = require("ist")
 
 function invert(transform) {
@@ -23,12 +23,12 @@ function testMapping(mapping, pos, newPos) {
 function testStepJSON(tr) {
   let newTR = new Transform(tr.before)
   tr.steps.forEach(step => newTR.step(Step.fromJSON(tr.doc.type.schema, step.toJSON())))
-  ist(tr.doc, newTR.doc, sameDoc)
+  ist(tr.doc, newTR.doc, eq)
 }
 
 function testTransform(tr, expect) {
-  ist(tr.doc, expect, sameDoc)
-  ist(invert(tr).doc, tr.before, sameDoc)
+  ist(tr.doc, expect, eq)
+  ist(invert(tr).doc, tr.before, eq)
 
   testStepJSON(tr)
 

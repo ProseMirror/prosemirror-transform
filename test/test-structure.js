@@ -1,6 +1,6 @@
 const {Schema, Block, Text, MarkType, Attribute, Slice} = require("prosemirror-model")
 const {canSplit, liftTarget, findWrapping, Transform} = require("../src")
-const {sameDoc} = require("prosemirror-model/test/build")
+const {eq} = require("prosemirror-model/test/build")
 const ist = require("ist")
 
 const schema = new Schema({
@@ -129,7 +129,7 @@ describe("Transform", () => {
       return () => {
         let slice = content ? new Slice(content.content, openLeft, openRight) : Slice.empty
         let tr = new Transform(doc).replace(from, to, slice)
-        ist(tr.doc, result, sameDoc)
+        ist(tr.doc, result, eq)
       }
     }
 
