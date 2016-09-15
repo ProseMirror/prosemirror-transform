@@ -1,32 +1,34 @@
-const {Schema, Block, Text, MarkType, Attribute, Slice} = require("prosemirror-model")
+const {Schema, Slice} = require("prosemirror-model")
 const {canSplit, liftTarget, findWrapping, Transform} = require("../src")
-const {eq} = require("prosemirror-model/test/build")
+const {eq, schema: baseSchema} = require("prosemirror-model/test/build")
 const ist = require("ist")
 
 const schema = new Schema({
   nodes: {
-    doc: {type: Block, content: "head? block* sect* closing?"},
-    para: {type: Block, content: "text<_>*", group: "block"},
-    head: {type: Block, content: "text*"},
-    figure: {type: Block, content: "caption figureimage", group: "block"},
-    quote: {type: Block, content: "block+", group: "block"},
-    figureimage: {type: Block},
-    caption: {type: Block, content: "text*"},
-    sect: {type: Block, content: "head block* sect*"},
-    closing: {type: Block, content: "text<_>*"},
-    tcell: {type: Block, content: "text<_>*"},
-    trow: {type: class extends Block {
-      get attrs() { return {columns: new Attribute({default: 1})} }
-    }, content: "tcell{.columns}"},
-    table: {type: class extends Block {
-      get attrs() { return {columns: new Attribute({default: 1})} }
-    }, content: "trow[columns=.columns]+", group: "block"},
-    text: {type: Text},
+    doc: {content: "head? block* sect* closing?"},
+    para: {content: "text<_>*", group: "block"},
+    head: {content: "text*"},
+    figure: {content: "caption figureimage", group: "block"},
+    quote: {content: "block+", group: "block"},
+    figureimage: {},
+    caption: {content: "text*"},
+    sect: {content: "head block* sect*"},
+    closing: {content: "text<_>*"},
+    tcell: {content: "text<_>*"},
+    trow: {
+      attrs: {columns: {default: 1}},
+      content: "tcell{.columns}"
+    },
+    table: {
+      attrs: {columns: {default: 1}},
+      content: "trow[columns=.columns]+", group: "block"
+    },
+    text: baseSchema.nodeSpec.get("text"),
 
-    fixed: {type: Block, content: "head para closing", group: "block"}
+    fixed: {content: "head para closing", group: "block"}
   },
   marks: {
-    em: MarkType
+    em: {}
   }
 })
 
