@@ -25,7 +25,7 @@ exports.liftTarget = liftTarget
 
 // :: (NodeRange, number) → Transform
 // Split the content in the given range off from its parent, if there
-// is subling content before or after it, and move it up the tree to
+// is sibling content before or after it, and move it up the tree to
 // the depth specified by `target`. You'll probably want to use
 // `liftTarget` to compute `target`, in order to be sure the lift is
 // valid.
@@ -62,7 +62,8 @@ Transform.prototype.lift = function(range, target) {
 // :: (NodeRange, NodeType, ?Object) → ?[{type: NodeType, attrs: ?Object}]
 // Try to find a valid way to wrap the content in the given range in a
 // node of the given type. May introduce extra nodes around and inside
-// the wrapper node, if necessary.
+// the wrapper node, if necessary. Returns null if no valid wrapping
+// could be found.
 function findWrapping(range, nodeType, attrs, innerRange = range) {
   let wrap = {type: nodeType, attrs}
   let around = findWrappingOutside(range, wrap)
@@ -220,15 +221,11 @@ function joinPoint(doc, pos, dir = -1) {
 exports.joinPoint = joinPoint
 
 // :: (number, ?number, ?bool) → Transform
-// Join the blocks around the given position. When `silent` is true,
-// the method will return without raising an error if the position
-// isn't a valid place to join.
-Transform.prototype.join = function(pos, depth = 1, silent = false) {
-  if (silent && (pos < depth || pos + depth > this.doc.content.size)) return this
+// Join the blocks around the given position. If depth is 2, their
+// last and first siblings are also joined, and so on.
+Transform.prototype.join = function(pos, depth = 1) {
   let step = new ReplaceStep(pos - depth, pos + depth, Slice.empty, true)
-  if (silent) this.maybeStep(step)
-  else this.step(step)
-  return this
+  return this.step(step)
 }
 
 // :: (Node, number, NodeType, ?Object) → ?number

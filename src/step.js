@@ -13,7 +13,8 @@ const stepsByID = Object.create(null)
 // New steps are defined by creating classes that extend `Step`,
 // overriding the `apply`, `invert`, `map`, `getMap` and `fromJSON`
 // methods, and registering your class with a unique
-// JSON-serialization identifier using `Step.jsonID`.
+// JSON-serialization identifier using
+// [`Step.jsonID`](#transform.Step^jsonID).
 class Step {
   // :: (doc: Node) → StepResult
   // Applies this step to the given document, returning a result
@@ -23,13 +24,13 @@ class Step {
   apply(_doc) { return mustOverride() }
 
   // :: () → StepMap
-  // Get the position map that represents the changes made by this
+  // Get the step map that represents the changes made by this
   // step.
   getMap() { return StepMap.empty }
 
   // :: (doc: Node) → Step
   // Create an inverted version of this step. Needs the document as it
-  // was before the step as input.
+  // was before the step as argument.
   invert(_doc) { return mustOverride() }
 
   // :: (mapping: Mappable) → ?Step
@@ -100,9 +101,9 @@ class StepResult {
   static fail(message) { return new StepResult(null, message) }
 
   // :: (Node, number, number, Slice) → StepResult
-  // Call `Node.replace` with the given arguments. Create a successful
-  // result if it succeeds, and a failed one if it throws a
-  // `ReplaceError`.
+  // Call [`Node.replace`](#model.Node.replace) with the given
+  // arguments. Create a successful result if it succeeds, and a
+  // failed one if it throws a `ReplaceError`.
   static fromReplace(doc, from, to, slice) {
     try {
       return StepResult.ok(doc.replace(from, to, slice))

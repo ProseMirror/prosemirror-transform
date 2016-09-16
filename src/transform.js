@@ -3,9 +3,8 @@ const {Mapping} = require("./map")
 class TransformError extends Error {}
 exports.TransformError = TransformError
 
-// ::- A change to a document often consists of a series of
-// [steps](#transform.Step). This class provides a convenience abstraction to
-// build up and track such an array of steps.
+// ::- Abstraction to build up and track such an array of
+// [steps](#transform.Step).
 //
 // The high-level transforming methods return the `Transform` object
 // itself, so that they can be chained.
@@ -23,8 +22,8 @@ class Transform {
     // :: [Node]
     // The documents before each of the steps.
     this.docs = []
-    // :: [StepMap]
-    // The position maps for each of the steps in this transform.
+    // :: Mapping
+    // A mapping with the maps for each of the steps in this transform.
     this.mapping = new Mapping
   }
 

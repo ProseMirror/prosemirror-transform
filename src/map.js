@@ -1,12 +1,12 @@
 // Mappable:: interface
-// There are various things that positions can be mapped through.
-// We'll denote those as 'mappable'. This is not an actual class in
-// the codebase, only an agreed-on interface.
+// There are several things that positions can be mapped through.
+// We'll denote those as 'mappable'.
 //
 //   map:: (pos: number, bias: ?number) → number
 //   Map a position through this object. When given, `bias` (should be
-//   -1 or 1) determines in which direction to move when a chunk of
-//   content is inserted at or around the mapped position.
+//   -1 or 1, defaults to 1) determines in which direction to move
+//   when a chunk of content is inserted at or around the mapped
+//   position.
 //
 //   mapResult:: (pos: number, bias: ?number) → MapResult
 //   Map a position, and return an object containing additional
@@ -31,7 +31,7 @@ function makeRecover(index, offset) { return index + offset * factor16 }
 function recoverIndex(value) { return value & lower16 }
 function recoverOffset(value) { return (value - (value & lower16)) / factor16 }
 
-// ::- An object representing a mapped position with some extra
+// ::- An object representing a mapped position with extra
 // information.
 class MapResult {
   constructor(pos, deleted = false, recover = null) {
@@ -48,7 +48,7 @@ exports.MapResult = MapResult
 // ::- A map describing the deletions and insertions made by a step,
 // which can be used to find the correspondence between positions in
 // the pre-step version of a document and the same position in the
-// post-step version. This class implements `Mappable`.
+// post-step version. This class implements [`Mappable`](#transform.Mappable).
 class StepMap {
   // :: ([number])
   // Create a position map. The modifications to the document are
@@ -113,7 +113,6 @@ class StepMap {
   // :: ((oldStart: number, oldEnd: number, newStart: number, newEnd: number))
   // Calls the given function on each of the changed ranges denoted by
   // this map.
-  // FIXME add tests
   forEach(f) {
     let oldIndex = this.inverted ? 2 : 1, newIndex = this.inverted ? 1 : 2
     for (let i = 0, diff = 0; i < this.ranges.length; i += 3) {
@@ -139,23 +138,25 @@ exports.StepMap = StepMap
 
 StepMap.empty = new StepMap([])
 
-// ::- A remapping represents a pipeline of zero or more [step
-// maps](#transform.StepMap). It is a specialized data structured used
-// to manage mapping through a series of steps, typically including
-// inverted and non-inverted versions of the same step. (This comes up
-// when ‘rebasing’ steps for collaboration or history management.)
-// This class implements `Mappable`.
+// ::- A mapping represents a pipeline of zero or more [step
+// maps](#transform.StepMap). It has special provisions for losslessly
+// handling mapping positions through a series of steps in which some
+// steps are inverted versions of earlier steps. (This comes up when
+// ‘rebasing’ steps for collaboration or history management.) This
+// class implements [`Mappable`](#transform.Mappable).
 class Mapping {
   // :: (?[StepMap])
-  // Create a new remapping with the given position maps, with its
-  // current start index pointing at `mapFrom`.
+  // Create a new remapping with the given position maps.
   constructor(maps, mirror, from, to) {
     // :: [StepMap]
+    // The step maps in this mapping.
     this.maps = maps || []
     // :: number
-    // The current starting position in the `maps` array, used when
-    // `map` or `mapResult` is called.
+    // The starting position in the `maps` array, used when `map` or
+    // `mapResult` is called.
     this.from = from || 0
+    // :: number
+    // The end positions in the `maps` array.
     this.to = to == null ? this.maps.length : to
     this.mirror = mirror
   }
@@ -181,25 +182,23 @@ class Mapping {
   }
 
   // :: (StepMap, ?number)
-  // Add a map to the end of this remapping. If `mirrors` is given, it
-  // should be the index of the map that is the mirror image of this
-  // one.
+  // Add a step map to the end of this remapping. If `mirrors` is
+  // given, it should be the index of the step map that is the mirror
+  // image of this one.
   appendMap(map, mirrors) {
     this.to = this.maps.push(map)
     if (mirrors != null) this.setMirror(this.maps.length - 1, mirrors)
   }
 
+  // :: (Mapping)
+  // Add all the step maps in a given mapping to this one (preserving
+  // mirroring information).
   appendMapping(mapping) {
     for (let i = 0, startSize = this.maps.length; i < mapping.maps.length; i++) {
       let mirr = mapping.getMirror(i)
       this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : null)
     }
   }
-
-  // :: (number, ?number) → MapResult
-  // Map a position through this remapping, returning a mapping
-  // result.
-  mapResult(pos, bias) { return this._map(pos, bias, false) }
 
   // :: (number, ?number) → number
   // Map a position through this remapping.
@@ -209,6 +208,11 @@ class Mapping {
       pos = this.maps[i].map(pos, bias)
     return pos
   }
+
+  // :: (number, ?number) → MapResult
+  // Map a position through this remapping, returning a mapping
+  // result.
+  mapResult(pos, bias) { return this._map(pos, bias, false) }
 
   _map(pos, bias, simple) {
     let deleted = false, recoverables = null

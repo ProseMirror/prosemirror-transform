@@ -54,12 +54,6 @@ Transform.prototype.insert = function(pos, content) {
   return this.replaceWith(pos, pos, content)
 }
 
-// :: (number, Node) → Transform
-// Insert the given node at `pos`, inheriting the marks of the
-// existing content at that position.
-Transform.prototype.insertInline = function(pos, node) {
-  return this.insert(pos, node.mark(this.doc.marksAt(pos)))
-}
 
 
 function fitLeftInner($from, depth, placed, placedBelow) {

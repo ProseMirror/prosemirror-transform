@@ -80,7 +80,7 @@ class ReplaceAroundStep extends Step {
   // Create a replace-wrap step with the given range and gap. `insert`
   // should be the point in the slice into which the gap should be
   // moved. `structure` has the same meaning as it has in the
-  // `ReplaceStep` class.
+  // [`ReplaceStep`](#transform.ReplaceStep) class.
   constructor(from, to, gapFrom, gapTo, slice, insert, structure) {
     super()
     this.from = from
