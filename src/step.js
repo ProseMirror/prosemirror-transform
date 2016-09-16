@@ -1,6 +1,6 @@
 const {ReplaceError} = require("prosemirror-model")
 
-const {PosMap} = require("./map")
+const {StepMap} = require("./map")
 
 function mustOverride() { throw new Error("Override me") }
 
@@ -11,7 +11,7 @@ const stepsByID = Object.create(null)
 // associated with it will only make sense for that document.
 //
 // New steps are defined by creating classes that extend `Step`,
-// overriding the `apply`, `invert`, `map`, `posMap` and `fromJSON`
+// overriding the `apply`, `invert`, `map`, `getMap` and `fromJSON`
 // methods, and registering your class with a unique
 // JSON-serialization identifier using `Step.jsonID`.
 class Step {
@@ -22,10 +22,10 @@ class Step {
   // transformed document.
   apply(_doc) { return mustOverride() }
 
-  // :: () → PosMap
+  // :: () → StepMap
   // Get the position map that represents the changes made by this
   // step.
-  posMap() { return PosMap.empty }
+  getMap() { return StepMap.empty }
 
   // :: (doc: Node) → Step
   // Create an inverted version of this step. Needs the document as it

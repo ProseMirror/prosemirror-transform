@@ -45,10 +45,11 @@ class MapResult {
 }
 exports.MapResult = MapResult
 
-// ::- A position map, holding information about the way positions in
-// the pre-step version of a document correspond to positions in the
+// ::- A map describing the deletions and insertions made by a step,
+// which can be used to find the correspondence between positions in
+// the pre-step version of a document and the same position in the
 // post-step version. This class implements `Mappable`.
-class PosMap {
+class StepMap {
   // :: ([number])
   // Create a position map. The modifications to the document are
   // represented as an array of numbers, in which each group of three
@@ -123,33 +124,33 @@ class PosMap {
     }
   }
 
-  // :: () → PosMap
+  // :: () → StepMap
   // Create an inverted version of this map. The result can be used to
   // map positions in the post-step document to the pre-step document.
   invert() {
-    return new PosMap(this.ranges, !this.inverted)
+    return new StepMap(this.ranges, !this.inverted)
   }
 
   toString() {
     return (this.inverted ? "-" : "") + JSON.stringify(this.ranges)
   }
 }
-exports.PosMap = PosMap
+exports.StepMap = StepMap
 
-PosMap.empty = new PosMap([])
+StepMap.empty = new StepMap([])
 
-// ::- A remapping represents a pipeline of zero or more mappings. It
-// is a specialized data structured used to manage mapping through a
-// series of steps, typically including inverted and non-inverted
-// versions of the same step. (This comes up when ‘rebasing’ steps for
-// collaboration or history management.) This class implements
-// `Mappable`.
+// ::- A remapping represents a pipeline of zero or more [step
+// maps](#transform.StepMap). It is a specialized data structured used
+// to manage mapping through a series of steps, typically including
+// inverted and non-inverted versions of the same step. (This comes up
+// when ‘rebasing’ steps for collaboration or history management.)
+// This class implements `Mappable`.
 class Mapping {
-  // :: (?[PosMap])
+  // :: (?[StepMap])
   // Create a new remapping with the given position maps, with its
   // current start index pointing at `mapFrom`.
   constructor(maps, mirror, from, to) {
-    // :: [PosMap]
+    // :: [StepMap]
     this.maps = maps || []
     // :: number
     // The current starting position in the `maps` array, used when
@@ -179,7 +180,7 @@ class Mapping {
     this.mirror.push(n, m)
   }
 
-  // :: (PosMap, ?number)
+  // :: (StepMap, ?number)
   // Add a map to the end of this remapping. If `mirrors` is given, it
   // should be the index of the map that is the mirror image of this
   // one.

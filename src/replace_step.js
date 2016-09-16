@@ -1,7 +1,7 @@
 const {Slice} = require("prosemirror-model")
 
 const {Step, StepResult} = require("./step")
-const {PosMap} = require("./map")
+const {StepMap} = require("./map")
 
 // ::- Replace a part of the document with a slice of new content.
 class ReplaceStep extends Step {
@@ -27,8 +27,8 @@ class ReplaceStep extends Step {
     return StepResult.fromReplace(doc, this.from, this.to, this.slice)
   }
 
-  posMap() {
-    return new PosMap([this.from, this.to - this.from, this.slice.size])
+  getMap() {
+    return new StepMap([this.from, this.to - this.from, this.slice.size])
   }
 
   invert(doc) {
@@ -105,9 +105,9 @@ class ReplaceAroundStep extends Step {
     return StepResult.fromReplace(doc, this.from, this.to, inserted)
   }
 
-  posMap() {
-    return new PosMap([this.from, this.gapFrom - this.from, this.insert,
-                       this.gapTo, this.to - this.gapTo, this.slice.size - this.insert])
+  getMap() {
+    return new StepMap([this.from, this.gapFrom - this.from, this.insert,
+                        this.gapTo, this.to - this.gapTo, this.slice.size - this.insert])
   }
 
   invert(doc) {

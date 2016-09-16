@@ -23,7 +23,7 @@ class Transform {
     // :: [Node]
     // The documents before each of the steps.
     this.docs = []
-    // :: [PosMap]
+    // :: [StepMap]
     // The position maps for each of the steps in this transform.
     this.mapping = new Mapping
   }
@@ -48,7 +48,7 @@ class Transform {
     if (!result.failed) {
       this.docs.push(this.doc)
       this.steps.push(step)
-      this.mapping.appendMap(step.posMap())
+      this.mapping.appendMap(step.getMap())
       this.doc = result.doc
     }
     return result
