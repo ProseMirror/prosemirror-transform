@@ -184,14 +184,14 @@ Transform.prototype.split = function(pos, depth = 1, typeAfter, attrsAfter) {
 // :: (Node, number) → bool
 // Test whether the blocks before and after a given position can be
 // joined.
-function joinable(doc, pos) {
+function canJoin(doc, pos) {
   let $pos = doc.resolve(pos), index = $pos.index()
-  return canJoin($pos.nodeBefore, $pos.nodeAfter) &&
+  return joinable($pos.nodeBefore, $pos.nodeAfter) &&
     $pos.parent.canReplace(index, index + 1)
 }
-exports.joinable = joinable
+exports.canJoin = canJoin
 
-function canJoin(a, b) {
+function joinable(a, b) {
   return a && b && !a.isLeaf && a.canAppend(b)
 }
 
@@ -213,7 +213,7 @@ function joinPoint(doc, pos, dir = -1) {
       before = $pos.node(d).maybeChild($pos.index(d) - 1)
       after = $pos.node(d + 1)
     }
-    if (before && !before.isTextblock && canJoin(before, after)) return pos
+    if (before && !before.isTextblock && joinable(before, after)) return pos
     if (d == 0) break
     pos = dir < 0 ? $pos.before(d) : $pos.after(d)
   }

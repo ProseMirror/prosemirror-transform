@@ -47,6 +47,6 @@ transformations or determining whether they are even possible.
 @liftTarget
 @findWrapping
 @canSplit
-@joinable
+@canJoin
 @joinPoint
 @insertPoint
