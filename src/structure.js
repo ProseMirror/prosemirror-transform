@@ -144,39 +144,41 @@ Transform.prototype.setNodeType = function(pos, type, attrs) {
                                          new Slice(Fragment.from(type.create(attrs)), 0, 0), 1, true))
 }
 
-// :: (Node, number, ?NodeType, ?Object) → bool
+// :: (Node, number, ?[?{type: NodeType, attrs: ?Object}]) → bool
 // Check whether splitting at the given position is allowed.
-function canSplit(doc, pos, depth = 1, typeAfter, attrsAfter) {
+function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
   if (base < 0 ||
       !$pos.parent.canReplace($pos.index(), $pos.parent.childCount) ||
       !$pos.parent.canReplace(0, $pos.indexAfter()))
     return false
-  for (let d = $pos.depth - 1; d > base; d--) {
+  for (let d = $pos.depth - 1, i = depth - 1; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
+    let typeAfter = typesAfter && typesAfter[i]
     if (!node.canReplace(0, index) ||
-        !node.canReplaceWith(index, node.childCount, typeAfter || $pos.node(d + 1).type,
-                             typeAfter ? attrsAfter : $pos.node(d + 1).attrs))
+        !node.canReplaceWith(index, node.childCount, typeAfter ? typeAfter.type : $pos.node(d + 1).type,
+                             typeAfter ? typeAfter.attrs : $pos.node(d + 1).attrs))
       return false
-    typeAfter = null
   }
   let index = $pos.indexAfter(base)
-  return $pos.node(base).canReplaceWith(index, index, typeAfter || $pos.node(base + 1).type,
-                                        typeAfter ? attrsAfter : $pos.node(base + 1).attrs)
+  let baseType = typesAfter && typesAfter[0]
+  return $pos.node(base).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base + 1).type,
+                                        baseType ? baseType.attrs : $pos.node(base + 1).attrs)
 }
 exports.canSplit = canSplit
 
-// :: (number, ?number, ?NodeType, ?Object) → Transform
+// :: (number, ?number, ?[?{type: NodeType, attrs: ?Object}]) → Transform
 // Split the node at the given position, and optionally, if `depth` is
-// greater than one, any number of nodes above that. By default, the part
-// split off will inherit the node type of the original node. This can
-// be changed by passing `typeAfter` and `attrsAfter`.
-Transform.prototype.split = function(pos, depth = 1, typeAfter, attrsAfter) {
+// greater than one, any number of nodes above that. By default, the
+// parts split off will inherit the node type of the original node.
+// This can be changed by passing an array of types and attributes to
+// use after the split.
+Transform.prototype.split = function(pos, depth = 1, typesAfter) {
   let $pos = this.doc.resolve(pos), before = Fragment.empty, after = Fragment.empty
-  for (let d = $pos.depth, e = $pos.depth - depth; d > e; d--) {
+  for (let d = $pos.depth, e = $pos.depth - depth, i = depth - 1; d > e; d--, i--) {
     before = Fragment.from($pos.node(d).copy(before))
-    after = Fragment.from(typeAfter ? typeAfter.create(attrsAfter, after) : $pos.node(d).copy(after))
-    typeAfter = null
+    let typeAfter = typesAfter && typesAfter[i]
+    after = Fragment.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after))
   }
   return this.step(new ReplaceStep(pos, pos, new Slice(before.append(after), depth, depth, true)))
 }

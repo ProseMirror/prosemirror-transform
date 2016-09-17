@@ -62,10 +62,10 @@ function range(pos, end) {
 
 describe("canSplit", () => {
   function yes(pos, depth, after) {
-    return () => ist(canSplit(doc, pos, depth, after && schema.nodes[after]))
+    return () => ist(canSplit(doc, pos, depth, after && [{type: schema.nodes[after]}]))
   }
   function no(pos, depth, after) {
-    return () => ist(!canSplit(doc, pos, depth, after && schema.nodes[after]))
+    return () => ist(!canSplit(doc, pos, depth, after && [{type: schema.nodes[after]}]))
   }
 
   it("can't at start", no(0))

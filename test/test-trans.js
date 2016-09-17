@@ -213,7 +213,7 @@ describe("Transform", () => {
     it("respects the type param", () =>
        split(doc(h1("hell<a>o!")),
              doc(h1("hell"), p("<a>o!")),
-             undefined, schema.nodes.paragraph))
+             undefined, [{type: schema.nodes.paragraph}]))
 
     it("preserves content constraints before", () =>
        split(doc(blockquote("<a>", p("x"))), "fail"))
