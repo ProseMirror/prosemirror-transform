@@ -1,4 +1,4 @@
-const {Transform, Step, Mapping} = require("../src")
+const {Transform, Step, Mapping} = require("../dist")
 const {eq} = require("prosemirror-model/test/build")
 const ist = require("ist")
 
