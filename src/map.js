@@ -2,13 +2,14 @@
 // There are several things that positions can be mapped through.
 // We'll denote those as 'mappable'.
 //
-//   map:: (pos: number, bias: ?number) → number
-//   Map a position through this object. When given, `bias` (should be
-//   -1 or 1, defaults to 1) determines in which direction to move
-//   when a chunk of content is inserted at or around the mapped
-//   position.
+//   map:: (pos: number, assoc: ?number) → number
+//   Map a position through this object. When given, `assoc` (should
+//   be -1 or 1, defaults to 1) determines with which side the
+//   position is associated, which determines in which direction to
+//   move when a chunk of content is inserted at the mapped position,
+//   and when to consider the position to be deleted.
 //
-//   mapResult:: (pos: number, bias: ?number) → MapResult
+//   mapResult:: (pos: number, assoc: ?number) → MapResult
 //   Map a position, and return an object containing additional
 //   information about the mapping. The result's `deleted` field tells
 //   you whether the position was deleted (completely enclosed in a
@@ -67,30 +68,30 @@ class StepMap {
   }
 
   // :: (number, ?number) → MapResult
-  // Map the given position through this map. The `bias` parameter can
+  // Map the given position through this map. The `assoc` parameter can
   // be used to control what happens when the transform inserted
-  // content at (or around) this position—if `bias` is negative, the a
+  // content at (or around) this position—if `assoc` is negative, the a
   // position before the inserted content will be returned, if it is
   // positive, a position after the insertion is returned.
-  mapResult(pos, bias) { return this._map(pos, bias, false) }
+  mapResult(pos, assoc) { return this._map(pos, assoc, false) }
 
   // :: (number, ?number) → number
   // Map the given position through this map, returning only the
   // mapped position.
-  map(pos, bias) { return this._map(pos, bias, true) }
+  map(pos, assoc) { return this._map(pos, assoc, true) }
 
-  _map(pos, bias, simple) {
+  _map(pos, assoc, simple) {
     let diff = 0, oldIndex = this.inverted ? 2 : 1, newIndex = this.inverted ? 1 : 2
     for (let i = 0; i < this.ranges.length; i += 3) {
       let start = this.ranges[i] - (this.inverted ? diff : 0)
       if (start > pos) break
       let oldSize = this.ranges[i + oldIndex], newSize = this.ranges[i + newIndex], end = start + oldSize
       if (pos <= end) {
-        let side = !oldSize ? bias : pos == start ? -1 : pos == end ? 1 : bias
+        let side = !oldSize ? assoc : pos == start ? -1 : pos == end ? 1 : assoc
         let result = start + diff + (side < 0 ? 0 : newSize)
         if (simple) return result
         let recover = makeRecover(i / 3, pos - start)
-        return new MapResult(result, pos != start && pos != end, recover)
+        return new MapResult(result, assoc < 0 ? pos != start : pos != end, recover)
       }
       diff += newSize - oldSize
     }
@@ -202,19 +203,19 @@ class Mapping {
 
   // :: (number, ?number) → number
   // Map a position through this remapping.
-  map(pos, bias) {
-    if (this.mirror) return this._map(pos, bias, true)
+  map(pos, assoc) {
+    if (this.mirror) return this._map(pos, assoc, true)
     for (let i = this.from; i < this.to; i++)
-      pos = this.maps[i].map(pos, bias)
+      pos = this.maps[i].map(pos, assoc)
     return pos
   }
 
   // :: (number, ?number) → MapResult
   // Map a position through this remapping, returning a mapping
   // result.
-  mapResult(pos, bias) { return this._map(pos, bias, false) }
+  mapResult(pos, assoc) { return this._map(pos, assoc, false) }
 
-  _map(pos, bias, simple) {
+  _map(pos, assoc, simple) {
     let deleted = false, recoverables = null
 
     for (let i = this.from; i < this.to; i++) {
@@ -224,7 +225,7 @@ class Mapping {
         continue
       }
 
-      let result = map.mapResult(pos, bias)
+      let result = map.mapResult(pos, assoc)
       if (result.recover != null) {
         let corr = this.getMirror(i)
         if (corr != null && corr > i && corr < this.to) {
