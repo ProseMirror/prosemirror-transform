@@ -327,6 +327,13 @@ describe("Transform", () => {
        type(doc(p("hello<a> ", em("world"))),
             doc(h1("hello<a> ", em("world"))),
             "heading", {level: 1}))
+
+    it("works after another step", () => {
+      let d = doc(p("f<x>oob<y>ar"), p("baz<a>"))
+      let tr = new Transform(d).delete(d.tag.x, d.tag.y), pos = tr.mapping.map(d.tag.a)
+      tr.setBlockType(pos, pos, schema.nodes.heading, {level: 1})
+      testTransform(tr, doc(p("f<x><y>ar"), h1("baz<a>")))
+    })
   })
 
   describe("setNodeType", () => {
