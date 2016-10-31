@@ -34,7 +34,7 @@ exports.replaceStep = replaceStep
 
 // :: (number, ?number, ?Slice) → Transform
 // Replace the part of the document between `from` and `to` with the
-// part of the `source` between `start` and `end`.
+// given `slice`.
 Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
   let step = replaceStep(this.doc, from, to, slice)
   if (step) this.step(step)
