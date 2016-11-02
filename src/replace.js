@@ -222,11 +222,15 @@ function nodeRight(content, depth) {
   return content.lastChild
 }
 
+// : (ResolvedPos, Slice) → [{content: Fragment, openRight: number, depth: number}]
 function placeSlice($from, slice) {
   let dFrom = $from.depth, unplaced = null
   let placed = [], parents = null
 
+  // Loop over the open side of the slice, trying to find a place for
+  // each open fragment.
   for (let dSlice = slice.openLeft;; --dSlice) {
+    // Get the components of the node at this level
     let curType, curAttrs, curFragment
     if (dSlice >= 0) {
       if (dSlice > 0) { // Inside slice
@@ -235,39 +239,46 @@ function placeSlice($from, slice) {
         curFragment = slice.content
       }
       if (dSlice < slice.openLeft) curFragment = curFragment.cut(curFragment.firstChild.nodeSize)
-    } else { // Outside slice
+    } else { // Outside slice, in generated wrappers (see below)
       curFragment = Fragment.empty
       let parent = parents[parents.length + dSlice - 1]
       curType = parent.type
       curAttrs = parent.attrs
     }
-    if (unplaced)
-      curFragment = curFragment.addToStart(unplaced)
+    // If the last iteration left unplaced content, include it in the fragment
+    if (unplaced) curFragment = curFragment.addToStart(unplaced)
 
+    // If there's nothing left to place, we're done
     if (curFragment.size == 0 && dSlice <= 0) break
 
-    // FIXME cut/remove marks when it helps find a placement
+    // This will go through the positions in $from, down from dFrom,
+    // to find a fit
     let found = findPlacement(curFragment, $from, dFrom)
     if (found) {
+      // If there was a fit, store it, and consider this content placed
       if (found.fragment.size > 0) placed[found.depth] = {
         content: found.fill.append(found.fragment),
         openRight: dSlice > 0 ? 0 : slice.openRight - dSlice,
         depth: found.depth
       }
+      // If that was the last of the content, we're done
       if (dSlice <= 0) break
       unplaced = null
       dFrom = Math.max(0, found.depth - 1)
     } else {
       if (dSlice == 0) {
+        // This is the top of the slice, and we haven't found a place to insert it.
         let top = $from.node(0)
-        parents = top.contentMatchAt($from.index(0)).findWrapping(curFragment.firstChild.type, curFragment.firstChild.attrs)
-        if (!parents) break
-        let last = parents[parents.length - 1]
-        if (last ? !last.type.contentExpr.matches(last.attrs, curFragment)
-                 : !top.canReplace($from.indexAfter(0), $from.depth ? $from.index(0) : $from.indexAfter(0), curFragment)) break
-        parents = [{type: top.type, attrs: top.attrs}].concat(parents)
-        curType = parents[parents.length - 1].type
-        curAttrs = parents[parents.length - 1].type
+        // Try to find a wrapping that makes its first child fit in the top node.
+        let wrap = top.contentMatchAt($from.index(0)).findWrapping(curFragment.firstChild.type, curFragment.firstChild.attrs)
+        // If no such thing exists, give up.
+        if (!wrap || wrap.length == 0) break
+        let last = wrap[wrap.length - 1]
+        // Check that the fragment actually fits in the wrapping.
+        if (!last.type.contentExpr.matches(last.attrs, curFragment)) break
+        // Store the result for subsequent iterations.
+        parents = [{type: top.type, attrs: top.attrs}].concat(wrap)
+        ;({type: curType, attrs: curAttrs} = last)
       }
       curFragment = curType.contentExpr.start(curAttrs).fillBefore(curFragment, true).append(curFragment)
       unplaced = curType.create(curAttrs, curFragment)
