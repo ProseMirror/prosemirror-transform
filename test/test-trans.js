@@ -2,7 +2,7 @@ const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
        strong, code, a, a2, img, img2, dataImage, br, hr} = require("prosemirror-model/test/build")
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../dist")
-const {Slice} = require("prosemirror-model")
+const {Slice, Fragment} = require("prosemirror-model")
 const ist = require("ist")
 
 describe("Transform", () => {
@@ -354,7 +354,7 @@ describe("Transform", () => {
 
   describe("replace", () => {
     function repl(doc, source, expect) {
-      let slice = source ? source.slice(source.tag.a, source.tag.b) : Slice.empty
+      let slice = !source ? Slice.empty : source instanceof Slice ? source : source.slice(source.tag.a, source.tag.b)
       testTransform(new Transform(doc).replace(doc.tag.a, doc.tag.b || doc.tag.a, slice), expect)
     }
 
@@ -517,5 +517,10 @@ describe("Transform", () => {
        repl(doc(p("<a>x")),
             doc(p("b<a>"), blockquote("<b>", p("hi"))),
             doc(p(), blockquote(p()), p("x"))))
+
+    it("does nothing when given an unfittable slice", () =>
+       repl(doc(p("<a>x")),
+            new Slice(Fragment.from([p("foo"), schema.text("bar")]), 0, 0),
+            doc(p("x"))))
   })
 })
