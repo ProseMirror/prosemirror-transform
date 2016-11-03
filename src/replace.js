@@ -270,7 +270,7 @@ function placeSlice($from, slice) {
         // This is the top of the slice, and we haven't found a place to insert it.
         let top = $from.node(0)
         // Try to find a wrapping that makes its first child fit in the top node.
-        let wrap = top.contentMatchAt($from.index(0)).findWrapping(curFragment.firstChild.type, curFragment.firstChild.attrs)
+        let wrap = top.contentMatchAt($from.index(0)).findWrappingFor(curFragment.firstChild)
         // If no such thing exists, give up.
         if (!wrap || wrap.length == 0) break
         let last = wrap[wrap.length - 1]

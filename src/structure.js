@@ -86,7 +86,7 @@ function findWrappingOutside(range, wrap) {
 function findWrappingInside(range, wrap) {
   let {parent, startIndex, endIndex} = range
   let inner = parent.child(startIndex)
-  let inside = wrap.type.contentExpr.start(wrap.attrs).findWrapping(inner.type, inner.attrs)
+  let inside = wrap.type.contentExpr.start(wrap.attrs).findWrappingFor(inner)
   if (!inside) return null
   let last = inside.length ? inside[inside.length - 1] : wrap
   let innerMatch = last.type.contentExpr.start(last.attrs)
