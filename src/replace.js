@@ -254,10 +254,10 @@ function placeSlice($from, slice) {
     // This will go through the positions in $from, down from dFrom,
     // to find a fit
     let found = findPlacement(curFragment, $from, dFrom)
-    if (found) {
+    if (found && (found.depth || noMoreContent(slice, dSlice))) {
       // If there was a fit, store it, and consider this content placed
-      if (found.fragment.size > 0) placed[found.depth] = {
-        content: found.fill.append(found.fragment),
+      if (curFragment.size > 0) placed[found.depth] = {
+        content: found.fragment,
         openRight: dSlice > 0 ? 0 : slice.openRight - dSlice,
         depth: found.depth
       }
@@ -280,8 +280,12 @@ function placeSlice($from, slice) {
         parents = [{type: top.type, attrs: top.attrs}].concat(wrap)
         ;({type: curType, attrs: curAttrs} = last)
       }
-      curFragment = curType.contentExpr.start(curAttrs).fillBefore(curFragment, true).append(curFragment)
-      unplaced = curType.create(curAttrs, curFragment)
+      if (curFragment.size) {
+        curFragment = curType.contentExpr.start(curAttrs).fillBefore(curFragment, true).append(curFragment)
+        unplaced = curType.create(curAttrs, curFragment)
+      } else {
+        unplaced = null
+      }
     }
   }
 
@@ -295,10 +299,10 @@ function findPlacement(fragment, $from, start) {
   for (let d = start; d >= 0; d--) {
     let startMatch = $from.node(d).contentMatchAt($from.indexAfter(d))
     let match = startMatch.fillBefore(fragment)
-    if (match) return {depth: d, fill: match, fragment}
+    if (match) return {depth: d, fragment: match.append(fragment)}
     if (hasMarks) {
       let stripped = matchStrippingMarks(startMatch, fragment)
-      if (stripped) return {depth: d, fill: Fragment.empty, fragment: stripped}
+      if (stripped) return {depth: d, fragment: stripped}
     }
   }
 }
@@ -312,4 +316,13 @@ function matchStrippingMarks(match, fragment) {
     newNodes.push(stripped)
   }
   return Fragment.from(newNodes)
+}
+
+function noMoreContent(slice, depth) {
+  if (depth <= 0) return true
+  for (let i = 0, content = slice.content;; i++) {
+    let next = content.firstChild
+    if (i == depth - 1) return 2 * i + next.nodeSize == slice.content.size
+    content = next.content
+  }
 }

@@ -498,7 +498,7 @@ describe("Transform", () => {
             null,
             doc(p())))
 
-    it("preserves and empty parent to the left", () =>
+    it("preserves an empty parent to the left", () =>
        repl(doc(blockquote("<a>", p("hi")), p("b<b>x")),
             doc(p("<a>hi<b>")),
             doc(blockquote(p("hix")))))
@@ -522,5 +522,10 @@ describe("Transform", () => {
        repl(doc(p("<a>x")),
             new Slice(Fragment.from([p("foo"), schema.text("bar")]), 0, 0),
             doc(p("x"))))
+
+    it("doesn't drop content when things only fit at the top level", () =>
+       repl(doc(p("foo"), "<a>", p("bar<b>")),
+            ol(li(p("<a>a")), li(p("b<b>"))),
+            doc(p("foo"), ol(li(p("a")), li(p("b"))))))
   })
 })
