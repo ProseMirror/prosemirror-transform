@@ -2,6 +2,100 @@ const {Fragment, Slice} = require("prosemirror-model")
 
 const {ReplaceStep, ReplaceAroundStep} = require("./replace_step")
 const {Transform} = require("./transform")
+const {insertPoint} = require("./structure")
+
+// :: (number, number, Slice) → Transform
+// Replace a range of the document with a given slice, using `from`,
+// `to`, and the slice's [`openLeft`](#model.Slice.openLeft) property
+// as hints, rather than fixed start and end points. This method may
+// grow the replaced area or close open nodes in the slice in order to
+// get a fit that is more in line with WYSIWYG expectations, by
+// dropping fully covered parent nodes of the replaced region when
+// they are marked [non-defining](#model.NodeSpec.defining), or
+// including open parent nodes from the slice that _are_ marked as
+// [defining](#model.NodeSpec.defining).
+Transform.prototype.replaceRange = function(from, to, slice) {
+  if (!slice.size) return this.deleteRange(from, to)
+
+  let $from = this.doc.resolve(from)
+
+  let maxExpand = 0, preferredExpand = 0
+  for (let d = $from.depth; d > 0; d--) {
+    if (from - maxExpand != $from.start(d) || to + maxExpand != $from.end(d)) break
+    if (preferredExpand == maxExpand && !$from.node(d).type.spec.defining) preferredExpand++
+    maxExpand++
+  }
+
+  let leftNodes = [], preferredDepth = slice.openLeft
+  for (let content = slice.content, i = 0;; i++) {
+    let node = content.firstChild
+    leftNodes.push(node)
+    if (i == slice.openLeft) break
+    content = node.content
+  }
+  while (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
+    --preferredDepth
+
+  for (let i = 0; i <= maxExpand; i++) {
+    // Loop over possible expansion levels, starting with the
+    // preferred one
+    let expand = (i + preferredExpand) % (maxExpand + 1), depth = $from.depth - expand
+    let parent = $from.node(depth), index = $from.index(depth)
+    for (let j = slice.openLeft; j >= 0; j--) {
+      let openDepth = (j + preferredDepth) % (slice.openLeft + 1)
+      let insert = leftNodes[openDepth]
+      if (parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
+        return this.replace(from - expand, to + expand,
+                            new Slice(closeFragment(slice.content, 0, slice.openLeft, openDepth),
+                                      openDepth, slice.openRight))
+    }
+  }
+
+  return this.replace(from, to, slice)
+}
+
+function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
+  if (depth < oldOpen) {
+    let first = fragment.firstChild
+    fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
+  }
+  if (depth > newOpen)
+    fragment = parent.contentMatchAt(0).fillBefore(fragment).append(fragment)
+  return fragment
+}
+
+// :: (number, number, Node) → Transform
+// Replace the given range with a node, but use `from` and `to` as
+// hints, rather than precise positions. When from and to are the same
+// and are at the start or end of a parent node in which the given
+// node doesn't fit, this method may _move_ them out towards a parent
+// that does allow the given node to be placed. When the given range
+// completely covers a parent node, this method may completely replace
+// that parent node.
+Transform.prototype.replaceRangeWith = function(from, to, node) {
+  if (!node.isInline && from == to && this.doc.resolve(from).parent.content.size) {
+    let point = insertPoint(this.doc, from, node.type, node.attrs)
+    if (point != null) from = to = point
+  }
+  return this.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
+}
+
+// :: (number, number) → Transform
+// Delete the given range, and any fully covered parent nodes that are
+// not allowed to be empty.
+Transform.prototype.deleteRange = function(from, to) {
+  let $from = this.doc.resolve(from)
+  // When this deletes the whole content of a node that can't be
+  // empty, delete that parent node too, and so on for the next
+  // parent.
+  for (let d = $from.depth; d > 0; d--) {
+    if (from != $from.start(d) || to != $from.end(d) ||
+        $from.node(d).contentMatchAt(0).validEnd()) break
+    from--
+    to++
+  }
+  return this.delete(from, to)
+}
 
 // :: (number, number) → Transform
 // Delete the content between the given positions.
