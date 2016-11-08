@@ -528,4 +528,78 @@ describe("Transform", () => {
             ol(li(p("<a>a")), li(p("b<b>"))),
             doc(p("foo"), ol(li(p("a")), li(p("b"))))))
   })
+
+  describe("replaceRange", () => {
+    function repl(doc, source, expect) {
+      let slice = !source ? Slice.empty : source instanceof Slice ? source : source.slice(source.tag.a, source.tag.b, true)
+      testTransform(new Transform(doc).replaceRange(doc.tag.a, doc.tag.b || doc.tag.a, slice), expect)
+    }
+
+    it("replaces inline content", () =>
+       repl(doc(p("foo<a>b<b>ar")), p("<a>xx<b>"), doc(p("foo<a>xx<b>ar"))))
+
+    it("replaces an empty paragraph with a heading", () =>
+       repl(doc(p("<a>")), doc(h1("<a>text<b>")), doc(h1("text"))))
+
+    it("replaces a fully selected paragraph with a heading", () =>
+       repl(doc(p("<a>abc<b>")), doc(h1("<a>text<b>")), doc(h1("text"))))
+
+    it("recreates a list when overwriting a paragraph", () =>
+       repl(doc(p("<a>")), doc(ul(li(p("<a>foobar<b>")))), doc(ul(li(p("foobar"))))))
+
+    it("drops context when it doesn't fit", () =>
+       repl(doc(ul(li(p("<a>")), li(p("b")))), doc(h1("<a>h<b>")), doc(ul(li(p("h<a>")), li(p("b"))))))
+
+    it("properly closes slices", () =>
+       repl(doc(p("<a>")), doc(ul(li(p("foo"), h1("<a>bar<b>")))), doc(ul(li(p(), h1("bar"))))))
+  })
+
+  describe("replaceRangeWith", () => {
+    function repl(doc, node, expect) {
+      testTransform(new Transform(doc).replaceRangeWith(doc.tag.a, doc.tag.b || doc.tag.a, node), expect)
+    }
+
+    it("can insert an inline node", () =>
+       repl(doc(p("fo<a>o")), img, doc(p("fo", img, "<a>o"))))
+
+    it("can replace content with an inline node", () =>
+       repl(doc(p("<a>fo<b>o")), img, doc(p("<a>", img, "o"))))
+
+    it("can replace a block node with an inline node", () =>
+       repl(doc("<a>", blockquote(p("a")), "<b>"), img, doc(p(img))))
+
+    it("can replace a block node with a block node", () =>
+       repl(doc("<a>", blockquote(p("a")), "<b>"), hr, doc(hr)))
+
+    it("can insert a block quote in the middle of text", () =>
+       repl(doc(p("foo<a>bar")), hr, doc(p("foo"), hr, p("bar"))))
+
+    it("can replace empty parents with a block node", () =>
+       repl(doc(blockquote(p("<a>"))), hr, doc(blockquote(hr))))
+
+    it("can move an inserted block forward out of parent nodes", () =>
+       repl(doc(h1("foo<a>")), hr, doc(h1("foo"), hr)))
+
+    it("can move an inserted block backward out of parent nodes", () =>
+       repl(doc(p("a"), blockquote(p("<a>b"))), hr, doc(p("a"), blockquote(hr, p("b")))))
+  })
+
+  describe("deleteRange", () => {
+    function del(doc, expect) {
+      testTransform(new Transform(doc).deleteRange(doc.tag.a, doc.tag.b || doc.tag.a), expect)
+    }
+
+    it("deletes the given range", () =>
+       del(doc(p("fo<a>o"), p("b<b>ar")), doc(p("fo<a><b>ar"))))
+
+    it("deletes empty parent nodes", () =>
+       del(doc(blockquote(ul(li("<a>", p("foo"), "<b>")), p("x"))),
+           doc(blockquote("<a><b>", p("x")))))
+
+    it("doesn't delete parent nodes that can be empty", () =>
+       del(doc(p("<a>foo<b>")), doc(p("<a><b>"))))
+
+    it("is okay with deleting empty ranges", () =>
+       del(doc(p("<a><b>")), doc(p("<a><b>"))))
+  })
 })

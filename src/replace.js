@@ -12,8 +12,14 @@ const {insertPoint} = require("./structure")
 // get a fit that is more in line with WYSIWYG expectations, by
 // dropping fully covered parent nodes of the replaced region when
 // they are marked [non-defining](#model.NodeSpec.defining), or
-// including open parent nodes from the slice that _are_ marked as
+// including an open parent node from the slice that _is_ marked as
 // [defining](#model.NodeSpec.defining).
+//
+// This is the method, for example, to handle paste. The similar
+// [`replace`](#transform.Transform.replace) method is a more
+// primitive tool which will _not_ move the start and end of its given
+// range, and is useful in situations where you need more precise
+// control over what happens.
 Transform.prototype.replaceRange = function(from, to, slice) {
   if (!slice.size) return this.deleteRange(from, to)
 
@@ -33,8 +39,12 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     if (i == slice.openLeft) break
     content = node.content
   }
-  while (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
-    --preferredDepth
+  // Back up if the node directly above openLeft, or the node above
+  // that separated only by a non-defining textblock node, is defining.
+  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
+    preferredDepth -= 1
+  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
+    preferredDepth -= 2
 
   for (let i = 0; i <= maxExpand; i++) {
     // Loop over possible expansion levels, starting with the
@@ -44,7 +54,7 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     for (let j = slice.openLeft; j >= 0; j--) {
       let openDepth = (j + preferredDepth) % (slice.openLeft + 1)
       let insert = leftNodes[openDepth]
-      if (parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
+      if (insert && parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
         return this.replace(from - expand, to + expand,
                             new Slice(closeFragment(slice.content, 0, slice.openLeft, openDepth),
                                       openDepth, slice.openRight))
