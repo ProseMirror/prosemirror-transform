@@ -551,7 +551,13 @@ describe("Transform", () => {
        repl(doc(ul(li(p("<a>")), li(p("b")))), doc(h1("<a>h<b>")), doc(ul(li(p("h<a>")), li(p("b"))))))
 
     it("properly closes slices", () =>
-       repl(doc(p("<a>")), doc(ul(li(p("foo"), h1("<a>bar<b>")))), doc(ul(li(p(), h1("bar"))))))
+       repl(doc(ul("<a>", li(p("x")))), doc(ul(li(p("foo"), h1("<a>bar<b>")))),
+            doc(ul(li(p(), h1("bar")), li(p("x"))))))
+
+    it("can replace a node when endpoints are in different children", () =>
+       repl(doc(p("a"), ul(li(p("<a>b")), li(p("c"), blockquote(p("d<b>")))), p("e")),
+            doc(h1("<a>x<b>")),
+            doc(p("a"), h1("x"), p("e"))))
   })
 
   describe("replaceRangeWith", () => {
@@ -601,5 +607,8 @@ describe("Transform", () => {
 
     it("is okay with deleting empty ranges", () =>
        del(doc(p("<a><b>")), doc(p("<a><b>"))))
+
+    it("will delete a whole covered node even if selection ends are in different nodes", () =>
+       del(doc(ul(li(p("<a>foo")), li(p("bar<b>"))), p("hi")), doc(p("hi"))))
   })
 })

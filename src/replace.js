@@ -25,11 +25,12 @@ Transform.prototype.replaceRange = function(from, to, slice) {
 
   let $from = this.doc.resolve(from)
 
-  let maxExpand = 0, preferredExpand = 0
+  let canExpand = coveredDepths($from, this.doc.resolve(to)), preferredExpand = 0
+  canExpand.unshift($from.depth + 1)
   for (let d = $from.depth; d > 0; d--) {
-    if (from - maxExpand != $from.start(d) || to + maxExpand != $from.end(d)) break
-    if (preferredExpand == maxExpand && !$from.node(d).type.spec.defining) preferredExpand++
-    maxExpand++
+    if ($from.node(d).type.spec.defining) break
+    let found = canExpand.indexOf(d, 1)
+    if (found > -1) preferredExpand = found
   }
 
   let leftNodes = [], preferredDepth = slice.openLeft
@@ -46,16 +47,17 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
     preferredDepth -= 2
 
-  for (let i = 0; i <= maxExpand; i++) {
-    // Loop over possible expansion levels, starting with the
-    // preferred one
-    let expand = (i + preferredExpand) % (maxExpand + 1), depth = $from.depth - expand
-    let parent = $from.node(depth), index = $from.index(depth)
-    for (let j = slice.openLeft; j >= 0; j--) {
-      let openDepth = (j + preferredDepth) % (slice.openLeft + 1)
-      let insert = leftNodes[openDepth]
-      if (insert && parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
-        return this.replace(from - expand, to + expand,
+  for (let j = slice.openLeft; j >= 0; j--) {
+    let openDepth = (j + preferredDepth + 1) % (slice.openLeft + 1)
+    let insert = leftNodes[openDepth]
+    if (!insert) continue
+    for (let i = 0; i < canExpand.length; i++) {
+      // Loop over possible expansion levels, starting with the
+      // preferred one
+      let expandDepth = canExpand[(i + preferredExpand) % canExpand.length]
+      let parent = $from.node(expandDepth - 1), index = $from.index(expandDepth - 1)
+      if (parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
+        return this.replace($from.before(expandDepth), expandDepth > $from.depth ? to : $from.after(expandDepth),
                             new Slice(closeFragment(slice.content, 0, slice.openLeft, openDepth),
                                       openDepth, slice.openRight))
     }
@@ -95,16 +97,28 @@ Transform.prototype.replaceRangeWith = function(from, to, node) {
 // not allowed to be empty.
 Transform.prototype.deleteRange = function(from, to) {
   let $from = this.doc.resolve(from)
-  // When this deletes the whole content of a node that can't be
-  // empty, delete that parent node too, and so on for the next
-  // parent.
-  for (let d = $from.depth; d > 0; d--) {
-    if (from != $from.start(d) || to != $from.end(d) ||
-        $from.node(d).contentMatchAt(0).validEnd()) break
-    from--
-    to++
+  // When this deletes the whole content of a node that can be removed
+  // as a whole, do that.
+  let covered = coveredDepths($from, this.doc.resolve(to))
+  for (let i = 0; i < covered.length; i++) {
+    let depth = covered[i] - 1
+    if ($from.node(depth).canReplace($from.index(depth), $from.indexAfter(depth)))
+      return this.delete($from.before(depth + 1), $from.after(depth + 1))
   }
   return this.delete(from, to)
+}
+
+// : (ResolvedPos, ResolvedPos) → [number]
+// Returns an array of all depths for which $from - $to spans the
+// whole content of the node at that depth.
+function coveredDepths($from, $to) {
+  let result = []
+  for (let i = 0; i < $from.depth; i++) {
+    let depth = $from.depth - i
+    if ($from.pos - i > $from.start(depth)) break
+    if ($to.depth >= depth && $to.pos + ($to.depth - depth) == $from.end(depth)) result.push(depth)
+  }
+  return result
 }
 
 // :: (number, number) → Transform
