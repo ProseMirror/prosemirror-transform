@@ -97,13 +97,25 @@ Transform.prototype.replaceRangeWith = function(from, to, node) {
 // not allowed to be empty.
 Transform.prototype.deleteRange = function(from, to) {
   let $from = this.doc.resolve(from)
-  // When this deletes the whole content of a node that can be removed
-  // as a whole, do that.
-  let covered = coveredDepths($from, this.doc.resolve(to))
+  let covered = coveredDepths($from, this.doc.resolve(to)), grown = false
+  // Find the innermost covered node that allows its whole content to
+  // be deleted
   for (let i = 0; i < covered.length; i++) {
-    let depth = covered[i] - 1
-    if ($from.node(depth).canReplace($from.index(depth), $from.indexAfter(depth)))
-      return this.delete($from.before(depth + 1), $from.after(depth + 1))
+    if ($from.node(covered[i]).contentMatchAt(0).validEnd()) {
+      from = $from.start(covered[i])
+      to = $from.end(covered[i])
+      grown = true
+      break
+    }
+  }
+  // If no such node was found and the outermose covered node can be
+  // deleted entirely, do that
+  if (!grown && covered.length) {
+    let depth = covered[covered.length - 1]
+    if ($from.node(depth - 1).canReplace($from.index(depth - 1), $from.indexAfter(depth - 1))) {
+      from = $from.before(depth)
+      to = $from.after(depth)
+    }
   }
   return this.delete(from, to)
 }

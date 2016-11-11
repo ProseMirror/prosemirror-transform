@@ -610,5 +610,8 @@ describe("Transform", () => {
 
     it("will delete a whole covered node even if selection ends are in different nodes", () =>
        del(doc(ul(li(p("<a>foo")), li(p("bar<b>"))), p("hi")), doc(p("hi"))))
+
+    it("leaves wrapping textblock when deleting all text in it", () =>
+       del(doc(p("a"), p("<a>b<b>")), doc(p("a"), p())))
   })
 })
