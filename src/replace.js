@@ -383,10 +383,10 @@ function placeSlice($from, slice) {
 
     // This will go through the positions in $from, down from dFrom,
     // to find a fit
-    let found = findPlacement(curFragment, $from, dFrom)
-    if (found && (found.depth || noMoreContent(slice, dSlice))) {
+    let found = findPlacement(curFragment, $from, dFrom, placed)
+    if (found) {
       // If there was a fit, store it, and consider this content placed
-      if (curFragment.size > 0) placed[found.depth] = {
+      if (found.fragment.size > 0) placed[found.depth] = {
         content: found.fragment,
         openRight: dSlice > 0 ? 0 : slice.openRight - dSlice,
         depth: found.depth
@@ -394,7 +394,7 @@ function placeSlice($from, slice) {
       // If that was the last of the content, we're done
       if (dSlice <= 0) break
       unplaced = null
-      dFrom = Math.max(0, found.depth - 1)
+      dFrom = found.depth - (curType == $from.node(found.depth).type ? 1 : 0)
     } else {
       if (dSlice == 0) {
         // This is the top of the slice, and we haven't found a place to insert it.
@@ -422,17 +422,19 @@ function placeSlice($from, slice) {
   return placed
 }
 
-function findPlacement(fragment, $from, start) {
+function findPlacement(fragment, $from, start, placed) {
   let hasMarks = false
   for (let i = 0; i < fragment.childCount; i++)
     if (fragment.child(i).marks.length) hasMarks = true
   for (let d = start; d >= 0; d--) {
     let startMatch = $from.node(d).contentMatchAt($from.indexAfter(d))
+    let existing = placed[d]
+    if (existing) startMatch = startMatch.matchFragment(existing.content)
     let match = startMatch.fillBefore(fragment)
-    if (match) return {depth: d, fragment: match.append(fragment)}
+    if (match) return {depth: d, fragment: (existing ? existing.content.append(match) : match).append(fragment)}
     if (hasMarks) {
       let stripped = matchStrippingMarks(startMatch, fragment)
-      if (stripped) return {depth: d, fragment: stripped}
+      if (stripped) return {depth: d, fragment: existing ? existing.content.append(stripped) : stripped}
     }
   }
 }
@@ -446,13 +448,4 @@ function matchStrippingMarks(match, fragment) {
     newNodes.push(stripped)
   }
   return Fragment.from(newNodes)
-}
-
-function noMoreContent(slice, depth) {
-  if (depth <= 0) return true
-  for (let i = 0, content = slice.content;; i++) {
-    let next = content.firstChild
-    if (i == depth - 1) return 2 * i + next.nodeSize == slice.content.size
-    content = next.content
-  }
 }

@@ -486,7 +486,7 @@ describe("Transform", () => {
     it("can close nested parent nodes", () =>
        repl(doc(blockquote(blockquote(p("one"), p("tw<a>o"), p("t<b>hree<3>"), p("four<4>")))),
             doc(ol(li(p("hello<a>world")), li(p("bye"))), p("ne<b>xt")),
-            doc(blockquote(blockquote(p("one"), p("tw<a>world")), ol(li(p("bye"))), p("ne<b>hree<3>"), blockquote(p("four<4>"))))))
+            doc(blockquote(blockquote(p("one"), p("tw<a>world"), ol(li(p("bye"))), p("ne<b>hree<3>"), p("four<4>"))))))
 
     it("will close open nodes to the right", () =>
        repl(doc(p("x"), "<a>"),
@@ -526,7 +526,7 @@ describe("Transform", () => {
     it("doesn't drop content when things only fit at the top level", () =>
        repl(doc(p("foo"), "<a>", p("bar<b>")),
             ol(li(p("<a>a")), li(p("b<b>"))),
-            doc(p("foo"), ol(li(p("a")), li(p("b"))))))
+            doc(p("foo"), p("a"), ol(li(p("b"))))))
   })
 
   describe("replaceRange", () => {
