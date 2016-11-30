@@ -388,7 +388,7 @@ function placeSlice($from, slice) {
       // If there was a fit, store it, and consider this content placed
       if (found.fragment.size > 0) placed[found.depth] = {
         content: found.fragment,
-        openRight: dSlice > 0 ? 0 : slice.openRight - dSlice,
+        openRight: endOfContent(slice, dSlice) ? slice.openRight - dSlice : 0,
         depth: found.depth
       }
       // If that was the last of the content, we're done
@@ -420,6 +420,14 @@ function placeSlice($from, slice) {
   }
 
   return placed
+}
+
+function endOfContent(slice, depth) {
+  for (let i = 0, content = slice.content; i < depth; i++) {
+    if (content.childCount > 1) return false
+    content = content.firstChild.content
+  }
+  return true
 }
 
 function findPlacement(fragment, $from, start, placed) {
