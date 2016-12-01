@@ -24,6 +24,8 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   if (!slice.size) return this.deleteRange(from, to)
 
   let $from = this.doc.resolve(from)
+  if (fitsTrivially($from, this.doc.resolve(to), slice))
+    return this.step(new ReplaceStep(from, to, slice))
 
   let canExpand = coveredDepths($from, this.doc.resolve(to)), preferredExpand = 0
   canExpand.unshift($from.depth + 1)
@@ -146,6 +148,8 @@ function replaceStep(doc, from, to = from, slice = Slice.empty) {
   if (from == to && !slice.size) return null
 
   let $from = doc.resolve(from), $to = doc.resolve(to)
+  // Optimization -- avoid work if it's obvious that it's not needed.
+  if (fitsTrivially($from, $to, slice)) return new ReplaceStep(from, to, slice)
   let placed = placeSlice($from, slice)
 
   let fittedLeft = fitLeft($from, placed)
@@ -301,6 +305,11 @@ function fitRight($from, $to, slice) {
   // FIXME we might want to be clever about selectively dropping nodes here?
   if (!fitted) return null
   return normalizeSlice(fitted, slice.openLeft, $to.depth)
+}
+
+function fitsTrivially($from, $to, slice) {
+  return !slice.openLeft && !slice.openRight && $from.start() == $to.start() &&
+    $from.parent.canReplace($from.index(), $to.index(), slice.content)
 }
 
 function canMoveText($from, $to, slice) {
