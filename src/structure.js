@@ -118,7 +118,7 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
   this.doc.nodesBetween(from, to, (node, pos) => {
     if (node.isTextblock && !node.hasMarkup(type, attrs)) {
       // Ensure all markup that isn't allowed in the new node type is cleared
-      this.clearMarkupFor(this.mapping.slice(mapFrom).map(pos, 1), type, attrs)
+      this.clearNonMatching(this.mapping.slice(mapFrom).map(pos, 1), type.contentExpr.start(attrs))
       let mapping = this.mapping.slice(mapFrom)
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1)
       this.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1,

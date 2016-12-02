@@ -1,4 +1,4 @@
-const {MarkType, Slice} = require("prosemirror-model")
+const {MarkType, Slice, Fragment} = require("prosemirror-model")
 
 const {Transform} = require("./transform")
 const {AddMarkStep, RemoveMarkStep} = require("./mark_step")
@@ -91,10 +91,10 @@ Transform.prototype.clearMarkup = function(from, to) {
   return this
 }
 
-Transform.prototype.clearMarkupFor = function(pos, newType, newAttrs) {
-  let node = this.doc.nodeAt(pos), match = newType.contentExpr.start(newAttrs)
-  let delSteps = []
-  for (let i = 0, cur = pos + 1; i < node.childCount; i++) {
+Transform.prototype.clearNonMatching = function(pos, match) {
+  let node = this.doc.nodeAt(pos)
+  let delSteps = [], cur = pos + 1
+  for (let i = 0; i < node.childCount; i++) {
     let child = node.child(i), end = cur + child.nodeSize
     let allowed = match.matchType(child.type, child.attrs)
     if (!allowed) {
@@ -105,6 +105,10 @@ Transform.prototype.clearMarkupFor = function(pos, newType, newAttrs) {
         this.step(new RemoveMarkStep(cur, end, child.marks[j]))
     }
     cur = end
+  }
+  if (!match.validEnd()) {
+    let fill = match.fillBefore(Fragment.empty, true)
+    this.replace(cur, cur, new Slice(fill, 0, 0))
   }
   for (let i = delSteps.length - 1; i >= 0; i--) this.step(delSteps[i])
   return this
