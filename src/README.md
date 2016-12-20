@@ -1,5 +1,5 @@
 This module defines a way to transform documents. You can read more
-about transformations in [this guide](guide/transform.md).
+about transformations in [this guide](guide/transform.html).
 
 ### Steps
 
