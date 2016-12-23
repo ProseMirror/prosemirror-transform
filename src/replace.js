@@ -227,7 +227,6 @@ function fitRightJoin(content, parent, $from, $to, depth, openLeft, openRight) {
 
   let toNode = $to.node(depth)
   if (openRight > 0 && depth < $to.depth) {
-    // FIXME find a less allocaty approach
     let after = toNode.content.cutByIndex($to.indexAfter(depth)).addToStart(content.lastChild)
     let joinable = match.fillBefore(after, true)
     // Can't insert content if there's a single node stretched across this gap
@@ -302,7 +301,6 @@ function normalizeSlice(content, openLeft, openRight) {
 // : (ResolvedPos, ResolvedPos, number, Slice) → Slice
 function fitRight($from, $to, slice) {
   let fitted = fitRightJoin(slice.content, $from.node(0), $from, $to, 0, slice.openLeft, slice.openRight)
-  // FIXME we might want to be clever about selectively dropping nodes here?
   if (!fitted) return null
   return normalizeSlice(fitted, slice.openLeft, $to.depth)
 }
