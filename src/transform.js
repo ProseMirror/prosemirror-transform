@@ -44,13 +44,15 @@ class Transform {
   // fails. Returns the step result.
   maybeStep(step) {
     let result = step.apply(this.doc)
-    if (!result.failed) {
-      this.docs.push(this.doc)
-      this.steps.push(step)
-      this.mapping.appendMap(step.getMap())
-      this.doc = result.doc
-    }
+    if (!result.failed) this.addStep(step, result.doc)
     return result
+  }
+
+  addStep(step, doc) {
+    this.docs.push(this.doc)
+    this.steps.push(step)
+    this.mapping.appendMap(step.getMap())
+    this.doc = doc
   }
 }
 exports.Transform = Transform
