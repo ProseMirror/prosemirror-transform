@@ -5,7 +5,7 @@ const {StepMap} = require("./map")
 
 // ::- Replace a part of the document with a slice of new content.
 class ReplaceStep extends Step {
-  // :: (number, number, Slice, bool)
+  // :: (number, number, Slice, ?bool)
   // The given `slice` should fit the 'gap' between `from` and
   // `to`—the depths must line up, and the surrounding nodes must be
   // able to be joined with the open sides of the slice. When
@@ -76,7 +76,7 @@ Step.jsonID("replace", ReplaceStep)
 // preserve a range of the replaced content by moving it into the
 // slice.
 class ReplaceAroundStep extends Step {
-  // :: (number, number, number, number, Slice, number, bool)
+  // :: (number, number, number, number, Slice, number, ?bool)
   // Create a replace-wrap step with the given range and gap. `insert`
   // should be the point in the slice into which the gap should be
   // moved. `structure` has the same meaning as it has in the
