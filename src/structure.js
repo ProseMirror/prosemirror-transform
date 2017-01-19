@@ -129,20 +129,21 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
   return this
 }
 
-// :: (number, ?NodeType, ?Object) → Transform
+// :: (number, ?NodeType, ?Object, ?[Mark]) → Transform
 // Change the type and attributes of the node after `pos`.
-Transform.prototype.setNodeType = function(pos, type, attrs) {
+Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
   if (!type) type = node.type
+  let newNode = type.create(attrs, null, marks || node.marks)
   if (node.isLeaf)
-    return this.replaceWith(pos, pos + node.nodeSize, type.create(attrs, null, node.marks))
+    return this.replaceWith(pos, pos + node.nodeSize, newNode)
 
   if (!type.validContent(node.content, attrs))
     throw new RangeError("Invalid content for node type " + type.name)
 
   return this.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1,
-                                         new Slice(Fragment.from(type.create(attrs)), 0, 0), 1, true))
+                                         new Slice(Fragment.from(newNode), 0, 0), 1, true))
 }
 
 // :: (Node, number, ?[?{type: NodeType, attrs: ?Object}]) → bool
