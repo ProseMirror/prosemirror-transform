@@ -1,6 +1,9 @@
 const {Mapping} = require("./map")
 
-class TransformError extends Error {}
+class TransformError extends Error {
+  constructor(message) { super(message) }
+  get name() { return "TransformError" }
+}
 exports.TransformError = TransformError
 
 // ::- Abstraction to build up and track such an array of
