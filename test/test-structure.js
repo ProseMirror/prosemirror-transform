@@ -23,7 +23,7 @@ const schema = new Schema({
       attrs: {columns: {default: 1}},
       content: "trow[columns=.columns]+", group: "block"
     },
-    text: baseSchema.nodeSpec.get("text"),
+    text: baseSchema.spec.nodes.get("text"),
 
     fixed: {content: "head para closing", group: "block"}
   },
