@@ -51,6 +51,12 @@ class Transform {
     return result
   }
 
+  // :: bool
+  // True when this transaction changes the document.
+  get docChanged() {
+    return this.steps.length > 0
+  }
+
   addStep(step, doc) {
     this.docs.push(this.doc)
     this.steps.push(step)
