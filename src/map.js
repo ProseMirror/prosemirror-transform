@@ -201,6 +201,23 @@ class Mapping {
     }
   }
 
+  // :: (Mapping)
+  // Append the inverse of the given mapping to this one.
+  appendMappingInverted(mapping) {
+    for (let i = mapping.maps.length - 1, totalSize = this.maps.length + mapping.maps.length; i >= 0; i--) {
+      let mirr = mapping.getMirror(i)
+      this.appendMap(mapping.maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : null)
+    }
+  }
+
+  // () → Mapping
+  // Create an inverted version of this mapping.
+  invert() {
+    let inverse = new Mapping
+    inverse.appendMappingInverted(this)
+    return inverse
+  }
+
   // :: (number, ?number) → number
   // Map a position through this remapping.
   map(pos, assoc) {
