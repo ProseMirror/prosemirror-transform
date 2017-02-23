@@ -23,11 +23,12 @@ const {insertPoint} = require("./structure")
 Transform.prototype.replaceRange = function(from, to, slice) {
   if (!slice.size) return this.deleteRange(from, to)
 
-  let $from = this.doc.resolve(from)
-  if (fitsTrivially($from, this.doc.resolve(to), slice))
+  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  if (fitsTrivially($from, $to, slice))
     return this.step(new ReplaceStep(from, to, slice))
 
   let canExpand = coveredDepths($from, this.doc.resolve(to)), preferredExpand = 0
+  if (canExpand[canExpand.length - 1] == 0) canExpand.pop()
   canExpand.unshift($from.depth + 1)
   for (let d = $from.depth; d > 0; d--) {
     if ($from.node(d).type.spec.defining) break
@@ -59,7 +60,7 @@ Transform.prototype.replaceRange = function(from, to, slice) {
       let expandDepth = canExpand[(i + preferredExpand) % canExpand.length]
       let parent = $from.node(expandDepth - 1), index = $from.index(expandDepth - 1)
       if (parent.canReplaceWith(index, index, insert.type, insert.attrs, insert.marks))
-        return this.replace($from.before(expandDepth), expandDepth > $from.depth ? to : $from.after(expandDepth),
+        return this.replace($from.before(expandDepth), expandDepth > $from.depth ? to : $to.after(expandDepth),
                             new Slice(closeFragment(slice.content, 0, slice.openLeft, openDepth),
                                       openDepth, slice.openRight))
     }
@@ -95,28 +96,22 @@ Transform.prototype.replaceRangeWith = function(from, to, node) {
 }
 
 // :: (number, number) → Transform
-// Delete the given range, and any fully covered parent nodes that are
-// not allowed to be empty.
+// Delete the given range, expanding it to cover fully covered
+// parent nodes until a valid replace is found.
 Transform.prototype.deleteRange = function(from, to) {
-  let $from = this.doc.resolve(from)
-  let covered = coveredDepths($from, this.doc.resolve(to)), grown = false
-  // Find the innermost covered node that allows its whole content to
-  // be deleted
+  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  let covered = coveredDepths($from, $to)
   for (let i = 0; i < covered.length; i++) {
-    if ($from.node(covered[i]).contentMatchAt(0).validEnd()) {
-      from = $from.start(covered[i])
-      to = $from.end(covered[i])
-      grown = true
+    let depth = covered[i], last = i == covered.length - 1
+    if ((last && depth == 0) || $from.node(depth).contentMatchAt(0).validEnd()) {
+      from = $from.start(depth)
+      to = $to.end(depth)
       break
     }
-  }
-  // If no such node was found and the outermose covered node can be
-  // deleted entirely, do that
-  if (!grown && covered.length) {
-    let depth = covered[covered.length - 1]
-    if ($from.node(depth - 1).canReplace($from.index(depth - 1), $from.indexAfter(depth - 1))) {
+    if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1)))) {
       from = $from.before(depth)
-      to = $from.after(depth)
+      to = $to.after(depth)
+      break
     }
   }
   return this.delete(from, to)
@@ -124,13 +119,14 @@ Transform.prototype.deleteRange = function(from, to) {
 
 // : (ResolvedPos, ResolvedPos) → [number]
 // Returns an array of all depths for which $from - $to spans the
-// whole content of the node at that depth.
+// whole content of the nodes at that depth.
 function coveredDepths($from, $to) {
-  let result = []
-  for (let i = 0; i < $from.depth; i++) {
-    let depth = $from.depth - i
-    if ($from.pos - i > $from.start(depth)) break
-    if ($to.depth >= depth && $to.pos + ($to.depth - depth) == $from.end(depth)) result.push(depth)
+  let result = [], minDepth = Math.min($from.depth, $to.depth)
+  for (let d = minDepth; d >= 0; d--) {
+    let start = $from.start(d)
+    if (start < $from.pos - ($from.depth - d) ||
+        $to.end(d) > $to.pos + ($to.depth - d)) break
+    if (start == $to.start(d)) result.push(d)
   }
   return result
 }

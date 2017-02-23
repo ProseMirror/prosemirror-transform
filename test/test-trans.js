@@ -618,5 +618,13 @@ describe("Transform", () => {
 
     it("leaves wrapping textblock when deleting all text in it", () =>
        del(doc(p("a"), p("<a>b<b>")), doc(p("a"), p())))
+
+    it("expands to cover the whole parent node", () =>
+       del(doc(p("a"), blockquote(blockquote(p("<a>foo")), p("bar<b>")), p("b")),
+           doc(p("a"), p("b"))))
+
+    it("expands to cover the whole document", () =>
+       del(doc(h1("<a>foo"), p("bar"), p("baz<b>")),
+           doc(p())))
   })
 })
