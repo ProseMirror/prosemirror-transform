@@ -147,7 +147,7 @@ StepMap.empty = new StepMap([])
 // class implements [`Mappable`](#transform.Mappable).
 class Mapping {
   // :: (?[StepMap])
-  // Create a new remapping with the given position maps.
+  // Create a new mapping with the given position maps.
   constructor(maps, mirror, from, to) {
     // :: [StepMap]
     // The step maps in this mapping.
@@ -163,7 +163,7 @@ class Mapping {
   }
 
   // :: (?number, ?number) → Mapping
-  // Create a remapping that maps only through a part of this one.
+  // Create a mapping that maps only through a part of this one.
   slice(from = 0, to = this.maps.length) {
     return new Mapping(this.maps, this.mirror, from, to)
   }
@@ -183,7 +183,7 @@ class Mapping {
   }
 
   // :: (StepMap, ?number)
-  // Add a step map to the end of this remapping. If `mirrors` is
+  // Add a step map to the end of this mapping. If `mirrors` is
   // given, it should be the index of the step map that is the mirror
   // image of this one.
   appendMap(map, mirrors) {
@@ -219,7 +219,7 @@ class Mapping {
   }
 
   // :: (number, ?number) → number
-  // Map a position through this remapping.
+  // Map a position through this mapping.
   map(pos, assoc) {
     if (this.mirror) return this._map(pos, assoc, true)
     for (let i = this.from; i < this.to; i++)
@@ -228,7 +228,7 @@ class Mapping {
   }
 
   // :: (number, ?number) → MapResult
-  // Map a position through this remapping, returning a mapping
+  // Map a position through this mapping, returning a mapping
   // result.
   mapResult(pos, assoc) { return this._map(pos, assoc, false) }
 
