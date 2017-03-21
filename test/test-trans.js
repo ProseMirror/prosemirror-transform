@@ -1,5 +1,5 @@
 const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
-       strong, code, a, a2, img, img2, dataImage, br, hr} = require("prosemirror-model/test/build")
+       strong, code, a, img, br, hr} = require("prosemirror-test-builder")
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../dist")
 const {Slice, Fragment} = require("prosemirror-model")
@@ -28,8 +28,8 @@ describe("Transform", () => {
 
     it("should overwrite marks with different attributes", () =>
        add(doc(p("this is a ", a("<a>link<b>"))),
-           schema.mark("link", {href: "http://bar"}),
-           doc(p("this is a ", a2("link")))))
+           schema.mark("link", {href: "bar"}),
+           doc(p("this is a ", a({href: "bar"}, "link")))))
 
     it("can add a mark in a nested node", () =>
        add(doc(p("before"), blockquote(p("the variable is called <a>i<b>")), p("after")),
@@ -64,12 +64,12 @@ describe("Transform", () => {
 
     it("can remove a link", () =>
        rem(doc(p("<a>hello ", a("link<b>"))),
-           schema.mark("link", {href: "http://foo"}),
+           schema.mark("link", {href: "foo"}),
            doc(p("hello link"))))
 
     it("doesn't remove a non-matching link", () =>
        rem(doc(p("hello ", a("link"))),
-           schema.mark("link", {href: "http://bar"}),
+           schema.mark("link", {href: "bar"}),
            doc(p("hello ", a("link")))))
 
     it("can remove across blocks", () =>
@@ -348,8 +348,8 @@ describe("Transform", () => {
 
     it("can change an inline node", () =>
        type(doc(p("foo<a>", img, "bar")),
-            doc(p("foo", img2, "bar")),
-            "image", {src: dataImage, alt: "y"}))
+            doc(p("foo", img({src: "bar", alt: "y"}), "bar")),
+            "image", {src: "bar", alt: "y"}))
   })
 
   describe("replace", () => {
@@ -571,28 +571,28 @@ describe("Transform", () => {
     }
 
     it("can insert an inline node", () =>
-       repl(doc(p("fo<a>o")), img, doc(p("fo", img, "<a>o"))))
+       repl(doc(p("fo<a>o")), img(), doc(p("fo", img, "<a>o"))))
 
     it("can replace content with an inline node", () =>
-       repl(doc(p("<a>fo<b>o")), img, doc(p("<a>", img, "o"))))
+       repl(doc(p("<a>fo<b>o")), img(), doc(p("<a>", img, "o"))))
 
     it("can replace a block node with an inline node", () =>
-       repl(doc("<a>", blockquote(p("a")), "<b>"), img, doc(p(img))))
+       repl(doc("<a>", blockquote(p("a")), "<b>"), img(), doc(p(img))))
 
     it("can replace a block node with a block node", () =>
-       repl(doc("<a>", blockquote(p("a")), "<b>"), hr, doc(hr)))
+       repl(doc("<a>", blockquote(p("a")), "<b>"), hr(), doc(hr)))
 
     it("can insert a block quote in the middle of text", () =>
-       repl(doc(p("foo<a>bar")), hr, doc(p("foo"), hr, p("bar"))))
+       repl(doc(p("foo<a>bar")), hr(), doc(p("foo"), hr, p("bar"))))
 
     it("can replace empty parents with a block node", () =>
-       repl(doc(blockquote(p("<a>"))), hr, doc(blockquote(hr))))
+       repl(doc(blockquote(p("<a>"))), hr(), doc(blockquote(hr))))
 
     it("can move an inserted block forward out of parent nodes", () =>
-       repl(doc(h1("foo<a>")), hr, doc(h1("foo"), hr)))
+       repl(doc(h1("foo<a>")), hr(), doc(h1("foo"), hr)))
 
     it("can move an inserted block backward out of parent nodes", () =>
-       repl(doc(p("a"), blockquote(p("<a>b"))), hr, doc(p("a"), blockquote(hr, p("b")))))
+       repl(doc(p("a"), blockquote(p("<a>b"))), hr(), doc(p("a"), blockquote(hr, p("b")))))
   })
 
   describe("deleteRange", () => {

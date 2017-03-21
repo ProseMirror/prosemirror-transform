@@ -1,5 +1,5 @@
 const {Transform, Step, Mapping} = require("../dist")
-const {eq} = require("prosemirror-model/test/build")
+const {eq} = require("prosemirror-test-builder")
 const ist = require("ist")
 
 function invert(transform) {
