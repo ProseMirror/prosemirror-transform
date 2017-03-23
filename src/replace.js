@@ -387,6 +387,9 @@ function placeSlice($from, slice) {
     // This will go through the positions in $from, down from dFrom,
     // to find a fit
     let found = findPlacement(curFragment, $from, dFrom, placed)
+    if (found && unneccesaryFallthrough($from, dFrom, found.depth, slice, dSlice))
+      found = null
+
     if (found) {
       // If there was a fit, store it, and consider this content placed
       if (found.fragment.size > 0) placed[found.depth] = {
@@ -459,4 +462,14 @@ function matchStrippingMarks(match, fragment) {
     newNodes.push(stripped)
   }
   return Fragment.from(newNodes)
+}
+
+function unneccesaryFallthrough($from, dFrom, dFound, slice, dSlice) {
+  if (dSlice < 1) return false
+  for (; dFrom > dFound; dFrom--) {
+    let here = $from.node(dFrom).contentMatchAt($from.indexAfter(dFrom))
+    for (let d = dSlice - 1; d >= 0; d--)
+      if (here.matchNode(nodeLeft(slice.content, d))) return true
+  }
+  return false
 }

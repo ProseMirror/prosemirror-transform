@@ -532,6 +532,11 @@ describe("Transform", () => {
        repl(doc(ul(li(p("ab<a>cd")), li(p("ef<b>gh")))),
             doc(ul(li(p("ABCD")), li(p("EFGH")))).slice(5, 13, true),
             doc(ul(li(p("abCD")), li(p("EFgh"))))))
+
+    it("will auto-close a list item when it fits in a list", () =>
+       repl(doc(ul(li(p("foo")), "<a>", li(p("bar")))),
+            ul(li(p("a<a>bc")), li(p("de<b>f"))),
+            doc(ul(li(p("foo")), li(p("bc")), li(p("de")), li(p("bar"))))))
   })
 
   describe("replaceRange", () => {
