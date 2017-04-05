@@ -146,7 +146,7 @@ Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
                                          new Slice(Fragment.from(newNode), 0, 0), 1, true))
 }
 
-// :: (Node, number, ?[?{type: NodeType, attrs: ?Object}]) → bool
+// :: (Node, number, number, ?[?{type: NodeType, attrs: ?Object}]) → bool
 // Check whether splitting at the given position is allowed.
 function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
