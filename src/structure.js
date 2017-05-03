@@ -10,12 +10,15 @@ function canCut(node, start, end) {
 
 // :: (NodeRange) → ?number
 // Try to find a target depth to which the content in the given range
-// can be lifted.
+// can be lifted. Will not go across
+// [isolating](##model.NodeSpec.isolating) parent nodes.
 function liftTarget(range) {
   let parent = range.parent
   let content = parent.content.cutByIndex(range.startIndex, range.endIndex)
   for (let depth = range.depth;; --depth) {
-    let node = range.$from.node(depth), index = range.$from.index(depth), endIndex = range.$to.indexAfter(depth)
+    let node = range.$from.node(depth)
+    if (node.type.spec.isolating) break
+    let index = range.$from.index(depth), endIndex = range.$to.indexAfter(depth)
     if (depth < range.depth && node.canReplace(index, endIndex, content))
       return depth
     if (depth == 0 || !canCut(node, index, endIndex)) break
