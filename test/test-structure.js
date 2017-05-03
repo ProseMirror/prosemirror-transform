@@ -127,9 +127,9 @@ describe("findWrapping", () => {
 
 describe("Transform", () => {
   describe("replace", () => {
-    function repl(doc, from, to, content, openLeft, openRight, result) {
+    function repl(doc, from, to, content, openStart, openEnd, result) {
       return () => {
-        let slice = content ? new Slice(content.content, openLeft, openRight) : Slice.empty
+        let slice = content ? new Slice(content.content, openStart, openEnd) : Slice.empty
         let tr = new Transform(doc).replace(from, to, slice)
         ist(tr.doc, result, eq)
       }

@@ -44,13 +44,13 @@ class ReplaceStep extends Step {
   merge(other) {
     if (!(other instanceof ReplaceStep) || other.structure != this.structure) return null
 
-    if (this.from + this.slice.size == other.from && !this.slice.openRight && !other.slice.openLeft) {
+    if (this.from + this.slice.size == other.from && !this.slice.openEnd && !other.slice.openStart) {
       let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
-          : new Slice(this.slice.content.append(other.slice.content), this.slice.openLeft, other.slice.openRight)
+          : new Slice(this.slice.content.append(other.slice.content), this.slice.openStart, other.slice.openEnd)
       return new ReplaceStep(this.from, this.to + (other.to - other.from), slice, this.structure)
-    } else if (other.to == this.from && !this.slice.openLeft && !other.slice.openRight) {
+    } else if (other.to == this.from && !this.slice.openStart && !other.slice.openEnd) {
       let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
-          : new Slice(other.slice.content.append(this.slice.content), other.slice.openLeft, this.slice.openRight)
+          : new Slice(other.slice.content.append(this.slice.content), other.slice.openStart, this.slice.openEnd)
       return new ReplaceStep(other.from, this.to, slice, this.structure)
     } else {
       return null
@@ -102,7 +102,7 @@ class ReplaceAroundStep extends Step {
       return StepResult.fail("Structure gap-replace would overwrite content")
 
     let gap = doc.slice(this.gapFrom, this.gapTo)
-    if (gap.openLeft || gap.openRight)
+    if (gap.openStart || gap.openEnd)
       return StepResult.fail("Gap is not a flat range")
     let inserted = this.slice.insertAt(this.insert, gap.content)
     if (!inserted) return StepResult.fail("Content does not fit in gap")

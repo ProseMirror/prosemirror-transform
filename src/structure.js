@@ -35,28 +35,28 @@ Transform.prototype.lift = function(range, target) {
   let gapStart = $from.before(depth + 1), gapEnd = $to.after(depth + 1)
   let start = gapStart, end = gapEnd
 
-  let before = Fragment.empty, openLeft = 0
+  let before = Fragment.empty, openStart = 0
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $from.index(d) > 0) {
       splitting = true
       before = Fragment.from($from.node(d).copy(before))
-      openLeft++
+      openStart++
     } else {
       start--
     }
-  let after = Fragment.empty, openRight = 0
+  let after = Fragment.empty, openEnd = 0
   for (let d = depth, splitting = false; d > target; d--)
     if (splitting || $to.after(d + 1) < $to.end(d)) {
       splitting = true
       after = Fragment.from($to.node(d).copy(after))
-      openRight++
+      openEnd++
     } else {
       end++
     }
 
   return this.step(new ReplaceAroundStep(start, end, gapStart, gapEnd,
-                                         new Slice(before.append(after), openLeft, openRight),
-                                         before.size - openLeft, true))
+                                         new Slice(before.append(after), openStart, openEnd),
+                                         before.size - openStart, true))
 }
 
 // :: (NodeRange, NodeType, ?Object) → ?[{type: NodeType, attrs: ?Object}]

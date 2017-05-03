@@ -528,7 +528,7 @@ describe("Transform", () => {
             ol(li(p("<a>a")), li(p("b<b>"))),
             doc(p("foo"), p("a"), ol(li(p("b"))))))
 
-    it("preserves openRight when top isn't placed", () =>
+    it("preserves openEnd when top isn't placed", () =>
        repl(doc(ul(li(p("ab<a>cd")), li(p("ef<b>gh")))),
             doc(ul(li(p("ABCD")), li(p("EFGH")))).slice(5, 13, true),
             doc(ul(li(p("abCD")), li(p("EFgh"))))))
