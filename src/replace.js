@@ -125,7 +125,9 @@ function coveredDepths($from, $to) {
   for (let d = minDepth; d >= 0; d--) {
     let start = $from.start(d)
     if (start < $from.pos - ($from.depth - d) ||
-        $to.end(d) > $to.pos + ($to.depth - d)) break
+        $to.end(d) > $to.pos + ($to.depth - d) ||
+        $from.node(d).type.spec.isolating ||
+        $to.node(d).type.spec.isolating) break
     if (start == $to.start(d)) result.push(d)
   }
   return result
