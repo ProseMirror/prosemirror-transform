@@ -2,7 +2,7 @@ const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
        strong, code, a, img, br, hr} = require("prosemirror-test-builder")
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../dist")
-const {Slice, Fragment} = require("prosemirror-model")
+const {Slice, Fragment, Schema} = require("prosemirror-model")
 const ist = require("ist")
 
 describe("Transform", () => {
@@ -40,6 +40,31 @@ describe("Transform", () => {
        add(doc(p("hi <a>this"), blockquote(p("is")), p("a docu<b>ment"), p("!")),
            schema.mark("em"),
            doc(p("hi ", em("this")), blockquote(p(em("is"))), p(em("a docu"), "ment"), p("!"))))
+
+    it("does not remove non-excluded marks of the same type", () => {
+      let schema = new Schema({
+        nodes: {doc: {content: "text<_>*"},
+                text: {}},
+        marks: {comment: {excludes: "", attrs: {id: {}}}}
+      })
+      let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("comment", {id: 10})])))
+      tr.addMark(0, 2, schema.mark("comment", {id: 20}))
+      ist(tr.doc.firstChild.marks.length, 2)
+    })
+
+    it("can remove multiple excluded marks", () => {
+      let schema = new Schema({
+        nodes: {doc: {content: "text<_>*"},
+                text: {}},
+        marks: {big: {excludes: "small1 small2"},
+                small1: {}, small2: {}}
+      })
+      let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("small1"), schema.mark("small2")])))
+      ist(tr.doc.firstChild.marks.length, 2)
+      tr.addMark(0, 2, schema.mark("big"))
+      ist(tr.doc.firstChild.marks.length, 1)
+      ist(tr.doc.firstChild.marks[0].type.name, "big")
+    })
   })
 
   describe("removeMark", () => {
