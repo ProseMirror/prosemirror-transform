@@ -33,7 +33,7 @@ class Transform {
   // :: Node The document at the start of the transformation.
   get before() { return this.docs.length ? this.docs[0] : this.doc }
 
-  // :: (step: Step) → Transform
+  // :: (step: Step) → this
   // Apply a new step in this transformation, saving the result.
   // Throws an error when the step fails.
   step(object) {

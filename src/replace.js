@@ -4,7 +4,7 @@ const {ReplaceStep, ReplaceAroundStep} = require("./replace_step")
 const {Transform} = require("./transform")
 const {insertPoint} = require("./structure")
 
-// :: (number, number, Slice) → Transform
+// :: (number, number, Slice) → this
 // Replace a range of the document with a given slice, using `from`,
 // `to`, and the slice's [`openStart`](#model.Slice.openStart) property
 // as hints, rather than fixed start and end points. This method may
@@ -79,7 +79,7 @@ function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
   return fragment
 }
 
-// :: (number, number, Node) → Transform
+// :: (number, number, Node) → this
 // Replace the given range with a node, but use `from` and `to` as
 // hints, rather than precise positions. When from and to are the same
 // and are at the start or end of a parent node in which the given
@@ -95,7 +95,7 @@ Transform.prototype.replaceRangeWith = function(from, to, node) {
   return this.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
 }
 
-// :: (number, number) → Transform
+// :: (number, number) → this
 // Delete the given range, expanding it to cover fully covered
 // parent nodes until a valid replace is found.
 Transform.prototype.deleteRange = function(from, to) {
@@ -133,7 +133,7 @@ function coveredDepths($from, $to) {
   return result
 }
 
-// :: (number, number) → Transform
+// :: (number, number) → this
 // Delete the content between the given positions.
 Transform.prototype.delete = function(from, to) {
   return this.replace(from, to, Slice.empty)
@@ -164,7 +164,7 @@ function replaceStep(doc, from, to = from, slice = Slice.empty) {
 }
 exports.replaceStep = replaceStep
 
-// :: (number, ?number, ?Slice) → Transform
+// :: (number, ?number, ?Slice) → this
 // Replace the part of the document between `from` and `to` with the
 // given `slice`.
 Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
@@ -173,14 +173,14 @@ Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
   return this
 }
 
-// :: (number, number, union<Fragment, Node, [Node]>) → Transform
+// :: (number, number, union<Fragment, Node, [Node]>) → this
 // Replace the given range with the given content, which may be a
 // fragment, node, or array of nodes.
 Transform.prototype.replaceWith = function(from, to, content) {
   return this.replace(from, to, new Slice(Fragment.from(content), 0, 0))
 }
 
-// :: (number, union<Fragment, Node, [Node]>) → Transform
+// :: (number, union<Fragment, Node, [Node]>) → this
 // Insert the given content at the given position.
 Transform.prototype.insert = function(pos, content) {
   return this.replaceWith(pos, pos, content)

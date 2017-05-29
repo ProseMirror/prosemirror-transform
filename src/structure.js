@@ -26,7 +26,7 @@ function liftTarget(range) {
 }
 exports.liftTarget = liftTarget
 
-// :: (NodeRange, number) → Transform
+// :: (NodeRange, number) → this
 // Split the content in the given range off from its parent, if there
 // is sibling content before or after it, and move it up the tree to
 // the depth specified by `target`. You'll probably want to use
@@ -99,7 +99,7 @@ function findWrappingInside(range, wrap) {
   return inside
 }
 
-// :: (NodeRange, [{type: NodeType, attrs: ?Object}]) → Transform
+// :: (NodeRange, [{type: NodeType, attrs: ?Object}]) → this
 // Wrap the given [range](#model.NodeRange) in the given set of wrappers.
 // The wrappers are assumed to be valid in this position, and should
 // probably be computed with `findWrapping`.
@@ -112,7 +112,7 @@ Transform.prototype.wrap = function(range, wrappers) {
   return this.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true))
 }
 
-// :: (number, ?number, NodeType, ?Object) → Transform
+// :: (number, ?number, NodeType, ?Object) → this
 // Set the type of all textblocks (partly) between `from` and `to` to
 // the given node type with the given attributes.
 Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
@@ -132,7 +132,7 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
   return this
 }
 
-// :: (number, ?NodeType, ?Object, ?[Mark]) → Transform
+// :: (number, ?NodeType, ?Object, ?[Mark]) → this
 // Change the type and attributes of the node after `pos`.
 Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
@@ -172,7 +172,7 @@ function canSplit(doc, pos, depth = 1, typesAfter) {
 }
 exports.canSplit = canSplit
 
-// :: (number, ?number, ?[?{type: NodeType, attrs: ?Object}]) → Transform
+// :: (number, ?number, ?[?{type: NodeType, attrs: ?Object}]) → this
 // Split the node at the given position, and optionally, if `depth` is
 // greater than one, any number of nodes above that. By default, the
 // parts split off will inherit the node type of the original node.
@@ -227,7 +227,7 @@ function joinPoint(doc, pos, dir = -1) {
 }
 exports.joinPoint = joinPoint
 
-// :: (number, ?number, ?bool) → Transform
+// :: (number, ?number, ?bool) → this
 // Join the blocks around the given position. If depth is 2, their
 // last and first siblings are also joined, and so on.
 Transform.prototype.join = function(pos, depth = 1) {

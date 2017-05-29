@@ -4,7 +4,7 @@ const {Transform} = require("./transform")
 const {AddMarkStep, RemoveMarkStep} = require("./mark_step")
 const {ReplaceStep} = require("./replace_step")
 
-// :: (number, number, Mark) → Transform
+// :: (number, number, Mark) → this
 // Add the given mark to the inline content between `from` and `to`.
 Transform.prototype.addMark = function(from, to, mark) {
   let removed = [], added = [], removing = null, adding = null
@@ -36,7 +36,7 @@ Transform.prototype.addMark = function(from, to, mark) {
   return this
 }
 
-// :: (number, number, ?union<Mark, MarkType>) → Transform
+// :: (number, number, ?union<Mark, MarkType>) → this
 // Remove the given mark, or all marks of the given type, from inline
 // nodes between `from` and `to`.
 Transform.prototype.removeMark = function(from, to, mark = null) {
@@ -74,7 +74,7 @@ Transform.prototype.removeMark = function(from, to, mark = null) {
   return this
 }
 
-// :: (number, number) → Transform
+// :: (number, number) → this
 // Remove all marks and non-text inline nodes from the given range.
 Transform.prototype.clearMarkup = function(from, to) {
   let delSteps = [] // Must be accumulated and applied in inverse order
