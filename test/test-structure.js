@@ -88,6 +88,17 @@ describe("canSplit", () => {
   it("can't at the end of a table cell", no(96))
   it("can between table rows", yes(100))
   it("can't at the end of the document", no(115))
+
+  it("doesn't return true when the split-off content doesn't fit in the given node type", () => {
+    let s = new Schema({nodes: schema.spec.nodes.addBefore("heading", "title", {content: "text*"})
+                        .addToEnd("chapter", {content: "title scene+"})
+                        .addToEnd("scene", {content: "para+"})
+                        .update("doc", {content: "chapter+"})})
+    ist(!canSplit(s.node("doc", null, s.node("chapter", null, [
+      s.node("title", null, s.text("title")),
+      s.node("scene", null, s.node("para", null, s.text("scene")))
+    ])), 4, 1, [{type: s.nodes.scene}]))
+  })
 })
 
 describe("liftTarget", () => {

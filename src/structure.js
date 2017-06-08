@@ -153,16 +153,17 @@ Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
 // Check whether splitting at the given position is allowed.
 function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
+  let innerType = typesAfter ? typesAfter[typesAfter.length - 1] : $pos.parent
   if (base < 0 ||
       !$pos.parent.canReplace($pos.index(), $pos.parent.childCount) ||
-      !$pos.parent.canReplace(0, $pos.indexAfter()))
+      !innerType.type.validContent($pos.parent.content.cutByIndex($pos.index(), $pos.parent.childCount), innerType.attrs))
     return false
-  for (let d = $pos.depth - 1, i = depth - 1; d > base; d--, i--) {
+  for (let d = $pos.depth - 1, i = depth - 2; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
-    let typeAfter = typesAfter && typesAfter[i]
-    if (!node.canReplace(0, index) ||
-        !node.canReplaceWith(index, node.childCount, typeAfter ? typeAfter.type : $pos.node(d + 1).type,
-                             typeAfter ? typeAfter.attrs : $pos.node(d + 1).attrs))
+    let rest = node.content.cutByIndex(index, node.childCount)
+    if (typesAfter) rest = rest.replaceChild(0, typesAfter[i + 1].type.create(typesAfter[i].attrs))
+    let after = typesAfter ? typesAfter[i] : node
+    if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest, after.attrs))
       return false
   }
   let index = $pos.indexAfter(base)
