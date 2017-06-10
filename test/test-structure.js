@@ -52,8 +52,8 @@ const doc = n("doc", // 0
                 n("head", t("S2")), // 86
                 n("para", t("Yes")), // 91
                 n_("table", {columns: 2}, // 92
-                   n("trow", n("tcell", t("a")), n("tcell", t("b"))), // 100
-                   n("trow", n("tcell", t("c")), n("tcell", t("d"))))), // 110
+                   n_("trow", {columns: 2}, n("tcell", t("a")), n("tcell", t("b"))), // 100
+                   n_("trow", {columns: 2}, n("tcell", t("c")), n("tcell", t("d"))))), // 110
               n("closing", t("fin"))) // 115
 
 function range(pos, end) {
