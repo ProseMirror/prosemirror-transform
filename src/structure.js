@@ -17,11 +17,10 @@ function liftTarget(range) {
   let content = parent.content.cutByIndex(range.startIndex, range.endIndex)
   for (let depth = range.depth;; --depth) {
     let node = range.$from.node(depth)
-    if (node.type.spec.isolating) break
     let index = range.$from.index(depth), endIndex = range.$to.indexAfter(depth)
     if (depth < range.depth && node.canReplace(index, endIndex, content))
       return depth
-    if (depth == 0 || !canCut(node, index, endIndex)) break
+    if (depth == 0 || node.type.spec.isolating || !canCut(node, index, endIndex)) break
   }
 }
 exports.liftTarget = liftTarget
