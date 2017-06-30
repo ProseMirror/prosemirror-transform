@@ -160,8 +160,11 @@ function canSplit(doc, pos, depth = 1, typesAfter) {
   for (let d = $pos.depth - 1, i = depth - 2; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
     let rest = node.content.cutByIndex(index, node.childCount)
-    if (typesAfter) rest = rest.replaceChild(0, typesAfter[i + 1].type.create(typesAfter[i].attrs))
-    let after = typesAfter ? typesAfter[i] : node
+    let after = node
+    if (typesAfter && typesAfter[i]) {
+      rest = rest.replaceChild(0, typesAfter[i + 1].type.create(typesAfter[i].attrs))
+      after = typesAfter[i]
+    }
     if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest, after.attrs))
       return false
   }
