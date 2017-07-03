@@ -152,7 +152,7 @@ Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
 // Check whether splitting at the given position is allowed.
 function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
-  let innerType = typesAfter ? typesAfter[typesAfter.length - 1] : $pos.parent
+  let innerType = (typesAfter && typesAfter[typesAfter.length - 1]) || $pos.parent
   if (base < 0 ||
       !$pos.parent.canReplace($pos.index(), $pos.parent.childCount) ||
       !innerType.type.validContent($pos.parent.content.cutByIndex($pos.index(), $pos.parent.childCount), innerType.attrs))
@@ -160,11 +160,8 @@ function canSplit(doc, pos, depth = 1, typesAfter) {
   for (let d = $pos.depth - 1, i = depth - 2; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
     let rest = node.content.cutByIndex(index, node.childCount)
-    let after = node
-    if (typesAfter && typesAfter[i]) {
-      rest = rest.replaceChild(0, typesAfter[i + 1].type.create(typesAfter[i].attrs))
-      after = typesAfter[i]
-    }
+    let after = (typesAfter && typesAfter[i + 1]) || node
+    if (after != node) rest = rest.replaceChild(0, after.type.create(after.attrs))
     if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest, after.attrs))
       return false
   }
