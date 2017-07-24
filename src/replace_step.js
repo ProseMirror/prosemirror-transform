@@ -129,7 +129,7 @@ class ReplaceAroundStep extends Step {
     return new ReplaceAroundStep(from.pos, to.pos, gapFrom, gapTo, this.slice, this.insert, this.structure)
   }
 
-  static toJSON() {
+  toJSON() {
     let json = {stepType: "replaceAround", from: this.from, to: this.to,
                 gapFrom: this.gapFrom, gapTo: this.gapTo, slice: this.slice.toJSON()}
     if (this.structure) json.structure = true
