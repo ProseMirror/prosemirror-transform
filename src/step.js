@@ -53,19 +53,11 @@ class Step {
   offset(_n) { return mustOverride() }
 
   // :: () → Object
-  // Create a JSON-serializeable representation of this step. By
-  // default, it'll create an object with the step's [JSON
-  // id](#transform.Step^jsonID), and each of the steps's own properties,
-  // automatically calling `toJSON` on the property values that have
-  // such a method.
-  toJSON() {
-    let obj = {stepType: this.jsonID}
-    for (let prop in this) if (this.hasOwnProperty(prop)) {
-      let val = this[prop]
-      obj[prop] = val && val.toJSON ? val.toJSON() : val
-    }
-    return obj
-  }
+  // Create a JSON-serializeable representation of this step. When
+  // defining this for a custom subclass, make sure the result object
+  // includes the step type's [JSON id](#transform.Step^jsonID) under
+  // the `stepType` property.
+  toJSON() { return mustOverride() }
 
   // :: (Schema, Object) → Step
   // Deserialize a step from its JSON representation. Will call

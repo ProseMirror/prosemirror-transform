@@ -54,6 +54,11 @@ class AddMarkStep extends Step {
     return new AddMarkStep(this.from + n, this.to + n, this.mark)
   }
 
+  toJSON() {
+    return {stepType: "addMark", mark: this.mark.toJSON(),
+            from: this.from, to: this.to}
+  }
+
   static fromJSON(schema, json) {
     return new AddMarkStep(json.from, json.to, schema.markFromJSON(json.mark))
   }
@@ -100,6 +105,11 @@ class RemoveMarkStep extends Step {
 
   offset(n) {
     return new RemoveMarkStep(this.from + n, this.to + n, this.mark)
+  }
+
+  toJSON() {
+    return {stepType: "removeMark", mark: this.mark.toJSON(),
+            from: this.from, to: this.to}
   }
 
   static fromJSON(schema, json) {
