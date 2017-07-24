@@ -134,7 +134,7 @@ class ReplaceAroundStep extends Step {
                 gapFrom: this.gapFrom, gapTo: this.gapTo}
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
-    return true
+    return json
   }
 
   offset(n) {
