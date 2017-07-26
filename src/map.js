@@ -73,12 +73,12 @@ class StepMap {
   // content at (or around) this position—if `assoc` is negative, the a
   // position before the inserted content will be returned, if it is
   // positive, a position after the insertion is returned.
-  mapResult(pos, assoc) { return this._map(pos, assoc, false) }
+  mapResult(pos, assoc = 1) { return this._map(pos, assoc, false) }
 
   // :: (number, ?number) → number
   // Map the given position through this map, returning only the
   // mapped position.
-  map(pos, assoc) { return this._map(pos, assoc, true) }
+  map(pos, assoc = 1) { return this._map(pos, assoc, true) }
 
   _map(pos, assoc, simple) {
     let diff = 0, oldIndex = this.inverted ? 2 : 1, newIndex = this.inverted ? 1 : 2
