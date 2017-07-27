@@ -1,8 +1,8 @@
-const {Fragment, Slice} = require("prosemirror-model")
+import {Fragment, Slice} from "prosemirror-model"
 
-const {ReplaceStep, ReplaceAroundStep} = require("./replace_step")
-const {Transform} = require("./transform")
-const {insertPoint} = require("./structure")
+import {ReplaceStep, ReplaceAroundStep} from "./replace_step"
+import {Transform} from "./transform"
+import {insertPoint} from "./structure"
 
 // :: (number, number, Slice) → this
 // Replace a range of the document with a given slice, using `from`,
@@ -142,7 +142,7 @@ Transform.prototype.delete = function(from, to) {
 // :: (Node, number, ?number, ?Slice) → ?Step
 // "Fit" a slice into a given position in the document, producing a
 // [step](#transform.Step) that inserts it.
-function replaceStep(doc, from, to = from, slice = Slice.empty) {
+export function replaceStep(doc, from, to = from, slice = Slice.empty) {
   if (from == to && !slice.size) return null
 
   let $from = doc.resolve(from), $to = doc.resolve(to)
@@ -162,7 +162,6 @@ function replaceStep(doc, from, to = from, slice = Slice.empty) {
   }
   return new ReplaceStep(from, to, fitted)
 }
-exports.replaceStep = replaceStep
 
 // :: (number, ?number, ?Slice) → this
 // Replace the part of the document between `from` and `to` with the

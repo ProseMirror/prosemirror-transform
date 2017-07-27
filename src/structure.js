@@ -1,7 +1,7 @@
-const {Slice, Fragment} = require("prosemirror-model")
+import {Slice, Fragment} from "prosemirror-model"
 
-const {Transform} = require("./transform")
-const {ReplaceStep, ReplaceAroundStep} = require("./replace_step")
+import {Transform} from "./transform"
+import {ReplaceStep, ReplaceAroundStep} from "./replace_step"
 
 function canCut(node, start, end) {
   return (start == 0 || node.canReplace(start, node.childCount)) &&
@@ -12,7 +12,7 @@ function canCut(node, start, end) {
 // Try to find a target depth to which the content in the given range
 // can be lifted. Will not go across
 // [isolating](#model.NodeSpec.isolating) parent nodes.
-function liftTarget(range) {
+export function liftTarget(range) {
   let parent = range.parent
   let content = parent.content.cutByIndex(range.startIndex, range.endIndex)
   for (let depth = range.depth;; --depth) {
@@ -23,7 +23,6 @@ function liftTarget(range) {
     if (depth == 0 || node.type.spec.isolating || !canCut(node, index, endIndex)) break
   }
 }
-exports.liftTarget = liftTarget
 
 // :: (NodeRange, number) → this
 // Split the content in the given range off from its parent, if there
@@ -66,14 +65,13 @@ Transform.prototype.lift = function(range, target) {
 // node of the given type. May introduce extra nodes around and inside
 // the wrapper node, if necessary. Returns null if no valid wrapping
 // could be found.
-function findWrapping(range, nodeType, attrs, innerRange = range) {
+export function findWrapping(range, nodeType, attrs, innerRange = range) {
   let wrap = {type: nodeType, attrs}
   let around = findWrappingOutside(range, wrap)
   let inner = around && findWrappingInside(innerRange, wrap)
   if (!inner) return null
   return around.concat(wrap).concat(inner)
 }
-exports.findWrapping = findWrapping
 
 function findWrappingOutside(range, wrap) {
   let {parent, startIndex, endIndex} = range
@@ -150,7 +148,7 @@ Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
 
 // :: (Node, number, number, ?[?{type: NodeType, attrs: ?Object}]) → bool
 // Check whether splitting at the given position is allowed.
-function canSplit(doc, pos, depth = 1, typesAfter) {
+export function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
   let innerType = (typesAfter && typesAfter[typesAfter.length - 1]) || $pos.parent
   if (base < 0 ||
@@ -170,7 +168,6 @@ function canSplit(doc, pos, depth = 1, typesAfter) {
   return $pos.node(base).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base + 1).type,
                                         baseType ? baseType.attrs : $pos.node(base + 1).attrs)
 }
-exports.canSplit = canSplit
 
 // :: (number, ?number, ?[?{type: NodeType, attrs: ?Object}]) → this
 // Split the node at the given position, and optionally, if `depth` is
@@ -191,12 +188,11 @@ Transform.prototype.split = function(pos, depth = 1, typesAfter) {
 // :: (Node, number) → bool
 // Test whether the blocks before and after a given position can be
 // joined.
-function canJoin(doc, pos) {
+export function canJoin(doc, pos) {
   let $pos = doc.resolve(pos), index = $pos.index()
   return joinable($pos.nodeBefore, $pos.nodeAfter) &&
     $pos.parent.canReplace(index, index + 1)
 }
-exports.canJoin = canJoin
 
 function joinable(a, b) {
   return a && b && !a.isLeaf && a.canAppend(b)
@@ -206,7 +202,7 @@ function joinable(a, b) {
 // Find an ancestor of the given position that can be joined to the
 // block before (or after if `dir` is positive). Returns the joinable
 // point, if any.
-function joinPoint(doc, pos, dir = -1) {
+export function joinPoint(doc, pos, dir = -1) {
   let $pos = doc.resolve(pos)
   for (let d = $pos.depth;; d--) {
     let before, after
@@ -225,7 +221,6 @@ function joinPoint(doc, pos, dir = -1) {
     pos = dir < 0 ? $pos.before(d) : $pos.after(d)
   }
 }
-exports.joinPoint = joinPoint
 
 // :: (number, ?number, ?bool) → this
 // Join the blocks around the given position. If depth is 2, their
@@ -240,7 +235,7 @@ Transform.prototype.join = function(pos, depth = 1) {
 // near `pos`, by searching up the node hierarchy when `pos` itself
 // isn't a valid place but is at the start or end of a node. Return
 // null if no position was found.
-function insertPoint(doc, pos, nodeType, attrs) {
+export function insertPoint(doc, pos, nodeType, attrs) {
   let $pos = doc.resolve(pos)
   if ($pos.parent.canReplaceWith($pos.index(), $pos.index(), nodeType, attrs)) return pos
 
@@ -257,4 +252,3 @@ function insertPoint(doc, pos, nodeType, attrs) {
       if (index < $pos.node(d).childCount) return null
     }
 }
-exports.insertPoint = insertPoint

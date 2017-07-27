@@ -1,17 +1,16 @@
-const {Mapping} = require("./map")
+import {Mapping} from "./map"
 
-class TransformError extends Error {
+export class TransformError extends Error {
   constructor(message) { super(message) }
   get name() { return "TransformError" }
 }
-exports.TransformError = TransformError
 
 // ::- Abstraction to build up and track such an array of
 // [steps](#transform.Step).
 //
 // The high-level transforming methods return the `Transform` object
 // itself, so that they can be chained.
-class Transform {
+export class Transform {
   // :: (Node)
   // Create a transformation that starts with the given document.
   constructor(doc) {
@@ -64,4 +63,3 @@ class Transform {
     this.doc = doc
   }
 }
-exports.Transform = Transform

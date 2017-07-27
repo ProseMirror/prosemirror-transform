@@ -1,10 +1,10 @@
-const {Slice} = require("prosemirror-model")
+import {Slice} from "prosemirror-model"
 
-const {Step, StepResult} = require("./step")
-const {StepMap} = require("./map")
+import {Step, StepResult} from "./step"
+import {StepMap} from "./map"
 
 // ::- Replace a part of the document with a slice of new content.
-class ReplaceStep extends Step {
+export class ReplaceStep extends Step {
   // :: (number, number, Slice, ?bool)
   // The given `slice` should fit the 'gap' between `from` and
   // `to`—the depths must line up, and the surrounding nodes must be
@@ -72,14 +72,13 @@ class ReplaceStep extends Step {
     return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
   }
 }
-exports.ReplaceStep = ReplaceStep
 
 Step.jsonID("replace", ReplaceStep)
 
 // ::- Replace a part of the document with a slice of content, but
 // preserve a range of the replaced content by moving it into the
 // slice.
-class ReplaceAroundStep extends Step {
+export class ReplaceAroundStep extends Step {
   // :: (number, number, number, number, Slice, number, ?bool)
   // Create a replace-wrap step with the given range and gap. `insert`
   // should be the point in the slice into which the gap should be
@@ -147,7 +146,6 @@ class ReplaceAroundStep extends Step {
                                  Slice.fromJSON(schema, json.slice), json.insert, !!json.structure)
   }
 }
-exports.ReplaceAroundStep = ReplaceAroundStep
 
 Step.jsonID("replaceAround", ReplaceAroundStep)
 

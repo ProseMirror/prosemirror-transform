@@ -34,7 +34,7 @@ function recoverOffset(value) { return (value - (value & lower16)) / factor16 }
 
 // ::- An object representing a mapped position with extra
 // information.
-class MapResult {
+export class MapResult {
   constructor(pos, deleted = false, recover = null) {
     // :: number The mapped version of the position.
     this.pos = pos
@@ -44,13 +44,12 @@ class MapResult {
     this.recover = recover
   }
 }
-exports.MapResult = MapResult
 
 // ::- A map describing the deletions and insertions made by a step,
 // which can be used to find the correspondence between positions in
 // the pre-step version of a document and the same position in the
 // post-step version. This class implements [`Mappable`](#transform.Mappable).
-class StepMap {
+export class StepMap {
   // :: ([number])
   // Create a position map. The modifications to the document are
   // represented as an array of numbers, in which each group of three
@@ -135,7 +134,6 @@ class StepMap {
     return (this.inverted ? "-" : "") + JSON.stringify(this.ranges)
   }
 }
-exports.StepMap = StepMap
 
 StepMap.empty = new StepMap([])
 
@@ -145,7 +143,7 @@ StepMap.empty = new StepMap([])
 // steps are inverted versions of earlier steps. (This comes up when
 // ‘rebasing’ steps for collaboration or history management.) This
 // class implements [`Mappable`](#transform.Mappable).
-class Mapping {
+export class Mapping {
   // :: (?[StepMap])
   // Create a new mapping with the given position maps.
   constructor(maps, mirror, from, to) {
@@ -220,7 +218,7 @@ class Mapping {
 
   // :: (number, ?number) → number
   // Map a position through this mapping.
-  map(pos, assoc) {
+  map(pos, assoc = 1) {
     if (this.mirror) return this._map(pos, assoc, true)
     for (let i = this.from; i < this.to; i++)
       pos = this.maps[i].map(pos, assoc)
@@ -230,7 +228,7 @@ class Mapping {
   // :: (number, ?number) → MapResult
   // Map a position through this mapping, returning a mapping
   // result.
-  mapResult(pos, assoc) { return this._map(pos, assoc, false) }
+  mapResult(pos, assoc = 1) { return this._map(pos, assoc, false) }
 
   _map(pos, assoc, simple) {
     let deleted = false, recoverables = null
@@ -263,4 +261,3 @@ class Mapping {
     return simple ? pos : new MapResult(pos, deleted)
   }
 }
-exports.Mapping = Mapping

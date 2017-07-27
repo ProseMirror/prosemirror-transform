@@ -1,8 +1,8 @@
-const {MarkType, Slice, Fragment} = require("prosemirror-model")
+import {MarkType, Slice, Fragment} from "prosemirror-model"
 
-const {Transform} = require("./transform")
-const {AddMarkStep, RemoveMarkStep} = require("./mark_step")
-const {ReplaceStep} = require("./replace_step")
+import {Transform} from "./transform"
+import {AddMarkStep, RemoveMarkStep} from "./mark_step"
+import {ReplaceStep} from "./replace_step"
 
 // :: (number, number, Mark) → this
 // Add the given mark to the inline content between `from` and `to`.

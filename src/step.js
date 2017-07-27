@@ -1,6 +1,6 @@
-const {ReplaceError} = require("prosemirror-model")
+import {ReplaceError} from "prosemirror-model"
 
-const {StepMap} = require("./map")
+import {StepMap} from "./map"
 
 function mustOverride() { throw new Error("Override me") }
 
@@ -15,7 +15,7 @@ const stepsByID = Object.create(null)
 // methods, and registering your class with a unique
 // JSON-serialization identifier using
 // [`Step.jsonID`](#transform.Step^jsonID).
-class Step {
+export class Step {
   // :: (doc: Node) → StepResult
   // Applies this step to the given document, returning a result
   // object that either indicates failure, if the step can not be
@@ -78,11 +78,10 @@ class Step {
     return stepClass
   }
 }
-exports.Step = Step
 
 // ::- The result of [applying](#transform.Step.apply) a step. Contains either a
 // new document or a failure value.
-class StepResult {
+export class StepResult {
   // : (?Node, ?string)
   constructor(doc, failed) {
     // :: ?Node The transformed document.
@@ -112,4 +111,3 @@ class StepResult {
     }
   }
 }
-exports.StepResult = StepResult
