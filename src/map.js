@@ -133,6 +133,14 @@ export class StepMap {
   toString() {
     return (this.inverted ? "-" : "") + JSON.stringify(this.ranges)
   }
+
+  // :: (n: number) → StepMap
+  // Create a map that moves all positions by offset `n` (which may be
+  // negative). This can be useful when applying steps meant for a
+  // sub-document to a larger document, or vice-versa.
+  static offset(n) {
+    return n == 0 ? StepMap.empty : new StepMap(n < 0 ? [0, -n, 0] : [0, 0, n])
+  }
 }
 
 StepMap.empty = new StepMap([])

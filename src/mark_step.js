@@ -50,10 +50,6 @@ export class AddMarkStep extends Step {
                              Math.max(this.to, other.to), this.mark)
   }
 
-  offset(n) {
-    return new AddMarkStep(this.from + n, this.to + n, this.mark)
-  }
-
   toJSON() {
     return {stepType: "addMark", mark: this.mark.toJSON(),
             from: this.from, to: this.to}
@@ -100,10 +96,6 @@ export class RemoveMarkStep extends Step {
         this.from <= other.to && this.to >= other.from)
       return new RemoveMarkStep(Math.min(this.from, other.from),
                                 Math.max(this.to, other.to), this.mark)
-  }
-
-  offset(n) {
-    return new RemoveMarkStep(this.from + n, this.to + n, this.mark)
   }
 
   toJSON() {

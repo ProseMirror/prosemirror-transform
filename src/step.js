@@ -45,13 +45,6 @@ export class Step {
   // steps can't be merged.
   merge(_other) { return null }
 
-  // :: (n: number) → Step
-  // Returns a copy of this step in which all positions have `n` added
-  // to them. The main use for this is to take a step in one document,
-  // and make it apply to a sub-document, or a larger document that
-  // the original document is a part of.
-  offset(_n) { return mustOverride() }
-
   // :: () → Object
   // Create a JSON-serializeable representation of this step. When
   // defining this for a custom subclass, make sure the result object

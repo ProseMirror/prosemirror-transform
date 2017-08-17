@@ -64,10 +64,6 @@ export class ReplaceStep extends Step {
     return json
   }
 
-  offset(n) {
-    return new ReplaceStep(this.from + n, this.to + n, this.slice, this.structure)
-  }
-
   static fromJSON(schema, json) {
     return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
   }
@@ -134,11 +130,6 @@ export class ReplaceAroundStep extends Step {
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
     return json
-  }
-
-  offset(n) {
-    return new ReplaceAroundStep(this.from + n, this.to + n, this.gapFrom + n, this.gapTo + n,
-                                 this.slice, this.insert, this.structure)
   }
 
   static fromJSON(schema, json) {
