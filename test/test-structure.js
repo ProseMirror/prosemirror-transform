@@ -6,15 +6,15 @@ const ist = require("ist")
 const schema = new Schema({
   nodes: {
     doc: {content: "head? block* sect* closing?"},
-    para: {content: "text<_>*", group: "block"},
-    head: {content: "text*"},
+    para: {content: "text*", group: "block"},
+    head: {content: "text*", marks: ""},
     figure: {content: "caption figureimage", group: "block"},
     quote: {content: "block+", group: "block"},
     figureimage: {},
-    caption: {content: "text*"},
+    caption: {content: "text*", marks: ""},
     sect: {content: "head block* sect*"},
-    closing: {content: "text<_>*"},
-    tcell: {content: "text<_>*"},
+    closing: {content: "text*"},
+    tcell: {content: "text*"},
     trow: {
       attrs: {columns: {default: 1}},
       content: "tcell{.columns}"

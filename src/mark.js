@@ -106,7 +106,7 @@ Transform.prototype.clearNonMatching = function(pos, match) {
     }
     cur = end
   }
-  if (!match.validEnd()) {
+  if (!match.validEnd) {
     let fill = match.fillBefore(Fragment.empty, true)
     this.replace(cur, cur, new Slice(fill, 0, 0))
   }

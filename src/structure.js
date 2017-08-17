@@ -66,33 +66,32 @@ Transform.prototype.lift = function(range, target) {
 // the wrapper node, if necessary. Returns null if no valid wrapping
 // could be found.
 export function findWrapping(range, nodeType, attrs, innerRange = range) {
-  let wrap = {type: nodeType, attrs}
-  let around = findWrappingOutside(range, wrap)
-  let inner = around && findWrappingInside(innerRange, wrap)
+  let around = findWrappingOutside(range, nodeType)
+  let inner = around && findWrappingInside(innerRange, nodeType)
   if (!inner) return null
-  return around.concat(wrap).concat(inner)
+  return around.map(withAttrs).concat({type: nodeType, attrs}).concat(inner.map(withAttrs))
 }
 
-function findWrappingOutside(range, wrap) {
+function withAttrs(type) { return {type, attrs: null} }
+
+function findWrappingOutside(range, type) {
   let {parent, startIndex, endIndex} = range
-  let around = parent.contentMatchAt(startIndex).findWrapping(wrap.type, wrap.attrs)
+  let around = parent.contentMatchAt(startIndex).findWrapping(type)
   if (!around) return null
-  let outer = around.length ? around[0] : wrap
-  if (!parent.canReplaceWith(startIndex, endIndex, outer.type, outer.attrs))
-    return null
-  return around
+  let outer = around.length ? around[0] : type
+  return parent.canReplaceWith(startIndex, endIndex, outer) ? around : null
 }
 
-function findWrappingInside(range, wrap) {
+function findWrappingInside(range, type) {
   let {parent, startIndex, endIndex} = range
   let inner = parent.child(startIndex)
-  let inside = wrap.type.contentExpr.start(wrap.attrs).findWrappingFor(inner)
+  let inside = type.contentMatch.findWrapping(inner.type)
   if (!inside) return null
-  let last = inside.length ? inside[inside.length - 1] : wrap
-  let innerMatch = last.type.contentExpr.start(last.attrs)
-  for (let i = startIndex; i < endIndex; i++)
-    innerMatch = innerMatch && innerMatch.matchNode(parent.child(i))
-  if (!innerMatch || !innerMatch.validEnd()) return null
+  let lastType = inside.length ? inside[inside.length - 1] : type
+  let innerMatch = lastType.contentMatch
+  for (let i = startIndex; innerMatch && i < endIndex; i++)
+    innerMatch = innerMatch.matchType(parent.child(i).type)
+  if (!innerMatch || !innerMatch.validEnd) return null
   return inside
 }
 
@@ -139,7 +138,7 @@ Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
   if (node.isLeaf)
     return this.replaceWith(pos, pos + node.nodeSize, newNode)
 
-  if (!type.validContent(node.content, attrs))
+  if (!type.validContent(node.content))
     throw new RangeError("Invalid content for node type " + type.name)
 
   return this.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1,
@@ -153,20 +152,19 @@ export function canSplit(doc, pos, depth = 1, typesAfter) {
   let innerType = (typesAfter && typesAfter[typesAfter.length - 1]) || $pos.parent
   if (base < 0 ||
       !$pos.parent.canReplace($pos.index(), $pos.parent.childCount) ||
-      !innerType.type.validContent($pos.parent.content.cutByIndex($pos.index(), $pos.parent.childCount), innerType.attrs))
+      !innerType.type.validContent($pos.parent.content.cutByIndex($pos.index(), $pos.parent.childCount)))
     return false
   for (let d = $pos.depth - 1, i = depth - 2; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
     let rest = node.content.cutByIndex(index, node.childCount)
     let after = (typesAfter && typesAfter[i]) || node
     if (after != node) rest = rest.replaceChild(0, after.type.create(after.attrs))
-    if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest, after.attrs))
+    if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest))
       return false
   }
   let index = $pos.indexAfter(base)
   let baseType = typesAfter && typesAfter[0]
-  return $pos.node(base).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base + 1).type,
-                                        baseType ? baseType.attrs : $pos.node(base + 1).attrs)
+  return $pos.node(base).canReplaceWith(index, index, baseType ? baseType.type : $pos.node(base + 1).type)
 }
 
 // :: (number, ?number, ?[?{type: NodeType, attrs: ?Object}]) → this
@@ -230,25 +228,25 @@ Transform.prototype.join = function(pos, depth = 1) {
   return this.step(step)
 }
 
-// :: (Node, number, NodeType, ?Object) → ?number
+// :: (Node, number, NodeType) → ?number
 // Try to find a point where a node of the given type can be inserted
 // near `pos`, by searching up the node hierarchy when `pos` itself
 // isn't a valid place but is at the start or end of a node. Return
 // null if no position was found.
-export function insertPoint(doc, pos, nodeType, attrs) {
+export function insertPoint(doc, pos, nodeType) {
   let $pos = doc.resolve(pos)
-  if ($pos.parent.canReplaceWith($pos.index(), $pos.index(), nodeType, attrs)) return pos
+  if ($pos.parent.canReplaceWith($pos.index(), $pos.index(), nodeType)) return pos
 
   if ($pos.parentOffset == 0)
     for (let d = $pos.depth - 1; d >= 0; d--) {
       let index = $pos.index(d)
-      if ($pos.node(d).canReplaceWith(index, index, nodeType, attrs)) return $pos.before(d + 1)
+      if ($pos.node(d).canReplaceWith(index, index, nodeType)) return $pos.before(d + 1)
       if (index > 0) return null
     }
   if ($pos.parentOffset == $pos.parent.content.size)
     for (let d = $pos.depth - 1; d >= 0; d--) {
       let index = $pos.indexAfter(d)
-      if ($pos.node(d).canReplaceWith(index, index, nodeType, attrs)) return $pos.after(d + 1)
+      if ($pos.node(d).canReplaceWith(index, index, nodeType)) return $pos.after(d + 1)
       if (index < $pos.node(d).childCount) return null
     }
 }

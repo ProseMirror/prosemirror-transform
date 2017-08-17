@@ -43,7 +43,7 @@ describe("Transform", () => {
 
     it("does not remove non-excluded marks of the same type", () => {
       let schema = new Schema({
-        nodes: {doc: {content: "text<_>*"},
+        nodes: {doc: {content: "text*"},
                 text: {}},
         marks: {comment: {excludes: "", attrs: {id: {}}}}
       })
@@ -54,7 +54,7 @@ describe("Transform", () => {
 
     it("can remove multiple excluded marks", () => {
       let schema = new Schema({
-        nodes: {doc: {content: "text<_>*"},
+        nodes: {doc: {content: "text*"},
                 text: {}},
         marks: {big: {excludes: "small1 small2"},
                 small1: {}, small2: {}}
