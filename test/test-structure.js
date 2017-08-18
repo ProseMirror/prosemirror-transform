@@ -14,15 +14,6 @@ const schema = new Schema({
     caption: {content: "text*", marks: ""},
     sect: {content: "head block* sect*"},
     closing: {content: "text*"},
-    tcell: {content: "text*"},
-    trow: {
-      attrs: {columns: {default: 1}},
-      content: "tcell{.columns}"
-    },
-    table: {
-      attrs: {columns: {default: 1}},
-      content: "trow[columns=.columns]+", group: "block"
-    },
     text: baseSchema.spec.nodes.get("text"),
 
     fixed: {content: "head para closing", group: "block"}
@@ -33,7 +24,6 @@ const schema = new Schema({
 })
 
 function n(name, ...content) { return schema.nodes[name].create(null, content) }
-function n_(name, attrs, ...content) { return schema.nodes[name].create(attrs, content) }
 function t(str, em) { return schema.text(str, em ? [schema.mark("em")] : null) }
 
 const doc = n("doc", // 0
@@ -50,11 +40,8 @@ const doc = n("doc", // 0
                   n("quote", n("para", t("!"))))), // 81
               n("sect", // 82
                 n("head", t("S2")), // 86
-                n("para", t("Yes")), // 91
-                n_("table", {columns: 2}, // 92
-                   n_("trow", {columns: 2}, n("tcell", t("a")), n("tcell", t("b"))), // 100
-                   n_("trow", {columns: 2}, n("tcell", t("c")), n("tcell", t("d"))))), // 110
-              n("closing", t("fin"))) // 115
+                n("para", t("Yes"))), // 92
+              n("closing", t("fin"))) // 97
 
 function range(pos, end) {
   return doc.resolve(pos).blockRange(end == null ? undefined : doc.resolve(end))
@@ -84,10 +71,7 @@ describe("canSplit", () => {
   it("can't after the figure caption", no(72))
   it("can in the first para in a quote", yes(76))
   it("can if it also splits the quote", yes(77, 2))
-  it("can't at the start of a table cell", no(94))
-  it("can't at the end of a table cell", no(96))
-  it("can between table rows", yes(100))
-  it("can't at the end of the document", no(115))
+  it("can't at the end of the document", no(97))
 
   it("doesn't return true when the split-off content doesn't fit in the given node type", () => {
     let s = new Schema({nodes: schema.spec.nodes.addBefore("heading", "title", {content: "text*"})
@@ -115,7 +99,6 @@ describe("liftTarget", () => {
   it("can't in a figure caption", no(70))
   it("can from a quote", yes(76))
   it("can't in a section head", no(86))
-  it("can't in a table", no(94))
 })
 
 describe("findWrapping", () => {
@@ -126,14 +109,12 @@ describe("findWrapping", () => {
     return () => { let r = range(pos, end); ist(!findWrapping(r, schema.nodes[type])) }
   }
 
-  it("can wrap the whole doc in a section", yes(0, 110, "sect"))
+  it("can wrap the whole doc in a section", yes(0, 92, "sect"))
   it("can't wrap a head before a para in a section", no(4, 4, "sect"))
   it("can wrap a top paragraph in a quote", yes(8, 8, "quote"))
   it("can't wrap a section head in a quote", no(18, 18, "quote"))
   it("can wrap a figure in a quote", yes(55, 74, "quote"))
   it("can't wrap a head in a figure", no(90, 90, "figure"))
-  it("can wrap a table in a quote", yes(91, 109, "quote"))
-  it("can't wrap a closing block in a quote", no(113, 113, "quote"))
 })
 
 describe("Transform", () => {
@@ -180,58 +161,5 @@ describe("Transform", () => {
        repl(n("doc", n("sect", n("head"), n("figure", n("caption"), n("figureimage")))),
             7, 9, n("doc", n("para", t("hi"))), 0, 0,
             n("doc", n("sect", n("head"), n("figure", n("caption"), n("figureimage")), n("para", t("hi"))))))
-
-    function table2(...args) { return n_("table", {columns: 2}, ...args) }
-    function trow2(...args) { return n_("trow", {columns: 2}, ...args) }
-
-    it("balances a table on delete",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b"))))),
-            2, 5, null, 0, 0,
-            n("doc", table2(trow2(n("tcell"), n("tcell", t("b")))))))
-
-    it("balances table on insertion at the start",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b"))))),
-            2, 2, trow2(n("tcell", t("c"))), 0, 0,
-            n("doc", n_("table", {columns: 2},
-                        trow2(n("tcell", t("c")), n("tcell")),
-                        trow2(n("tcell", t("a")), n("tcell", t("b")))))))
-
-    it("balances a table on insertion in the middle",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b"))))),
-            5, 5, trow2(n("tcell", t("c"))), 0, 0,
-            n("doc", n_("table", {columns: 2},
-                        trow2(n("tcell", t("a")), n("tcell", t("c"))),
-                        trow2(n("tcell"), n("tcell", t("b")))))))
-
-    it("balances a table when deleting across cells",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b"))))),
-            4, 6, null, 0, 0,
-            n("doc", table2(trow2(n("tcell", t("ab")), n("tcell"))))))
-
-    it("can join tables",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b")))),
-              table2(trow2(n("tcell", t("c")), n("tcell", t("d"))))),
-            9, 15, null, 0, 0,
-            n("doc", n_("table", {columns: 2},
-                        trow2(n("tcell", t("a")), n("tcell", t("b"))),
-                        trow2(n("tcell"), n("tcell", t("d")))))))
-
-    it("can join table cells",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b")))),
-              table2(trow2(n("tcell", t("c")), n("tcell", t("d"))))),
-            7, 16, null, 0, 0,
-            n("doc", n_("table", {columns: 2},
-                        trow2(n("tcell", t("a")), n("tcell", t("bd")))))))
-
-    it("adds a row when inserting a cell",
-       repl(n("doc", table2(trow2(n("tcell", t("a")), n("tcell", t("b"))))),
-            2, 2, trow2(n("tcell", t("c"))), 0, 0,
-            n("doc", table2(trow2(n("tcell", t("c")), n("tcell")),
-                            trow2(n("tcell", t("a")), n("tcell", t("b")))))))
-
-    it("will create missing required nodes",
-       repl(n("doc", n("fixed", n("head", t("foo")), n("para", t("bar")), n("closing", t("abc")))),
-            4, 8, null, 0, 0,
-            n("doc", n("fixed", n("head", t("foar")), n("para"), n("closing", t("abc"))))))
   })
 })

@@ -8,10 +8,10 @@ import {ReplaceStep} from "./replace_step"
 // Add the given mark to the inline content between `from` and `to`.
 Transform.prototype.addMark = function(from, to, mark) {
   let removed = [], added = [], removing = null, adding = null
-  this.doc.nodesBetween(from, to, (node, pos, parent, index) => {
+  this.doc.nodesBetween(from, to, (node, pos, parent) => {
     if (!node.isInline) return
     let marks = node.marks
-    if (!mark.isInSet(marks) && parent.contentMatchAt(index).allowsMark(mark.type)) {
+    if (!mark.isInSet(marks) && parent.type.allowsMarkType(mark.type)) {
       let start = Math.max(pos, from), end = Math.min(pos + node.nodeSize, to)
       let newSet = mark.addToSet(marks)
 
@@ -91,7 +91,7 @@ Transform.prototype.clearMarkup = function(from, to) {
   return this
 }
 
-Transform.prototype.clearNonMatching = function(pos, match) {
+Transform.prototype.clearNonMatching = function(pos, parentType, match = parentType.contentMatch) {
   let node = this.doc.nodeAt(pos)
   let delSteps = [], cur = pos + 1
   for (let i = 0; i < node.childCount; i++) {
@@ -101,7 +101,7 @@ Transform.prototype.clearNonMatching = function(pos, match) {
       delSteps.push(new ReplaceStep(cur, end, Slice.empty))
     } else {
       match = allowed
-      for (let j = 0; j < child.marks.length; j++) if (!match.allowsMark(child.marks[j]))
+      for (let j = 0; j < child.marks.length; j++) if (!parentType.allowsMarkType(child.marks[j].type))
         this.step(new RemoveMarkStep(cur, end, child.marks[j]))
     }
     cur = end

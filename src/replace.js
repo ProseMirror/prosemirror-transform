@@ -458,10 +458,10 @@ function findPlacement(fragment, $from, start, placed) {
 function matchStrippingMarks(type, match, fragment) {
   let newNodes = []
   for (let i = 0; i < fragment.childCount; i++) {
-    let node = fragment.child(i), stripped = node.mark(node.marks.filter(m => match.allowsMark(m.type)))
-    match = match.matchType(stripped.type)
+    let node = fragment.child(i)
+    match = match.matchType(node.type)
     if (!match) return null
-    newNodes.push(stripped.mark(type.allowedMarks(node.marks)))
+    newNodes.push(node.mark(type.allowedMarks(node.marks)))
   }
   return Fragment.from(newNodes)
 }
