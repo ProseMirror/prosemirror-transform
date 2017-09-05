@@ -585,14 +585,15 @@ describe("Transform", () => {
     it("drops context when it doesn't fit", () =>
        repl(doc(ul(li(p("<a>")), li(p("b")))), doc(h1("<a>h<b>")), doc(ul(li(p("h<a>")), li(p("b"))))))
 
-    it("properly closes slices", () =>
-       repl(doc(ul("<a>", li(p("x")))), doc(ul(li(p("foo"), h1("<a>bar<b>")))),
-            doc(ul(li(p(), h1("bar")), li(p("x"))))))
-
     it("can replace a node when endpoints are in different children", () =>
        repl(doc(p("a"), ul(li(p("<a>b")), li(p("c"), blockquote(p("d<b>")))), p("e")),
             doc(h1("<a>x<b>")),
             doc(p("a"), h1("x"), p("e"))))
+
+    it("keeps defining context when inserting at the start of a textblock", () =>
+       repl(doc(p("<a>foo")),
+            doc(ul(li(p("<a>one")), li(p("two<b>")))),
+            doc(ul(li(p("one")), li(p("twofoo"))))))
   })
 
   describe("replaceRangeWith", () => {

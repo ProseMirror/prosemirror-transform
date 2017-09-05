@@ -27,13 +27,22 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   if (fitsTrivially($from, $to, slice))
     return this.step(new ReplaceStep(from, to, slice))
 
-  let canExpand = coveredDepths($from, this.doc.resolve(to)), preferredExpand = 0
-  if (canExpand[canExpand.length - 1] == 0) canExpand.pop()
-  canExpand.unshift($from.depth + 1)
-  for (let d = $from.depth; d > 0; d--) {
-    if ($from.node(d).type.spec.defining) break
-    let found = canExpand.indexOf(d, 1)
-    if (found > -1) preferredExpand = found
+  let targetDepths = coveredDepths($from, this.doc.resolve(to))
+  // Can't replace the whole document, so remove 0 if it's present
+  if (targetDepths[targetDepths.length - 1] == 0) targetDepths.pop()
+  // Negative numbers represent not expansion over the whole node at
+  // that depth, but replacing from $from.before(-D) to $to.pos.
+  let preferredTarget = -($from.depth + 1)
+  targetDepths.unshift(preferredTarget)
+  // This loop picks a preferred target depth, if one of the covering
+  // depths is not outside of a defining node, and adds negative
+  // depths for any depth that has $from at its start and does not
+  // cross a defining node.
+  for (let d = $from.depth, pos = $from.pos - 1; d > 0; d--, pos--) {
+    let spec = $from.node(d).type.spec
+    if (spec.defining || spec.isolating) break
+    if (targetDepths.indexOf(d) > -1) preferredTarget = d
+    else if ($from.before(d) == pos) targetDepths.splice(1, 0, -d)
   }
 
   let leftNodes = [], preferredDepth = slice.openStart
@@ -50,17 +59,21 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
     preferredDepth -= 2
 
+  // Try to fit each possible depth of the slice into each possible
+  // target depth, starting with the preferred depths.
+  let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
   for (let j = slice.openStart; j >= 0; j--) {
     let openDepth = (j + preferredDepth + 1) % (slice.openStart + 1)
     let insert = leftNodes[openDepth]
     if (!insert) continue
-    for (let i = 0; i < canExpand.length; i++) {
+    for (let i = 0; i < targetDepths.length; i++) {
       // Loop over possible expansion levels, starting with the
       // preferred one
-      let expandDepth = canExpand[(i + preferredExpand) % canExpand.length]
-      let parent = $from.node(expandDepth - 1), index = $from.index(expandDepth - 1)
+      let targetDepth = targetDepths[(i + preferredTargetIndex) % targetDepths.length], expand = true
+      if (targetDepth < 0) { expand = false; targetDepth = -targetDepth }
+      let parent = $from.node(targetDepth - 1), index = $from.index(targetDepth - 1)
       if (parent.canReplaceWith(index, index, insert.type, insert.marks))
-        return this.replace($from.before(expandDepth), expandDepth > $from.depth ? to : $to.after(expandDepth),
+        return this.replace($from.before(targetDepth), expand ? $to.after(targetDepth) : to,
                             new Slice(closeFragment(slice.content, 0, slice.openStart, openDepth),
                                       openDepth, slice.openEnd))
     }
