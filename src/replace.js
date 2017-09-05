@@ -385,7 +385,7 @@ function placeSlice($from, slice) {
       } else if (dSlice == 0) { // Top of slice
         curFragment = slice.content
       }
-      if (dSlice < slice.openStart) curFragment = curFragment.cut(curFragment.firstChild.nodeSize)
+      if (dSlice < slice.openStart) curFragment = curFragment.cutByIndex(1, curFragment.childCount)
     } else { // Outside slice, in generated wrappers (see below)
       curFragment = Fragment.empty
       let parent = parents[parents.length + dSlice - 1]
@@ -406,10 +406,10 @@ function placeSlice($from, slice) {
 
     if (found) {
       // If there was a fit, store it, and consider this content placed
-      if (found.fragment.size > 0) placed[found.depth] = {
-        content: found.fragment,
-        openEnd: endOfContent(slice, dSlice) ? slice.openEnd - dSlice : 0,
-        depth: found.depth
+      if (found.fragment.size > 0) {
+        let openEnd = endOfContent(slice, dSlice) ? slice.openEnd - dSlice : 0
+        if (placed[found.depth]) openEnd = placed[found.depth].openEnd
+        placed[found.depth] = {content: found.fragment, openEnd, depth: found.depth}
       }
       // If that was the last of the content, we're done
       if (dSlice <= 0) break
