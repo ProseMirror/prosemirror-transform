@@ -408,7 +408,7 @@ function placeSlice($from, slice) {
       // If there was a fit, store it, and consider this content placed
       if (found.fragment.size > 0) {
         let openEnd = endOfContent(slice, dSlice) ? slice.openEnd - dSlice : 0
-        if (placed[found.depth]) openEnd = placed[found.depth].openEnd
+        if (placed[found.depth] && curFragment.size == 0) openEnd = placed[found.depth].openEnd
         placed[found.depth] = {content: found.fragment, openEnd, depth: found.depth}
       }
       // If that was the last of the content, we're done
