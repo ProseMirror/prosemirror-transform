@@ -74,23 +74,6 @@ Transform.prototype.removeMark = function(from, to, mark = null) {
   return this
 }
 
-// :: (number, number) → this
-// Remove all marks and non-text inline nodes from the given range.
-Transform.prototype.clearMarkup = function(from, to) {
-  let delSteps = [] // Must be accumulated and applied in inverse order
-  this.doc.nodesBetween(from, to, (node, pos) => {
-    if (!node.isInline) return
-    if (!node.type.isText) {
-      delSteps.push(new ReplaceStep(pos, pos + node.nodeSize, Slice.empty))
-      return
-    }
-    for (let i = 0; i < node.marks.length; i++)
-      this.step(new RemoveMarkStep(Math.max(pos, from), Math.min(pos + node.nodeSize, to), node.marks[i]))
-  })
-  for (let i = delSteps.length - 1; i >= 0; i--) this.step(delSteps[i])
-  return this
-}
-
 // :: (number, NodeType, ?ContentMatch) → this
 // Removes all marks and nodes from the content of the node at `pos`
 // that don't match the given new parent node type. Accepts an
