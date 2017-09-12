@@ -4,157 +4,11 @@ import {ReplaceStep, ReplaceAroundStep} from "./replace_step"
 import {Transform} from "./transform"
 import {insertPoint} from "./structure"
 
-// :: (number, number, Slice) → this
-// Replace a range of the document with a given slice, using `from`,
-// `to`, and the slice's [`openStart`](#model.Slice.openStart) property
-// as hints, rather than fixed start and end points. This method may
-// grow the replaced area or close open nodes in the slice in order to
-// get a fit that is more in line with WYSIWYG expectations, by
-// dropping fully covered parent nodes of the replaced region when
-// they are marked [non-defining](#model.NodeSpec.defining), or
-// including an open parent node from the slice that _is_ marked as
-// [defining](#model.NodeSpec.defining).
-//
-// This is the method, for example, to handle paste. The similar
-// [`replace`](#transform.Transform.replace) method is a more
-// primitive tool which will _not_ move the start and end of its given
-// range, and is useful in situations where you need more precise
-// control over what happens.
-Transform.prototype.replaceRange = function(from, to, slice) {
-  if (!slice.size) return this.deleteRange(from, to)
-
-  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
-  if (fitsTrivially($from, $to, slice))
-    return this.step(new ReplaceStep(from, to, slice))
-
-  let targetDepths = coveredDepths($from, this.doc.resolve(to))
-  // Can't replace the whole document, so remove 0 if it's present
-  if (targetDepths[targetDepths.length - 1] == 0) targetDepths.pop()
-  // Negative numbers represent not expansion over the whole node at
-  // that depth, but replacing from $from.before(-D) to $to.pos.
-  let preferredTarget = -($from.depth + 1)
-  targetDepths.unshift(preferredTarget)
-  // This loop picks a preferred target depth, if one of the covering
-  // depths is not outside of a defining node, and adds negative
-  // depths for any depth that has $from at its start and does not
-  // cross a defining node.
-  for (let d = $from.depth, pos = $from.pos - 1; d > 0; d--, pos--) {
-    let spec = $from.node(d).type.spec
-    if (spec.defining || spec.isolating) break
-    if (targetDepths.indexOf(d) > -1) preferredTarget = d
-    else if ($from.before(d) == pos) targetDepths.splice(1, 0, -d)
-  }
-
-  let leftNodes = [], preferredDepth = slice.openStart
-  for (let content = slice.content, i = 0;; i++) {
-    let node = content.firstChild
-    leftNodes.push(node)
-    if (i == slice.openStart) break
-    content = node.content
-  }
-  // Back up if the node directly above openStart, or the node above
-  // that separated only by a non-defining textblock node, is defining.
-  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
-    preferredDepth -= 1
-  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
-    preferredDepth -= 2
-
-  // Try to fit each possible depth of the slice into each possible
-  // target depth, starting with the preferred depths.
-  let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
-  for (let j = slice.openStart; j >= 0; j--) {
-    let openDepth = (j + preferredDepth + 1) % (slice.openStart + 1)
-    let insert = leftNodes[openDepth]
-    if (!insert) continue
-    for (let i = 0; i < targetDepths.length; i++) {
-      // Loop over possible expansion levels, starting with the
-      // preferred one
-      let targetDepth = targetDepths[(i + preferredTargetIndex) % targetDepths.length], expand = true
-      if (targetDepth < 0) { expand = false; targetDepth = -targetDepth }
-      let parent = $from.node(targetDepth - 1), index = $from.index(targetDepth - 1)
-      if (parent.canReplaceWith(index, index, insert.type, insert.marks))
-        return this.replace($from.before(targetDepth), expand ? $to.after(targetDepth) : to,
-                            new Slice(closeFragment(slice.content, 0, slice.openStart, openDepth),
-                                      openDepth, slice.openEnd))
-    }
-  }
-
-  return this.replace(from, to, slice)
-}
-
-function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
-  if (depth < oldOpen) {
-    let first = fragment.firstChild
-    fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
-  }
-  if (depth > newOpen)
-    fragment = parent.contentMatchAt(0).fillBefore(fragment).append(fragment)
-  return fragment
-}
-
-// :: (number, number, Node) → this
-// Replace the given range with a node, but use `from` and `to` as
-// hints, rather than precise positions. When from and to are the same
-// and are at the start or end of a parent node in which the given
-// node doesn't fit, this method may _move_ them out towards a parent
-// that does allow the given node to be placed. When the given range
-// completely covers a parent node, this method may completely replace
-// that parent node.
-Transform.prototype.replaceRangeWith = function(from, to, node) {
-  if (!node.isInline && from == to && this.doc.resolve(from).parent.content.size) {
-    let point = insertPoint(this.doc, from, node.type)
-    if (point != null) from = to = point
-  }
-  return this.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
-}
-
-// :: (number, number) → this
-// Delete the given range, expanding it to cover fully covered
-// parent nodes until a valid replace is found.
-Transform.prototype.deleteRange = function(from, to) {
-  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
-  let covered = coveredDepths($from, $to)
-  for (let i = 0; i < covered.length; i++) {
-    let depth = covered[i], last = i == covered.length - 1
-    if ((last && depth == 0) || $from.node(depth).type.contentMatch.validEnd) {
-      from = $from.start(depth)
-      to = $to.end(depth)
-      break
-    }
-    if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1)))) {
-      from = $from.before(depth)
-      to = $to.after(depth)
-      break
-    }
-  }
-  return this.delete(from, to)
-}
-
-// : (ResolvedPos, ResolvedPos) → [number]
-// Returns an array of all depths for which $from - $to spans the
-// whole content of the nodes at that depth.
-function coveredDepths($from, $to) {
-  let result = [], minDepth = Math.min($from.depth, $to.depth)
-  for (let d = minDepth; d >= 0; d--) {
-    let start = $from.start(d)
-    if (start < $from.pos - ($from.depth - d) ||
-        $to.end(d) > $to.pos + ($to.depth - d) ||
-        $from.node(d).type.spec.isolating ||
-        $to.node(d).type.spec.isolating) break
-    if (start == $to.start(d)) result.push(d)
-  }
-  return result
-}
-
-// :: (number, number) → this
-// Delete the content between the given positions.
-Transform.prototype.delete = function(from, to) {
-  return this.replace(from, to, Slice.empty)
-}
-
 // :: (Node, number, ?number, ?Slice) → ?Step
-// "Fit" a slice into a given position in the document, producing a
-// [step](#transform.Step) that inserts it.
+// ‘Fit’ a slice into a given position in the document, producing a
+// [step](#transform.Step) that inserts it. Will return null if
+// there's no meaningful way to insert the slice here, or inserting it
+// would be a no-op (an empty slice over an empty range).
 export function replaceStep(doc, from, to = from, slice = Slice.empty) {
   if (from == to && !slice.size) return null
 
@@ -190,6 +44,12 @@ Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
 // fragment, node, or array of nodes.
 Transform.prototype.replaceWith = function(from, to, content) {
   return this.replace(from, to, new Slice(Fragment.from(content), 0, 0))
+}
+
+// :: (number, number) → this
+// Delete the content between the given positions.
+Transform.prototype.delete = function(from, to) {
+  return this.replace(from, to, Slice.empty)
 }
 
 // :: (number, union<Fragment, Node, [Node]>) → this
@@ -488,4 +348,146 @@ function unneccesaryFallthrough($from, dFrom, dFound, slice, dSlice) {
     }
   }
   return false
+}
+
+// :: (number, number, Slice) → this
+// Replace a range of the document with a given slice, using `from`,
+// `to`, and the slice's [`openStart`](#model.Slice.openStart) property
+// as hints, rather than fixed start and end points. This method may
+// grow the replaced area or close open nodes in the slice in order to
+// get a fit that is more in line with WYSIWYG expectations, by
+// dropping fully covered parent nodes of the replaced region when
+// they are marked [non-defining](#model.NodeSpec.defining), or
+// including an open parent node from the slice that _is_ marked as
+// [defining](#model.NodeSpec.defining).
+//
+// This is the method, for example, to handle paste. The similar
+// [`replace`](#transform.Transform.replace) method is a more
+// primitive tool which will _not_ move the start and end of its given
+// range, and is useful in situations where you need more precise
+// control over what happens.
+Transform.prototype.replaceRange = function(from, to, slice) {
+  if (!slice.size) return this.deleteRange(from, to)
+
+  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  if (fitsTrivially($from, $to, slice))
+    return this.step(new ReplaceStep(from, to, slice))
+
+  let targetDepths = coveredDepths($from, this.doc.resolve(to))
+  // Can't replace the whole document, so remove 0 if it's present
+  if (targetDepths[targetDepths.length - 1] == 0) targetDepths.pop()
+  // Negative numbers represent not expansion over the whole node at
+  // that depth, but replacing from $from.before(-D) to $to.pos.
+  let preferredTarget = -($from.depth + 1)
+  targetDepths.unshift(preferredTarget)
+  // This loop picks a preferred target depth, if one of the covering
+  // depths is not outside of a defining node, and adds negative
+  // depths for any depth that has $from at its start and does not
+  // cross a defining node.
+  for (let d = $from.depth, pos = $from.pos - 1; d > 0; d--, pos--) {
+    let spec = $from.node(d).type.spec
+    if (spec.defining || spec.isolating) break
+    if (targetDepths.indexOf(d) > -1) preferredTarget = d
+    else if ($from.before(d) == pos) targetDepths.splice(1, 0, -d)
+  }
+
+  let leftNodes = [], preferredDepth = slice.openStart
+  for (let content = slice.content, i = 0;; i++) {
+    let node = content.firstChild
+    leftNodes.push(node)
+    if (i == slice.openStart) break
+    content = node.content
+  }
+  // Back up if the node directly above openStart, or the node above
+  // that separated only by a non-defining textblock node, is defining.
+  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
+    preferredDepth -= 1
+  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
+    preferredDepth -= 2
+
+  // Try to fit each possible depth of the slice into each possible
+  // target depth, starting with the preferred depths.
+  let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
+  for (let j = slice.openStart; j >= 0; j--) {
+    let openDepth = (j + preferredDepth + 1) % (slice.openStart + 1)
+    let insert = leftNodes[openDepth]
+    if (!insert) continue
+    for (let i = 0; i < targetDepths.length; i++) {
+      // Loop over possible expansion levels, starting with the
+      // preferred one
+      let targetDepth = targetDepths[(i + preferredTargetIndex) % targetDepths.length], expand = true
+      if (targetDepth < 0) { expand = false; targetDepth = -targetDepth }
+      let parent = $from.node(targetDepth - 1), index = $from.index(targetDepth - 1)
+      if (parent.canReplaceWith(index, index, insert.type, insert.marks))
+        return this.replace($from.before(targetDepth), expand ? $to.after(targetDepth) : to,
+                            new Slice(closeFragment(slice.content, 0, slice.openStart, openDepth),
+                                      openDepth, slice.openEnd))
+    }
+  }
+
+  return this.replace(from, to, slice)
+}
+
+function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
+  if (depth < oldOpen) {
+    let first = fragment.firstChild
+    fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
+  }
+  if (depth > newOpen)
+    fragment = parent.contentMatchAt(0).fillBefore(fragment).append(fragment)
+  return fragment
+}
+
+// :: (number, number, Node) → this
+// Replace the given range with a node, but use `from` and `to` as
+// hints, rather than precise positions. When from and to are the same
+// and are at the start or end of a parent node in which the given
+// node doesn't fit, this method may _move_ them out towards a parent
+// that does allow the given node to be placed. When the given range
+// completely covers a parent node, this method may completely replace
+// that parent node.
+Transform.prototype.replaceRangeWith = function(from, to, node) {
+  if (!node.isInline && from == to && this.doc.resolve(from).parent.content.size) {
+    let point = insertPoint(this.doc, from, node.type)
+    if (point != null) from = to = point
+  }
+  return this.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
+}
+
+// :: (number, number) → this
+// Delete the given range, expanding it to cover fully covered
+// parent nodes until a valid replace is found.
+Transform.prototype.deleteRange = function(from, to) {
+  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  let covered = coveredDepths($from, $to)
+  for (let i = 0; i < covered.length; i++) {
+    let depth = covered[i], last = i == covered.length - 1
+    if ((last && depth == 0) || $from.node(depth).type.contentMatch.validEnd) {
+      from = $from.start(depth)
+      to = $to.end(depth)
+      break
+    }
+    if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1)))) {
+      from = $from.before(depth)
+      to = $to.after(depth)
+      break
+    }
+  }
+  return this.delete(from, to)
+}
+
+// : (ResolvedPos, ResolvedPos) → [number]
+// Returns an array of all depths for which $from - $to spans the
+// whole content of the nodes at that depth.
+function coveredDepths($from, $to) {
+  let result = [], minDepth = Math.min($from.depth, $to.depth)
+  for (let d = minDepth; d >= 0; d--) {
+    let start = $from.start(d)
+    if (start < $from.pos - ($from.depth - d) ||
+        $to.end(d) > $to.pos + ($to.depth - d) ||
+        $from.node(d).type.spec.isolating ||
+        $to.node(d).type.spec.isolating) break
+    if (start == $to.start(d)) result.push(d)
+  }
+  return result
 }

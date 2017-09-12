@@ -37,8 +37,10 @@ Transform.prototype.addMark = function(from, to, mark) {
 }
 
 // :: (number, number, ?union<Mark, MarkType>) → this
-// Remove the given mark, or all marks of the given type, from inline
-// nodes between `from` and `to`.
+// Remove marks from inline nodes between `from` and `to`. When `mark`
+// is a single mark, remove precisely that mark. When it is a mark type,
+// remove all marks of that type. When it is null, remove all marks of
+// any type.
 Transform.prototype.removeMark = function(from, to, mark = null) {
   let matched = [], step = 0
   this.doc.nodesBetween(from, to, (node, pos) => {
@@ -77,7 +79,7 @@ Transform.prototype.removeMark = function(from, to, mark = null) {
 // :: (number, NodeType, ?ContentMatch) → this
 // Removes all marks and nodes from the content of the node at `pos`
 // that don't match the given new parent node type. Accepts an
-// optional starting [content match](##model.ContentMatch) as third
+// optional starting [content match](#model.ContentMatch) as third
 // argument.
 Transform.prototype.clearIncompatible = function(pos, parentType, match = parentType.contentMatch) {
   let node = this.doc.nodeAt(pos)

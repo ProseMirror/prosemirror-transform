@@ -1,23 +1,24 @@
 // Mappable:: interface
 // There are several things that positions can be mapped through.
-// We'll denote those as 'mappable'.
+// Such objects conform to this interface.
 //
 //   map:: (pos: number, assoc: ?number) → number
 //   Map a position through this object. When given, `assoc` (should
 //   be -1 or 1, defaults to 1) determines with which side the
 //   position is associated, which determines in which direction to
-//   move when a chunk of content is inserted at the mapped position,
-//   and when to consider the position to be deleted.
+//   move when a chunk of content is inserted at the mapped position.
 //
 //   mapResult:: (pos: number, assoc: ?number) → MapResult
 //   Map a position, and return an object containing additional
 //   information about the mapping. The result's `deleted` field tells
 //   you whether the position was deleted (completely enclosed in a
-//   replaced range) during the mapping.
+//   replaced range) during the mapping. When content on only one side
+//   is deleted, the position itself is only considered deleted when
+//   `assoc` points in the direction of the deleted content.
 
 // Recovery values encode a range index and an offset. They are
 // represented as numbers, because tons of them will be created when
-// mapping, for example, a large number of marked ranges. The number's
+// mapping, for example, a large number of decorations. The number's
 // lower 16 bits provide the index, the remaining bits the offset.
 //
 // Note: We intentionally don't use bit shift operators to en- and
@@ -45,10 +46,11 @@ export class MapResult {
   }
 }
 
-// ::- A map describing the deletions and insertions made by a step,
-// which can be used to find the correspondence between positions in
-// the pre-step version of a document and the same position in the
-// post-step version. This class implements [`Mappable`](#transform.Mappable).
+// :: class extends Mappable
+// A map describing the deletions and insertions made by a step, which
+// can be used to find the correspondence between positions in the
+// pre-step version of a document and the same position in the
+// post-step version.
 export class StepMap {
   // :: ([number])
   // Create a position map. The modifications to the document are
@@ -66,17 +68,10 @@ export class StepMap {
     return this.ranges[index * 3] + diff + recoverOffset(value)
   }
 
-  // :: (number, ?number) → MapResult
-  // Map the given position through this map. The `assoc` parameter can
-  // be used to control what happens when the transform inserted
-  // content at (or around) this position—if `assoc` is negative, the a
-  // position before the inserted content will be returned, if it is
-  // positive, a position after the insertion is returned.
+  // : (number, ?number) → MapResult
   mapResult(pos, assoc = 1) { return this._map(pos, assoc, false) }
 
-  // :: (number, ?number) → number
-  // Map the given position through this map, returning only the
-  // mapped position.
+  // : (number, ?number) → number
   map(pos, assoc = 1) { return this._map(pos, assoc, true) }
 
   _map(pos, assoc, simple) {
@@ -111,7 +106,7 @@ export class StepMap {
   }
 
   // :: ((oldStart: number, oldEnd: number, newStart: number, newEnd: number))
-  // Calls the given function on each of the changed ranges denoted by
+  // Calls the given function on each of the changed ranges included in
   // this map.
   forEach(f) {
     let oldIndex = this.inverted ? 2 : 1, newIndex = this.inverted ? 1 : 2
@@ -145,12 +140,13 @@ export class StepMap {
 
 StepMap.empty = new StepMap([])
 
-// ::- A mapping represents a pipeline of zero or more [step
+// :: class extends Mappable
+// A mapping represents a pipeline of zero or more [step
 // maps](#transform.StepMap). It has special provisions for losslessly
 // handling mapping positions through a series of steps in which some
 // steps are inverted versions of earlier steps. (This comes up when
-// ‘rebasing’ steps for collaboration or history management.) This
-// class implements [`Mappable`](#transform.Mappable).
+// ‘[rebasing](/docs/guide/#transform.rebasing)’ steps for
+// collaboration or history management.)
 export class Mapping {
   // :: (?[StepMap])
   // Create a new mapping with the given position maps.
@@ -163,7 +159,7 @@ export class Mapping {
     // `mapResult` is called.
     this.from = from || 0
     // :: number
-    // The end positions in the `maps` array.
+    // The end position in the `maps` array.
     this.to = to == null ? this.maps.length : to
     this.mirror = mirror
   }
@@ -224,7 +220,7 @@ export class Mapping {
     return inverse
   }
 
-  // :: (number, ?number) → number
+  // : (number, ?number) → number
   // Map a position through this mapping.
   map(pos, assoc = 1) {
     if (this.mirror) return this._map(pos, assoc, true)
@@ -233,7 +229,7 @@ export class Mapping {
     return pos
   }
 
-  // :: (number, ?number) → MapResult
+  // : (number, ?number) → MapResult
   // Map a position through this mapping, returning a mapping
   // result.
   mapResult(pos, assoc = 1) { return this._map(pos, assoc, false) }

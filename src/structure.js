@@ -28,8 +28,8 @@ export function liftTarget(range) {
 // Split the content in the given range off from its parent, if there
 // is sibling content before or after it, and move it up the tree to
 // the depth specified by `target`. You'll probably want to use
-// `liftTarget` to compute `target`, in order to be sure the lift is
-// valid.
+// [`liftTarget`](#transform.liftTarget) to compute `target`, to make
+// sure the lift is valid.
 Transform.prototype.lift = function(range, target) {
   let {$from, $to, depth} = range
 
@@ -98,7 +98,7 @@ function findWrappingInside(range, type) {
 // :: (NodeRange, [{type: NodeType, attrs: ?Object}]) → this
 // Wrap the given [range](#model.NodeRange) in the given set of wrappers.
 // The wrappers are assumed to be valid in this position, and should
-// probably be computed with `findWrapping`.
+// probably be computed with [`findWrapping`](#transform.findWrapping).
 Transform.prototype.wrap = function(range, wrappers) {
   let content = Fragment.empty
   for (let i = wrappers.length - 1; i >= 0; i--)
@@ -129,7 +129,8 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
 }
 
 // :: (number, ?NodeType, ?Object, ?[Mark]) → this
-// Change the type and attributes of the node after `pos`.
+// Change the type, attributes, and/or marks of the node at `pos`.
+// When `nodeType` is null, the existing node type is preserved,
 Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")

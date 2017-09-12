@@ -5,14 +5,14 @@ export class TransformError extends Error {
   get name() { return "TransformError" }
 }
 
-// ::- Abstraction to build up and track such an array of
-// [steps](#transform.Step).
+// ::- Abstraction to build up and track an array of
+// [steps](#transform.Step) representing a document transformation.
 //
-// The high-level transforming methods return the `Transform` object
-// itself, so that they can be chained.
+// Most transforming methods return the `Transform` object itself, so
+// that they can be chained.
 export class Transform {
   // :: (Node)
-  // Create a transformation that starts with the given document.
+  // Create a transform that starts with the given document.
   constructor(doc) {
     // :: Node
     // The current document (the result of applying the steps in the
@@ -29,12 +29,12 @@ export class Transform {
     this.mapping = new Mapping
   }
 
-  // :: Node The document at the start of the transformation.
+  // :: Node The starting document.
   get before() { return this.docs.length ? this.docs[0] : this.doc }
 
   // :: (step: Step) → this
-  // Apply a new step in this transformation, saving the result.
-  // Throws an error when the step fails.
+  // Apply a new step in this transform, saving the result. Throws an
+  // error when the step fails.
   step(object) {
     let result = this.maybeStep(object)
     if (result.failed) throw new TransformError(result.failed)
@@ -51,7 +51,8 @@ export class Transform {
   }
 
   // :: bool
-  // True when this transaction changes the document.
+  // True when the document has been changed (when there are any
+  // steps).
   get docChanged() {
     return this.steps.length > 0
   }

@@ -6,9 +6,9 @@ function mustOverride() { throw new Error("Override me") }
 
 const stepsByID = Object.create(null)
 
-// ::- A step object wraps an atomic operation. It generally applies
+// ::- A step object represents an atomic change. It generally applies
 // only to the document it was created for, since the positions
-// associated with it will only make sense for that document.
+// stored in it will only make sense for that document.
 //
 // New steps are defined by creating classes that extend `Step`,
 // overriding the `apply`, `invert`, `map`, `getMap` and `fromJSON`
@@ -24,8 +24,9 @@ export class Step {
   apply(_doc) { return mustOverride() }
 
   // :: () → StepMap
-  // Get the step map that represents the changes made by this
-  // step.
+  // Get the step map that represents the changes made by this step,
+  // and which can be used to transform between positions in the old
+  // and the new document.
   getMap() { return StepMap.empty }
 
   // :: (doc: Node) → Step
