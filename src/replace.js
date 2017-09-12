@@ -1,4 +1,4 @@
-import {Fragment, Slice} from "prosemirror-model"
+import {Fragment, Slice, Mark} from "prosemirror-model"
 
 import {ReplaceStep, ReplaceAroundStep} from "./replace_step"
 import {Transform} from "./transform"
@@ -378,19 +378,18 @@ function placeSlice($from, slice) {
   // each open fragment.
   for (let dSlice = slice.openStart;; --dSlice) {
     // Get the components of the node at this level
-    let curType, curAttrs, curFragment
+    let curType, curAttrs, curMarks, curFragment
     if (dSlice >= 0) {
       if (dSlice > 0) { // Inside slice
-        ;({type: curType, attrs: curAttrs, content: curFragment} = nodeLeft(slice.content, dSlice))
+        ;({type: curType, attrs: curAttrs, content: curFragment, marks: curMarks} = nodeLeft(slice.content, dSlice))
       } else if (dSlice == 0) { // Top of slice
         curFragment = slice.content
+        curMarks = Mark.none
       }
       if (dSlice < slice.openStart) curFragment = curFragment.cutByIndex(1, curFragment.childCount)
     } else { // Outside slice, in generated wrappers (see below)
       curFragment = Fragment.empty
-      let parent = parents[parents.length + dSlice - 1]
-      curType = parent.type
-      curAttrs = parent.attrs
+      ;({type: curType, attrs: curAttrs, marks: curMarks} = parents[parents.length + dSlice - 1])
     }
     // If the last iteration left unplaced content, include it in the fragment
     if (unplaced) curFragment = curFragment.addToStart(unplaced)
@@ -433,7 +432,7 @@ function placeSlice($from, slice) {
       }
       if (curFragment.size) {
         curFragment = curType.contentMatch.fillBefore(curFragment, true).append(curFragment)
-        unplaced = curType.create(curAttrs, curFragment)
+        unplaced = curType.create(curAttrs, curFragment, curMarks)
       } else {
         unplaced = null
       }

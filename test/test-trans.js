@@ -1,5 +1,5 @@
 const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
-       strong, code, a, img, br, hr} = require("prosemirror-test-builder")
+       strong, code, a, img, br, hr, eq} = require("prosemirror-test-builder")
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../dist")
 const {Slice, Fragment, Schema} = require("prosemirror-model")
@@ -562,6 +562,30 @@ describe("Transform", () => {
        repl(doc(ul(li(p("foo")), "<a>", li(p("bar")))),
             ul(li(p("a<a>bc")), li(p("de<b>f"))),
             doc(ul(li(p("foo")), li(p("bc")), li(p("de")), li(p("bar"))))))
+
+    // A schema that allows marks on top-level block nodes
+    let ms = new Schema({
+      nodes: schema.spec.nodes.update("doc", Object.assign({}, schema.spec.nodes.get("doc"), {marks: "_"})),
+      marks: schema.spec.marks
+    })
+
+    it("preserves marks on block nodes", () => {
+      let tr = new Transform(ms.node("doc", null, [
+        ms.node("paragraph", null, [ms.text("hey")], [ms.mark("em")]),
+        ms.node("paragraph", null, [ms.text("ok")], [ms.mark("strong")])
+      ]))
+      tr.replace(2, 7, tr.doc.slice(2, 7))
+      ist(tr.doc, tr.before, eq)
+    })
+
+    it("preserves marks on open slice block nodes", () => {
+      let tr = new Transform(ms.node("doc", null, [ms.node("paragraph", null, [ms.text("a")])]))
+      tr.replace(3, 3, ms.node("doc", null, [
+        ms.node("paragraph", null, [ms.text("b")], [ms.mark("em")])
+      ]).slice(1, 3))
+      ist(tr.doc.childCount, 2)
+      ist(tr.doc.lastChild.marks.length, 1)
+    })
   })
 
   describe("replaceRange", () => {
