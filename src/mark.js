@@ -91,7 +91,12 @@ Transform.prototype.clearMarkup = function(from, to) {
   return this
 }
 
-Transform.prototype.clearNonMatching = function(pos, parentType, match = parentType.contentMatch) {
+// :: (number, NodeType, ?ContentMatch) → this
+// Removes all marks and nodes from the content of the node at `pos`
+// that don't match the given new parent node type. Accepts an
+// optional starting [content match](##model.ContentMatch) as third
+// argument.
+Transform.prototype.clearIncompatible = function(pos, parentType, match = parentType.contentMatch) {
   let node = this.doc.nodeAt(pos)
   let delSteps = [], cur = pos + 1
   for (let i = 0; i < node.childCount; i++) {
