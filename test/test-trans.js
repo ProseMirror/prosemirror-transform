@@ -361,20 +361,20 @@ describe("Transform", () => {
     })
   })
 
-  describe("setNodeType", () => {
-    function type(doc, expect, type, attrs) {
-      testTransform(new Transform(doc).setNodeType(doc.tag.a, schema.nodes[type], attrs), expect)
+  describe("setNodeMarkup", () => {
+    function markup(doc, expect, type, attrs) {
+      testTransform(new Transform(doc).setNodeMarkup(doc.tag.a, schema.nodes[type], attrs), expect)
     }
 
     it("can change a textblock", () =>
-       type(doc("<a>", p("foo")),
-            doc(h1("foo")),
-            "heading", {level: 1}))
+       markup(doc("<a>", p("foo")),
+              doc(h1("foo")),
+              "heading", {level: 1}))
 
     it("can change an inline node", () =>
-       type(doc(p("foo<a>", img, "bar")),
-            doc(p("foo", img({src: "bar", alt: "y"}), "bar")),
-            "image", {src: "bar", alt: "y"}))
+       markup(doc(p("foo<a>", img, "bar")),
+              doc(p("foo", img({src: "bar", alt: "y"}), "bar")),
+              "image", {src: "bar", alt: "y"}))
   })
 
   describe("replace", () => {

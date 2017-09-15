@@ -128,10 +128,19 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
   return this
 }
 
+let warnedAboutSetNodeType = false
+Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
+  if (!warnedAboutSetNodeType && typeof console == "object" && console.warn) {
+    warnedAboutSetNodeType = true
+    console.warn("setNodeType has been renamed to setNodeMarkup")
+  }
+  return this.setNodeMarkup(pos, type, attrs, marks)
+}
+
 // :: (number, ?NodeType, ?Object, ?[Mark]) → this
 // Change the type, attributes, and/or marks of the node at `pos`.
 // When `nodeType` is null, the existing node type is preserved,
-Transform.prototype.setNodeType = function(pos, type, attrs, marks) {
+Transform.prototype.setNodeMarkup = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
   if (!type) type = node.type
