@@ -1,6 +1,6 @@
 {
   "name": "prosemirror-transform",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "ProseMirror document transformations",
   "main": "dist/index.js",
   "license": "MIT",
@@ -16,12 +16,12 @@
     "url": "git://github.com/prosemirror/prosemirror-transform.git"
   },
   "dependencies": {
-    "prosemirror-model": "^0.23.0"
+    "prosemirror-model": "^0.24.0"
   },
   "devDependencies": {
     "mocha": "^3.0.2",
     "ist": "^1.0.0",
-    "prosemirror-test-builder": "^0.23.0",
+    "prosemirror-test-builder": "^0.24.0",
     "rollup": "^0.49.0",
     "rollup-plugin-buble": "^0.15.0"
   },
