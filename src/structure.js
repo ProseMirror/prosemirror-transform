@@ -115,7 +115,7 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
   if (!type.isTextblock) throw new RangeError("Type given to setBlockType should be a textblock")
   let mapFrom = this.steps.length
   this.doc.nodesBetween(from, to, (node, pos) => {
-    if (node.isTextblock && !node.hasMarkup(type, attrs)) {
+    if (node.isTextblock && !node.hasMarkup(type, attrs) && canChangeType(this.doc, this.mapping.slice(mapFrom).map(pos), type)) {
       // Ensure all markup that isn't allowed in the new node type is cleared
       this.clearIncompatible(this.mapping.slice(mapFrom).map(pos, 1), type)
       let mapping = this.mapping.slice(mapFrom)
@@ -126,6 +126,11 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
     }
   })
   return this
+}
+
+function canChangeType(doc, pos, type) {
+  let $pos = doc.resolve(pos), index = $pos.index()
+  return $pos.parent.canReplaceWith(index, index + 1, type)
 }
 
 // :: (number, ?NodeType, ?Object, ?[Mark]) → this

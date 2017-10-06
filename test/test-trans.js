@@ -359,6 +359,11 @@ describe("Transform", () => {
       tr.setBlockType(pos, pos, schema.nodes.heading, {level: 1})
       testTransform(tr, doc(p("f<x><y>ar"), h1("baz<a>")))
     })
+
+    it("skips nodes that can't be changed due to constraints", () =>
+       type(doc(p("<a>hello", img), p("okay"), ul(li(p("foo<b>")))),
+            doc(pre("<a>hello"), pre("okay"), ul(li(p("foo<b>")))),
+            "code_block"))
   })
 
   describe("setNodeMarkup", () => {
