@@ -156,12 +156,13 @@ Transform.prototype.setNodeMarkup = function(pos, type, attrs, marks) {
 export function canSplit(doc, pos, depth = 1, typesAfter) {
   let $pos = doc.resolve(pos), base = $pos.depth - depth
   let innerType = (typesAfter && typesAfter[typesAfter.length - 1]) || $pos.parent
-  if (base < 0 ||
+  if (base < 0 || $pos.parent.type.spec.isolating ||
       !$pos.parent.canReplace($pos.index(), $pos.parent.childCount) ||
       !innerType.type.validContent($pos.parent.content.cutByIndex($pos.index(), $pos.parent.childCount)))
     return false
   for (let d = $pos.depth - 1, i = depth - 2; d > base; d--, i--) {
     let node = $pos.node(d), index = $pos.index(d)
+    if (node.type.spec.isolating) return false
     let rest = node.content.cutByIndex(index, node.childCount)
     let after = (typesAfter && typesAfter[i]) || node
     if (after != node) rest = rest.replaceChild(0, after.type.create(after.attrs))
