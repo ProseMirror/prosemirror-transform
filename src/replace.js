@@ -235,60 +235,63 @@ function placeSlice($from, slice) {
   if (!slice.content.size) return placed
 
   // Loop over the open side of the slice, trying to find a place for
-  // each open fragment.
+  // each open fragment. The first pass tries to find direct fits, the
+  // second allows wrapping.
   let dSlice = slice.openStart, lastPlaced = $from.depth + 1
-  for (let dFrom = $from.depth; dFrom > 0 && dSlice >= 0; dFrom--) {
+  for (let dFrom = $from.depth, pass = 1; dFrom >= 0 && dSlice >= 0; dFrom--) {
+    // If we've reached the end of the first pass, go to the second
+    if (dFrom == 0 && pass == 1) {
+      dFrom = lastPlaced
+      pass = 2
+      continue
+    }
     let parent = $from.node(dFrom), match = parent.contentMatchAt($from.indexAfter(dFrom))
-    let placedHere = Fragment.empty, openEnd = 0
+    let existing = placed[dFrom]
+    let placedHere = existing ? existing.content : Fragment.empty, openEnd = existing ? existing.openEnd : 0
+
     for (let d = dSlice; d >= 0; d--) {
-      let content = sliceRange(slice.content, d, dSlice == slice.openStart ? null : dSlice + 1), marks = hasMarks(content)
-      let fits = match.fillBefore(content)
-      if (!fits && marks) {
-        let stripped = matchStrippingMarks(parent.type, match, content)
-        if (stripped) { content = stripped; fits = Fragment.empty }
-      }
-      if (fits) {
-        content = fits.append(closeStart(content, dSlice - d))
+      let content = sliceRange(slice.content, d, dSlice == slice.openStart ? null : dSlice + 1)
+
+      if (pass == 1) {
+        // First pass, search for direct fits (possibly by stripping marks
+        let fits = match.fillBefore(content)
+        if (!fits && hasMarks(content)) {
+          let stripped = matchStrippingMarks(parent.type, match, content)
+          if (stripped) { content = stripped; fits = Fragment.empty }
+        }
+        if (fits) {
+          content = fits.append(closeStart(content, dSlice - d))
+          placedHere = placedHere.append(content)
+          if (content.size) openEnd = endOfContent(slice, d) ? slice.openEnd - d : 0
+          dSlice = d - 1
+          lastPlaced = dFrom
+          if (nodeLeft(slice.content, d).type == parent.type) break
+        }
+      } else {
+        // Second pass, allows introducing wrapper nodes
+        if (content.size == 0) continue
+        let wrap = match.findWrapping(content.firstChild.type)
+        if (!wrap) continue
+        let atEnd = endOfContent(slice, d)
+        if (!wrap.length) {
+          if (!match.matchFragment(content)) continue
+        } else if (d && wrap[wrap.length - 1] == nodeLeft(slice.content, d).type) {
+          // Don't create wrappers that correspond to exiting wrapper nodes
+          continue
+        } else if (!atEnd) {
+          let after = wrap[wrap.length - 1].contentMatch.matchFragment(content)
+          if (!after) continue
+          content = content.append(after.fillBefore(Fragment.empty, true))
+        }
+        content = closeStart(content, dSlice - d)
+        for (let i = wrap.length - 1; i >= 0; i--) content = Fragment.from(wrap[i].create(null, content))
         placedHere = placedHere.append(content)
-        if (content.size) openEnd = endOfContent(slice, d) ? slice.openEnd - d : 0
+        if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd : 0
         dSlice = d - 1
-        lastPlaced = dFrom
-        if (nodeLeft(slice.content, d).type == parent.type) break
       }
     }
 
     if (placedHere.size) placed[dFrom] = {content: placedHere, openEnd, depth: dFrom}
-  }
-
-  for (let dFrom = lastPlaced - 1; dFrom >= 0 && dSlice >= 0; dFrom--) {
-    let parent = $from.node(dFrom), match = parent.contentMatchAt($from.indexAfter(dFrom))
-    let existing = placed[dFrom]
-    let placedHere = existing ? existing.content : Fragment.empty, openEnd = existing ? existing.openEnd : 0
-    for (let d = dSlice; d >= 0; d--) {
-      let content = sliceRange(slice.content, d, dSlice == slice.openStart ? null : dSlice + 1)
-      if (content.size == 0) continue
-      let wrap = match.findWrapping(content.firstChild.type)
-      if (!wrap) continue
-      let atEnd = endOfContent(slice, d)
-      if (!wrap.length) {
-        if (!match.matchFragment(content)) continue
-      } else if (d && wrap[wrap.length - 1] == nodeLeft(slice.content, d).type) {
-        continue
-      } else if (!atEnd) {
-        let after = wrap[wrap.length - 1].contentMatch.matchFragment(content)
-        if (!after) continue
-        content = content.append(after.fillBefore(Fragment.empty, true))
-      }
-      content = closeStart(content, dSlice - d)
-      for (let i = wrap.length - 1; i >= 0; i--) content = Fragment.from(wrap[i].create(null, content))
-      placedHere = placedHere.append(content)
-      if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd : 0
-      dSlice = d - 1
-      if (dFrom > 0) break
-    }
-
-    if (placedHere.size)
-      placed[dFrom] = {content: placedHere, openEnd, depth: dFrom}
   }
 
   return placed
