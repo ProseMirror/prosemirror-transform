@@ -1,9 +1,14 @@
 import {Mapping} from "./map"
 
-export class TransformError extends Error {
-  constructor(message) { super(message) }
-  get name() { return "TransformError" }
+export function TransformError(message) {
+  let err = Error.call(this, message)
+  err.__proto__ = TransformError.prototype
+  return err
 }
+
+TransformError.prototype = Object.create(Error.prototype)
+TransformError.prototype.constructor = TransformError
+TransformError.prototype.name = "TransformError"
 
 // ::- Abstraction to build up and track an array of
 // [steps](#transform.Step) representing a document transformation.
