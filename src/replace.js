@@ -286,7 +286,7 @@ function placeSlice($from, slice) {
         content = closeStart(content, dSlice - d)
         for (let i = wrap.length - 1; i >= 0; i--) content = Fragment.from(wrap[i].create(null, content))
         placedHere = placedHere.append(content)
-        if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd : 0
+        if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd - d : 0
         dSlice = d - 1
       }
     }

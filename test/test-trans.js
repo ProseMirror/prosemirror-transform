@@ -568,6 +568,11 @@ describe("Transform", () => {
             ul(li(p("a<a>bc")), li(p("de<b>f"))),
             doc(ul(li(p("foo")), li(p("bc")), li(p("de")), li(p("bar"))))))
 
+    it("finds the proper openEnd value when unwrapping a deep slice", () =>
+       repl(doc("<a>", p(), "<b>"),
+            doc(blockquote(blockquote(blockquote(p("hi"))))).slice(3, 6, true),
+            doc(p("hi"))))
+
     // A schema that allows marks on top-level block nodes
     let ms = new Schema({
       nodes: schema.spec.nodes.update("doc", Object.assign({}, schema.spec.nodes.get("doc"), {marks: "_"})),
