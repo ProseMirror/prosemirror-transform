@@ -227,7 +227,7 @@ export function joinPoint(doc, pos, dir = -1) {
   }
 }
 
-// :: (number, ?number, ?bool) → this
+// :: (number, ?number) → this
 // Join the blocks around the given position. If depth is 2, their
 // last and first siblings are also joined, and so on.
 Transform.prototype.join = function(pos, depth = 1) {
