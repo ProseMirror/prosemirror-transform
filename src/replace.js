@@ -342,9 +342,11 @@ class Frontier {
       if (!placed) break
     }
     // Close the current open node if it's not the the root and we
-    // either placed something, or the the current slice depth's node
-    // type matches the open node's type
-    if (this.open.length > 1 && (i > 0 || parent && this.open[this.open.length - 1].parent.type == parent.type))
+    // either placed up to the end of the node or the the current
+    // slice depth's node type matches the open node's type
+    if (this.open.length > 1 &&
+        (i > 0 && i == fragment.childCount ||
+         parent && this.open[this.open.length - 1].parent.type == parent.type))
       this.closeNode()
 
     return new Slice(fragment.cutByIndex(i), openStart, openEnd)

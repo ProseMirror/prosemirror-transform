@@ -616,6 +616,12 @@ describe("Transform", () => {
       ist(tr.doc, hb.doc(hb.h("Content"), hb.b(hb.p())), eq)
     })
 
+    it("can unwrap a body after a placed node", () => {
+      let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("Content"))))
+      tr.replace(7, 7, tr.doc.slice(0, tr.doc.content.size))
+      ist(tr.doc, hb.doc(hb.h("Head"), hb.b(hb.h("Head"), hb.p("Content"), hb.p("Content"))), eq)
+    })
+
     it("can wrap a paragraph in a body, even when it's not the first node", () => {
       let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("One"), hb.p("Two"))))
       tr.replace(0, tr.doc.content.size, tr.doc.slice(8, 16))
