@@ -596,6 +596,29 @@ describe("Transform", () => {
       ist(tr.doc.childCount, 2)
       ist(tr.doc.lastChild.marks.length, 1)
     })
+
+    // A schema that enforces a heading and a body at the top level
+    let hbs = new Schema({
+      nodes: schema.spec.nodes.append({
+        doc: Object.assign({}, schema.spec.nodes.get("doc"), {content: "heading body"}),
+        body: {content: "block+"}
+      })
+    })
+
+    it("can wrap a paragraph in a body, even when it's not the first node", () => {
+      let tr = new Transform(hbs.node("doc", null, [
+        hbs.node("heading", null, [hbs.text("Head")]),
+        hbs.node("body", null, [
+          hbs.node("paragraph", null, [hbs.text("One")]),
+          hbs.node("paragraph", null, [hbs.text("Two")])
+        ])
+      ]))
+      tr.replace(0, tr.doc.content.size, tr.doc.slice(8, 16))
+      ist(tr.doc, hbs.node("doc", null, [
+        hbs.node("heading", null, [hbs.text("One")]),
+        hbs.node("body", null, [hbs.node("paragraph", null, [hbs.text("Two")])])
+      ]), eq)
+    })
   })
 
   describe("replaceRange", () => {

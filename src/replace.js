@@ -238,6 +238,7 @@ function placeSlice($from, slice) {
   // each open fragment. The first pass tries to find direct fits, the
   // second allows wrapping.
   let dSlice = slice.openStart, lastPlaced = $from.depth + 1
+  let parentMatch = []
   for (let dFrom = $from.depth, pass = 1; dFrom >= 0 && dSlice >= 0; dFrom--) {
     // If we've reached the end of the first pass, go to the second
     if (dFrom == 0 && pass == 1) {
@@ -245,7 +246,8 @@ function placeSlice($from, slice) {
       pass = 2
       continue
     }
-    let parent = $from.node(dFrom), match = parent.contentMatchAt($from.indexAfter(dFrom))
+    let parent = $from.node(dFrom)
+    let match = parentMatch[dFrom] || parent.contentMatchAt($from.indexAfter(dFrom))
     let existing = placed[dFrom]
     let placedHere = existing ? existing.content : Fragment.empty, openEnd = existing ? existing.openEnd : 0
 
@@ -261,6 +263,7 @@ function placeSlice($from, slice) {
         }
         if (fits) {
           content = fits.append(closeStart(content, dSlice - d))
+          match = match.matchFragment(content)
           placedHere = placedHere.append(content)
           if (content.size) openEnd = endOfContent(slice, d) ? slice.openEnd - d : 0
           dSlice = d - 1
@@ -276,7 +279,7 @@ function placeSlice($from, slice) {
         if (!wrap.length) {
           if (!match.matchFragment(content)) continue
         } else if (d && wrap[wrap.length - 1] == nodeLeft(slice.content, d).type) {
-          // Don't create wrappers that correspond to exiting wrapper nodes
+          // Don't create wrappers that correspond to existing wrapper nodes
           continue
         } else if (!atEnd) {
           let after = wrap[wrap.length - 1].contentMatch.matchFragment(content)
@@ -285,6 +288,7 @@ function placeSlice($from, slice) {
         }
         content = closeStart(content, dSlice - d)
         for (let i = wrap.length - 1; i >= 0; i--) content = Fragment.from(wrap[i].create(null, content))
+        match = match.matchFragment(content)
         placedHere = placedHere.append(content)
         if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd - d : 0
         dSlice = d - 1
@@ -292,6 +296,7 @@ function placeSlice($from, slice) {
     }
 
     if (placedHere.size) placed[dFrom] = {content: placedHere, openEnd, depth: dFrom}
+    parentMatch[dFrom] = match
   }
 
   return placed
