@@ -11,7 +11,7 @@ Transform.prototype.addMark = function(from, to, mark) {
   this.doc.nodesBetween(from, to, (node, pos, parent) => {
     if (!node.isInline) return
     let marks = node.marks
-    if (!mark.isInSet(marks) && parent.type.allowsMarkType(mark.type)) {
+    if (node.type.spec.marks !== '' && !mark.isInSet(marks) && parent.type.allowsMarkType(mark.type)) {
       let start = Math.max(pos, from), end = Math.min(pos + node.nodeSize, to)
       let newSet = mark.addToSet(marks)
 
