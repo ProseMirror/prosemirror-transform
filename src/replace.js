@@ -199,11 +199,6 @@ function canMoveText($from, $to, slice) {
   return match && match.validEnd
 }
 
-function nodeLeft(content, depth) {
-  for (let i = 1; i < depth; i++) content = content.firstChild.content
-  return content.firstChild
-}
-
 function nodeRight(content, depth) {
   for (let i = 1; i < depth; i++) content = content.lastChild.content
   return content.lastChild
@@ -222,132 +217,178 @@ function nodeRight(content, depth) {
 // from the inside out, and trying to find a landing spot for each
 // element, by simultaneously scanning over the gap side. When no
 // place is found for an open node's content, it is left in that node.
-//
-// If the outer content can't be placed, a set of wrapper nodes is
-// made up for it (by rooting it in the document node type using
-// findWrapping), and the algorithm continues to iterate over those.
-// This is guaranteed to find a fit, since both stacks now start with
-// the same node type (doc).
 
 // : (ResolvedPos, Slice) → [{content: Fragment, openEnd: number, depth: number}]
 function placeSlice($from, slice) {
-  let placed = []
-  if (!slice.content.size) return placed
+  let frontier = new Frontier($from)
+  for (let pass = 1; slice.size && pass <= 3; pass++)
+    slice = frontier.placeSlice(slice.content, slice.openStart, slice.openEnd, pass)
+  while (frontier.open.length) frontier.closeNode()
+  return frontier.placed
+}
 
-  // Loop over the open side of the slice, trying to find a place for
-  // each open fragment. The first pass tries to find direct fits, the
-  // second allows wrapping.
-  let dSlice = slice.openStart, lastPlaced = $from.depth + 1
-  let parentMatch = []
-  for (let dFrom = $from.depth, pass = 1; dFrom >= 0 && dSlice >= 0; dFrom--) {
-    // If we've reached the end of the first pass, go to the second
-    if (dFrom == 0 && pass == 1) {
-      dFrom = lastPlaced
-      pass = 2
-      continue
+// Helper class that models the open side of the insert position,
+// keeping track of the content match and already inserted content
+// at each depth.
+class Frontier {
+  constructor($pos) {
+    // : [{parent: Node, match: ContentMatch, content: Fragment, wrapper: bool, openEnd: number, depth: number}]
+    this.open = []
+    for (let d = 0; d <= $pos.depth; d++) {
+      let parent = $pos.node(d), match = parent.contentMatchAt($pos.indexAfter(d))
+      this.open.push({parent, match, content: Fragment.empty, wrapper: false, openEnd: 0, depth: d})
     }
-    let parent = $from.node(dFrom)
-    let match = parentMatch[dFrom] || parent.contentMatchAt($from.indexAfter(dFrom))
-    let existing = placed[dFrom]
-    let placedHere = existing ? existing.content : Fragment.empty, openEnd = existing ? existing.openEnd : 0
+    this.placed = []
+  }
 
-    for (let d = dSlice; d >= 0; d--) {
-      let content = sliceRange(slice.content, d, dSlice == slice.openStart ? null : dSlice + 1)
-
-      if (pass == 1) {
-        // First pass, search for direct fits (possibly by stripping marks
-        let fits = match.fillBefore(content)
-        if (!fits && hasMarks(content)) {
-          let stripped = matchStrippingMarks(parent.type, match, content)
-          if (stripped) { content = stripped; fits = Fragment.empty }
+  // : (Fragment, number, number, number, ?Node) → Slice
+  // Tries to place the content of the given slice, and returns a
+  // slice containing unplaced content.
+  //
+  // pass 1: try to fit directly
+  // pass 2: allow wrapper nodes to be introduced
+  // pass 3: allow unwrapping of nodes that aren't open
+  placeSlice(fragment, openStart, openEnd, pass, parent) {
+    if (openStart > 0) {
+      let first = fragment.firstChild
+      let inner = this.placeSlice(first.content, Math.max(0, openStart - 1),
+                                  openEnd && fragment.childCount == 1 ? openEnd - 1 : 0,
+                                  pass, first)
+      if (inner.content != first.content) {
+        if (inner.content.size) {
+          fragment = fragment.replaceChild(0, first.copy(inner.content))
+          openStart = inner.openStart + 1
+        } else {
+          if (fragment.childCount == 1) openEnd = 0
+          fragment = fragment.cutByIndex(1)
+          openStart = 0
         }
-        if (fits) {
-          content = fits.append(closeStart(content, dSlice - d))
-          match = match.matchFragment(content)
-          placedHere = placedHere.append(content)
-          if (content.size) openEnd = endOfContent(slice, d) ? slice.openEnd - d : 0
-          dSlice = d - 1
-          lastPlaced = dFrom
-          if (nodeLeft(slice.content, d).type == parent.type) break
-        }
-      } else {
-        // Second pass, allows introducing wrapper nodes
-        if (content.size == 0) continue
-        let wrap = match.findWrapping(content.firstChild.type)
-        if (!wrap) continue
-        let atEnd = endOfContent(slice, d)
-        if (!wrap.length) {
-          if (!match.matchFragment(content)) continue
-        } else if (d && wrap[wrap.length - 1] == nodeLeft(slice.content, d).type) {
-          // Don't create wrappers that correspond to existing wrapper nodes
-          continue
-        } else if (!atEnd) {
-          let after = wrap[wrap.length - 1].contentMatch.matchFragment(content)
-          if (!after) continue
-          content = content.append(after.fillBefore(Fragment.empty, true))
-        }
-        content = closeStart(content, dSlice - d)
-        for (let i = wrap.length - 1; i >= 0; i--) content = Fragment.from(wrap[i].create(null, content))
-        match = match.matchFragment(content)
-        placedHere = placedHere.append(content)
-        if (content.size) openEnd = atEnd ? wrap.length + slice.openEnd - d : 0
-        dSlice = d - 1
       }
     }
-
-    if (placedHere.size) placed[dFrom] = {content: placedHere, openEnd, depth: dFrom}
-    parentMatch[dFrom] = match
+    let result = this.placeContent(fragment, openStart, openEnd, pass, parent)
+    if (pass > 2 && result.size && openStart == 0) {
+      for (let i = 0; i < result.content.childCount; i++) {
+        let child = result.content.child(i)
+        this.placeContent(child.content, 0,
+                          openEnd && i == result.content.childCount.length - 1 ? openEnd - 1 : 0,
+                          pass, child)
+      }
+      result = Fragment.empty
+    }
+    return result
   }
 
-  return placed
-}
+  placeContent(fragment, openStart, openEnd, pass, parent) {
+    let i = 0
+    // Go over the fragment's children
+    for (; i < fragment.childCount; i++) {
+      let child = fragment.child(i), placed = false, last = i == fragment.childCount - 1
+      // Try each open node in turn, starting from the innermost
+      for (let d = this.open.length - 1; d >= 0; d--) {
+        let open = this.open[d], wrap
 
-function endOfContent(slice, depth) {
-  for (let i = 0, content = slice.content; i < depth; i++) {
-    if (content.childCount > 1) return false
-    content = content.firstChild.content
+        // If pass > 1, it is allowed to wrap the node to help find a
+        // fit, so if findWrappeing returns something, we add open
+        // nodes to the frontier for that wrapping.
+        if (pass > 1 && (wrap = open.match.findWrapping(child.type)) &&
+            !(parent && wrap.length && wrap[wrap.length - 1] == parent.type)) {
+          for (let w = 0; w < wrap.length; w++) {
+            open.match = open.match.matchType(wrap[w])
+            d++
+            open = {parent: wrap[w].create(),
+                    match: wrap[w].contentMatch,
+                    content: Fragment.empty, wrapper: true, openEnd: 0, depth: d + w}
+            this.open.push(open)
+          }
+        }
+
+        // See if the child fits here
+        let match = open.match.matchType(child.type)
+        if (!match) {
+          let fill = open.match.fillBefore(Fragment.from(child))
+          if (fill) {
+            for (let j = 0; j < fill.childCount; j++) {
+              let ch = fill.child(j)
+              this.addNode(open, ch, 0)
+              match = open.match.matchFragment(ch)
+            }
+          } else if (parent && open.match.matchType(parent.type)) {
+            // Don't continue looking further up if the parent node
+            // would fit here.
+            break
+          } else {
+            continue
+          }
+        }
+
+        // Close open nodes above this one, since we're starting to
+        // add to this.
+        while (this.open.length - 1 > d) this.closeNode()
+        // Strip marks from the child or close its start when necessary
+        child = child.mark(open.parent.type.allowedMarks(child.marks))
+        if (openStart) {
+          child = closeNodeStart(child, openStart)
+          openStart = 0
+        }
+        // Add the child to this open node and adjust its metadata
+        this.addNode(open, child, last ? openEnd : 0)
+        open.match = match
+        if (last) openEnd = 0
+        placed = true
+        break
+      }
+      // As soon as we've failed to place a node we stop looking at
+      // later nodes
+      if (!placed) break
+    }
+    // Close the current open node if it's not the the root and we
+    // either placed something, or the the current slice depth's node
+    // type matches the open node's type
+    if (this.open.length > 1 && (i > 0 || parent && this.open[this.open.length - 1].parent.type == parent.type))
+      this.closeNode()
+
+    return new Slice(fragment.cutByIndex(i), openStart, openEnd)
   }
-  return true
-}
 
-function hasMarks(fragment) {
-  for (let i = 0; i < fragment.childCount; i++)
-    if (fragment.child(i).marks.length) return true
-  return false
-}
-
-function matchStrippingMarks(type, match, fragment) {
-  let newNodes = []
-  for (let i = 0; i < fragment.childCount; i++) {
-    let node = fragment.child(i)
-    match = match.matchType(node.type)
-    if (!match) return null
-    newNodes.push(node.mark(type.allowedMarks(node.marks)))
+  addNode(open, node, openEnd) {
+    open.content = closeFragmentEnd(open.content, open.openEnd).addToEnd(node)
+    open.openEnd = openEnd
   }
-  return Fragment.from(newNodes)
+
+  closeNode() {
+    let open = this.open.pop()
+    if (open.content.size == 0) {
+      // Nothing here
+    } else if (open.wrapper) {
+      this.addNode(this.open[this.open.length - 1], open.parent.copy(open.content), open.openEnd + 1)
+    } else {
+      this.placed[open.depth] = {depth: open.depth, content: open.content, openEnd: open.openEnd}
+    }
+  }
 }
 
-// : (Fragment, number, ?number) → Fragment
-// Pick the fragment at `startDepth` out of a slice's content,
-// dropping the first node at depth `endDepth`, if not null.
-function sliceRange(content, startDepth, endDepth) {
-  for (let i = 0; i < startDepth; i++) content = content.firstChild.content
-  if (endDepth != null) content = dropFirstAt(content, endDepth - startDepth)
-  return content
+function closeNodeStart(node, depth) {
+  let content = node.content
+  if (depth > 1) {
+    let first = closeNodeStart(node.firstChild, depth - 1)
+    content = node.content.replaceChild(0, first)
+  }
+  let fill = node.type.contentMatch.fillBefore(content)
+  return node.copy(fill.append(content))
 }
 
-function dropFirstAt(fragment, depth) {
-  if (depth == 1) return fragment.cutByIndex(1, fragment.childCount)
-  let first = fragment.firstChild
-  return fragment.replaceChild(0, first.copy(dropFirstAt(first.content, depth - 1)))
+function closeNodeEnd(node, depth) {
+  let content = node.content
+  if (depth > 1) {
+    let last = closeNodeEnd(node.lastChild, depth - 1)
+    content = node.content.replaceChild(node.childCount - 1, last)
+  }
+  let fill = node.contentMatchAt(node.childCount).fillBefore(Fragment.empty, true)
+  return node.copy(content.append(fill))
 }
 
-function closeStart(fragment, depth) {
-  if (depth == 0) return fragment
-  let first = fragment.firstChild, content = closeStart(first.content, depth - 1)
-  if (!content.size) return fragment.cutByIndex(1, fragment.childCount)
-  let fill = first.type.contentMatch.fillBefore(content)
-  return fragment.replaceChild(0, first.copy(fill.append(content)))
+function closeFragmentEnd(fragment, depth) {
+  return depth ? fragment.replaceChild(fragment.childCount - 1, closeNodeEnd(fragment.lastChild, depth)) : fragment
 }
 
 // :: (number, number, Slice) → this

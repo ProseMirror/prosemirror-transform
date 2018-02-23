@@ -1,5 +1,5 @@
 const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
-       strong, code, a, img, br, hr, eq} = require("prosemirror-test-builder")
+       strong, code, a, img, br, hr, eq, builders} = require("prosemirror-test-builder")
 const {testTransform} = require("./trans")
 const {Transform, liftTarget, findWrapping} = require("../dist")
 const {Slice, Fragment, Schema} = require("prosemirror-model")
@@ -549,9 +549,9 @@ describe("Transform", () => {
             doc(p(), blockquote(p()), p("x"))))
 
     it("does nothing when given an unfittable slice", () =>
-       repl(doc(p("<a>x")),
-            new Slice(Fragment.from([p("foo"), schema.text("bar")]), 0, 0),
-            doc(p("x"))))
+       repl(p("<a>x"),
+            new Slice(Fragment.from([blockquote(), hr]), 0, 0),
+            p("x")))
 
     it("doesn't drop content when things only fit at the top level", () =>
        repl(doc(p("foo"), "<a>", p("bar<b>")),
@@ -598,26 +598,40 @@ describe("Transform", () => {
     })
 
     // A schema that enforces a heading and a body at the top level
-    let hbs = new Schema({
+    let hbSchema = new Schema({
       nodes: schema.spec.nodes.append({
         doc: Object.assign({}, schema.spec.nodes.get("doc"), {content: "heading body"}),
         body: {content: "block+"}
       })
     })
+    let hb = builders(hbSchema, {
+      p: {nodeType: "paragraph"},
+      b: {nodeType: "body"},
+      h: {nodeType: "heading", level: 1},
+    })
+
+    it("can unwrap a paragraph when replacing into a strict schema", () => {
+      let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("Content"))))
+      tr.replace(0, tr.doc.content.size, tr.doc.slice(7, 16))
+      ist(tr.doc, hb.doc(hb.h("Content"), hb.b(hb.p())), eq)
+    })
 
     it("can wrap a paragraph in a body, even when it's not the first node", () => {
-      let tr = new Transform(hbs.node("doc", null, [
-        hbs.node("heading", null, [hbs.text("Head")]),
-        hbs.node("body", null, [
-          hbs.node("paragraph", null, [hbs.text("One")]),
-          hbs.node("paragraph", null, [hbs.text("Two")])
-        ])
-      ]))
+      let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("One"), hb.p("Two"))))
       tr.replace(0, tr.doc.content.size, tr.doc.slice(8, 16))
-      ist(tr.doc, hbs.node("doc", null, [
-        hbs.node("heading", null, [hbs.text("One")]),
-        hbs.node("body", null, [hbs.node("paragraph", null, [hbs.text("Two")])])
-      ]), eq)
+      ist(tr.doc, hb.doc(hb.h("One"), hb.b(hb.p("Two"))), eq)
+    })
+
+    it("can split a fragment and place its children in different parents", () => {
+      let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.h("One"), hb.p("Two"))))
+      tr.replace(0, tr.doc.content.size, tr.doc.slice(7, 17))
+      ist(tr.doc, hb.doc(hb.h("One"), hb.b(hb.p("Two"))), eq)
+    })
+
+    it("will insert filler nodes before a node when necessary", () => {
+      let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("One"))))
+      tr.replace(0, tr.doc.content.size, tr.doc.slice(6, tr.doc.content.size))
+      ist(tr.doc, hb.doc(hb.h(), hb.b(hb.p("One"))), eq)
     })
   })
 
