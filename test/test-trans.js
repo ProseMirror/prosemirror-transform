@@ -671,6 +671,11 @@ describe("Transform", () => {
        repl(doc(p("<a>foo")),
             doc(ul(li(p("<a>one")), li(p("two<b>")))),
             doc(ul(li(p("one")), li(p("twofoo"))))))
+
+    it("drops defining context when it matches the parent structure", () =>
+       repl(doc(blockquote(p("<a>"))),
+            doc(blockquote(p("<a>one<b>"))),
+            doc(blockquote(p("one")))))
   })
 
   describe("replaceRangeWith", () => {

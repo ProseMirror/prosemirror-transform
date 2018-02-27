@@ -433,6 +433,9 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     if (targetDepths.indexOf(d) > -1) preferredTarget = d
     else if ($from.before(d) == pos) targetDepths.splice(1, 0, -d)
   }
+  // Try to fit each possible depth of the slice into each possible
+  // target depth, starting with the preferred depths.
+  let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
 
   let leftNodes = [], preferredDepth = slice.openStart
   for (let content = slice.content, i = 0;; i++) {
@@ -443,14 +446,13 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   }
   // Back up if the node directly above openStart, or the node above
   // that separated only by a non-defining textblock node, is defining.
-  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining)
+  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining &&
+      $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 1].type)
     preferredDepth -= 1
-  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining)
+  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining &&
+           $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 2].type)
     preferredDepth -= 2
 
-  // Try to fit each possible depth of the slice into each possible
-  // target depth, starting with the preferred depths.
-  let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
   for (let j = slice.openStart; j >= 0; j--) {
     let openDepth = (j + preferredDepth + 1) % (slice.openStart + 1)
     let insert = leftNodes[openDepth]
