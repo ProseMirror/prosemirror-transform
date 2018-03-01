@@ -27,7 +27,7 @@ export function replaceStep(doc, from, to = from, slice = Slice.empty) {
     if (fittedAfter)
       return new ReplaceAroundStep(from, after, to, $to.end(), fittedAfter, fittedLeft.size)
   }
-  return new ReplaceStep(from, to, fitted)
+  return fitted.size || from != to ? new ReplaceStep(from, to, fitted) : null
 }
 
 // :: (number, ?number, ?Slice) → this
