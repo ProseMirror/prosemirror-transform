@@ -60,7 +60,7 @@ Transform.prototype.lift = function(range, target) {
                                          before.size - openStart, true))
 }
 
-// :: (NodeRange, NodeType, ?Object) → ?[{type: NodeType, attrs: ?Object}]
+// :: (NodeRange, NodeType, ?Object, ?NodeRange) → ?[{type: NodeType, attrs: ?Object}]
 // Try to find a valid way to wrap the content in the given range in a
 // node of the given type. May introduce extra nodes around and inside
 // the wrapper node, if necessary. Returns null if no valid wrapping
