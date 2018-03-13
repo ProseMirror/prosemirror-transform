@@ -64,7 +64,9 @@ Transform.prototype.lift = function(range, target) {
 // Try to find a valid way to wrap the content in the given range in a
 // node of the given type. May introduce extra nodes around and inside
 // the wrapper node, if necessary. Returns null if no valid wrapping
-// could be found.
+// could be found. When `innerRange` is given, that range's content is
+// used as the content to fit into the wrapping, instead of the
+// content of `range`.
 export function findWrapping(range, nodeType, attrs, innerRange = range) {
   let around = findWrappingOutside(range, nodeType)
   let inner = around && findWrappingInside(innerRange, nodeType)
