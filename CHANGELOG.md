@@ -1,3 +1,11 @@
+## 1.0.5 (2018-03-14)
+
+### Bug fixes
+
+[`replaceStep`](https://prosemirror.net/docs/ref/#transform.replaceStep) will now return null rather than an empty step when it fails to place the slice.
+
+Avoid duplicating defining parent nodes in [`replaceRange`](https://prosemirror.net/docs/ref/#tranform.Transform.replaceRange).
+
 ## 1.0.4 (2018-02-23)
 
 ### Bug fixes
