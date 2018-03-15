@@ -65,6 +65,8 @@ export class ReplaceStep extends Step {
   }
 
   static fromJSON(schema, json) {
+    if (typeof json.from != "number" || typeof json.to != "number")
+      throw new RangeError("Invalid input for ReplaceStep.fromJSON")
     return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
   }
 }
@@ -133,6 +135,9 @@ export class ReplaceAroundStep extends Step {
   }
 
   static fromJSON(schema, json) {
+    if (typeof json.from != "number" || typeof json.to != "number" ||
+        typeof json.gapFrom != "number" || typeof json.gapTo != "number" || typeof json.insert != "number")
+      throw new RangeError("Invalid input for ReplaceAroundStep.fromJSON")
     return new ReplaceAroundStep(json.from, json.to, json.gapFrom, json.gapTo,
                                  Slice.fromJSON(schema, json.slice), json.insert, !!json.structure)
   }

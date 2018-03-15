@@ -56,6 +56,8 @@ export class AddMarkStep extends Step {
   }
 
   static fromJSON(schema, json) {
+    if (typeof json.from != "number" || typeof json.to != "number")
+      throw new RangeError("Invalid input for AddMarkStep.fromJSON")
     return new AddMarkStep(json.from, json.to, schema.markFromJSON(json.mark))
   }
 }
@@ -104,6 +106,8 @@ export class RemoveMarkStep extends Step {
   }
 
   static fromJSON(schema, json) {
+    if (typeof json.from != "number" || typeof json.to != "number")
+      throw new RangeError("Invalid input for RemoveMarkStep.fromJSON")
     return new RemoveMarkStep(json.from, json.to, schema.markFromJSON(json.mark))
   }
 }

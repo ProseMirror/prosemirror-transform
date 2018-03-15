@@ -57,7 +57,10 @@ export class Step {
   // Deserialize a step from its JSON representation. Will call
   // through to the step class' own implementation of this method.
   static fromJSON(schema, json) {
-    return stepsByID[json.stepType].fromJSON(schema, json)
+    if (!json || !json.stepType) throw new RangeError("Invalid input for Step.fromJSON")
+    let type = stepsByID[json.stepType]
+    if (!type) throw new RangeError(`No step type ${json.stepType} defined`)
+    return type.fromJSON(schema, json)
   }
 
   // :: (string, constructor<Step>)
