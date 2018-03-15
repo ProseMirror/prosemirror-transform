@@ -1,3 +1,9 @@
+## 1.0.6 (2018-03-15)
+
+### Bug fixes
+
+Throw errors, rather than constructing invalid objects, when deserializing from invalid JSON data.
+
 ## 1.0.5 (2018-03-14)
 
 ### Bug fixes
