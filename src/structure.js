@@ -137,7 +137,7 @@ function canChangeType(doc, pos, type) {
 
 // :: (number, ?NodeType, ?Object, ?[Mark]) → this
 // Change the type, attributes, and/or marks of the node at `pos`.
-// When `nodeType` is null, the existing node type is preserved,
+// When `type` is undefined, the existing node type is preserved,
 Transform.prototype.setNodeMarkup = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
