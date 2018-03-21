@@ -1,3 +1,9 @@
+## 1.0.7 (2018-03-21)
+
+### Bug fixes
+
+[`Transform.deleteRange`](https://prosemirror.net/docs/ref/#transform.Transform.deleteRange) will cover unmatched opening at the start of the deleted range.
+
 ## 1.0.6 (2018-03-15)
 
 ### Bug fixes
