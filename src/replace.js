@@ -507,16 +507,14 @@ Transform.prototype.deleteRange = function(from, to) {
   let covered = coveredDepths($from, $to)
   for (let i = 0; i < covered.length; i++) {
     let depth = covered[i], last = i == covered.length - 1
-    if ((last && depth == 0) || $from.node(depth).type.contentMatch.validEnd) {
-      from = $from.start(depth)
-      to = $to.end(depth)
-      break
-    }
-    if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1)))) {
-      from = $from.before(depth)
-      to = $to.after(depth)
-      break
-    }
+    if ((last && depth == 0) || $from.node(depth).type.contentMatch.validEnd)
+      return this.delete($from.start(depth), $to.end(depth))
+    if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1))))
+      return this.delete($from.before(depth), $to.after(depth))
+  }
+  for (let d = 1; d <= $from.depth; d++) {
+    if (from - $from.start(d) == $from.depth - d && to > $from.end(d))
+      return this.delete($from.before(d), to)
   }
   return this.delete(from, to)
 }

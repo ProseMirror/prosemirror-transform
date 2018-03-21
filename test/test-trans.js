@@ -739,5 +739,9 @@ describe("Transform", () => {
     it("expands to cover the whole document", () =>
        del(doc(h1("<a>foo"), p("bar"), p("baz<b>")),
            doc(p())))
+
+    it("deletes the open token when deleting from start to past end of block", () =>
+       del(doc(h1("<a>foo"), p("b<b>ar")),
+           doc(p("ar"))))
   })
 })
