@@ -1,6 +1,6 @@
 {
   "name": "prosemirror-transform",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "ProseMirror document transformations",
   "main": "dist/index.js",
   "license": "MIT",

@@ -1,3 +1,9 @@
+## 1.0.8 (2018-04-04)
+
+### Bug fixes
+
+Fixes an issue where [`replaceStep`](https://prosemirror.net/docs/ref/#transform.replaceStep) could generate slices that internally violated the schema.
+
 ## 1.0.7 (2018-03-21)
 
 ### Bug fixes
