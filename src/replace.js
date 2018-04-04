@@ -327,7 +327,7 @@ class Frontier {
         // Strip marks from the child or close its start when necessary
         child = child.mark(open.parent.type.allowedMarks(child.marks))
         if (openStart) {
-          child = closeNodeStart(child, openStart)
+          child = closeNodeStart(child, openStart, last ? openEnd : 0)
           openStart = 0
         }
         // Add the child to this open node and adjust its metadata
@@ -369,13 +369,13 @@ class Frontier {
   }
 }
 
-function closeNodeStart(node, depth) {
+function closeNodeStart(node, openStart, openEnd) {
   let content = node.content
-  if (depth > 1) {
-    let first = closeNodeStart(node.firstChild, depth - 1)
+  if (openStart > 1) {
+    let first = closeNodeStart(node.firstChild, openStart - 1, node.childCount == 1 ? openEnd - 1 : 0)
     content = node.content.replaceChild(0, first)
   }
-  let fill = node.type.contentMatch.fillBefore(content)
+  let fill = node.type.contentMatch.fillBefore(content, openEnd == 0)
   return node.copy(fill.append(content))
 }
 
