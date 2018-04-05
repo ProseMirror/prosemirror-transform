@@ -1,3 +1,9 @@
+## 1.0.9 (2018-04-05)
+
+### Bug fixes
+
+Fix a bug that made [`replaceStep`](https://prosemirror.net/docs/ref/#transform.replaceStep) unable to generate wrapper nodes in some circumstances.
+
 ## 1.0.8 (2018-04-04)
 
 ### Bug fixes
