@@ -292,6 +292,7 @@ class Frontier {
         // nodes to the frontier for that wrapping.
         if (pass > 1 && (wrap = open.match.findWrapping(child.type)) &&
             !(parent && wrap.length && wrap[wrap.length - 1] == parent.type)) {
+          while (this.open.length - 1 > d) this.closeNode()
           for (let w = 0; w < wrap.length; w++) {
             open.match = open.match.matchType(wrap[w])
             d++

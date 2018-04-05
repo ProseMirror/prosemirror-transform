@@ -138,6 +138,11 @@ describe("Transform", () => {
        ins(doc(blockquote("<a>", p("he<1>y")), p("after<2>")),
            schema.node("paragraph"),
            doc(blockquote(p(), "<a>", p("he<1>y")), p("after<2>"))))
+
+    it("will wrap a node with the suitable parent", () =>
+       ins(doc(p("foo<a>bar")),
+           schema.nodes.list_item.createAndFill(),
+           doc(p("foo"), ol(li(p())), p("bar"))))
   })
 
   describe("delete", () => {
