@@ -123,7 +123,7 @@ Transform.prototype.setBlockType = function(from, to = from, type, attrs) {
       let mapping = this.mapping.slice(mapFrom)
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1)
       this.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1,
-                                      new Slice(Fragment.from(type.create(attrs)), 0, 0), 1, true))
+                                      new Slice(Fragment.from(type.create(attrs, null, node.marks)), 0, 0), 1, true))
       return false
     }
   })
