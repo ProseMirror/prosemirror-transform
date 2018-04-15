@@ -1,3 +1,9 @@
+## 1.0.10 (2018-04-15)
+
+### Bug fixes
+
+[`Transform.setBlockType`](https://prosemirror.net/docs/ref/#transform.Transform.setBlockType) no longer drops marks on the nodes it updates.
+
 ## 1.0.9 (2018-04-05)
 
 ### Bug fixes
