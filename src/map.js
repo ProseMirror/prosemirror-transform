@@ -174,16 +174,6 @@ export class Mapping {
     return new Mapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to)
   }
 
-  getMirror(n) {
-    if (this.mirror) for (let i = 0; i < this.mirror.length; i++)
-      if (this.mirror[i] == n) return this.mirror[i + (i % 2 ? -1 : 1)]
-  }
-
-  setMirror(n, m) {
-    if (!this.mirror) this.mirror = []
-    this.mirror.push(n, m)
-  }
-
   // :: (StepMap, ?number)
   // Add a step map to the end of this mapping. If `mirrors` is
   // given, it should be the index of the step map that is the mirror
@@ -201,6 +191,20 @@ export class Mapping {
       let mirr = mapping.getMirror(i)
       this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : null)
     }
+  }
+
+  // :: (number) → ?number
+  // Finds the offset of the step map that mirrors the map at the
+  // given offset, in this mapping (as per the second argument to
+  // `appendMap`).
+  getMirror(n) {
+    if (this.mirror) for (let i = 0; i < this.mirror.length; i++)
+      if (this.mirror[i] == n) return this.mirror[i + (i % 2 ? -1 : 1)]
+  }
+
+  setMirror(n, m) {
+    if (!this.mirror) this.mirror = []
+    this.mirror.push(n, m)
   }
 
   // :: (Mapping)
