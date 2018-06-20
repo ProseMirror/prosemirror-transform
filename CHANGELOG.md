@@ -1,3 +1,11 @@
+## 1.1.0 (2018-06-20)
+
+### New features
+
+[`Transform.getMirror`](https://prosemirror.net/docs/ref/#transform.Transform.getMirror), usable in obscure circumstances for inspecting the mirroring structure or a transform, is now a public method.
+
+New utility function [`dropPoint`](https://prosemirror.net/docs/ref/#transform.dropPoint), which tries to find a valid position for dropping a slice near a given document position.
+
 ## 1.0.10 (2018-04-15)
 
 ### Bug fixes
