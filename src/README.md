@@ -52,3 +52,4 @@ transformations or determining whether they are even possible.
 @canJoin
 @joinPoint
 @insertPoint
+@dropPoint
