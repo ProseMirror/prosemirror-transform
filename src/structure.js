@@ -259,3 +259,26 @@ export function insertPoint(doc, pos, nodeType) {
       if (index < $pos.node(d).childCount) return null
     }
 }
+
+// :: (Node, number, Slice) → ?number
+// Finds a position at or around the given position where the given
+// slice can be inserted. Will look at parent nodes' nearest boundary
+// and try there, even if the original position wasn't directly at the
+// start or end of that node. Returns null when no position was found.
+export function dropPoint(doc, pos, slice) {
+  let $pos = doc.resolve(pos)
+  if (!slice.content.size) return pos
+  let content = slice.content
+  for (let i = 0; i < slice.openStart; i++) content = content.firstChild.content
+  for (let pass = 1; pass <= (slice.openStart == 0 && slice.length ? 2 : 1); pass++) {
+    for (let d = $pos.depth; d >= 0; d--) {
+      let bias = d == $pos.depth ? 0 : $pos.pos <= ($pos.start(d + 1) + $pos.end(d + 1)) / 2 ? -1 : 1
+      let insertPos = $pos.index(d) + (bias > 0 ? 1 : 0)
+      if (pass == 1
+          ? $pos.node(d).canReplace(insertPos, insertPos, content)
+          : $pos.node(d).contentMatchAt(insertPos).findWrapping(content.firstChild))
+        return bias == 0 ? $pos.pos : bias < 0 ? $pos.before(d + 1) : $pos.after(d + 1)
+    }
+  }
+  return null
+}
