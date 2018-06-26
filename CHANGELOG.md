@@ -1,3 +1,9 @@
+## 1.1.1 (2018-06-26)
+
+### Bug fixes
+
+Fix issues in the new [`dropPoint`](https://prosemirror.net/docs/ref/#transform.dropPoint) function.
+
 ## 1.1.0 (2018-06-20)
 
 ### New features
