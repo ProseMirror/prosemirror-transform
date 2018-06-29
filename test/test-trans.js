@@ -681,6 +681,11 @@ describe("Transform", () => {
        repl(doc(blockquote(p("<a>"))),
             doc(blockquote(p("<a>one<b>"))),
             doc(blockquote(p("one")))))
+
+    it("closes open nodes at the start", () =>
+       repl(doc("<a>", p("abc"), "<b>"),
+            doc(ul(li("<a>")), p("def"), "<b>"),
+            doc(ul(li(p())), p("def"))))
   })
 
   describe("replaceRangeWith", () => {

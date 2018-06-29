@@ -480,7 +480,7 @@ function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
     fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
   }
   if (depth > newOpen)
-    fragment = parent.contentMatchAt(0).fillBefore(fragment).append(fragment)
+    fragment = parent.contentMatchAt(0).fillBefore(fragment, true).append(fragment)
   return fragment
 }
 
