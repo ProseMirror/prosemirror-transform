@@ -1,3 +1,9 @@
+## 1.1.2 (2018-06-29)
+
+### Bug fixes
+
+Fix issue where [`replaceRange`](https://prosemirror.net/docs/ref/#transform.Transform.replaceRange) might create invalid nodes.
+
 ## 1.1.1 (2018-06-26)
 
 ### Bug fixes
