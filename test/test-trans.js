@@ -165,6 +165,10 @@ describe("Transform", () => {
     it("doesn't join incompatible nodes", () =>
        del(doc(pre("fo<a>o"), p("b<b>ar", img)),
            doc(pre("fo"), p("ar", img))))
+
+    it("doesn't join when marks are incompatible", () =>
+       del(doc(pre("fo<a>o"), p(em("b<b>ar"))),
+           doc(pre("fo"), p(em("ar")))))
   })
 
   describe("join", () => {

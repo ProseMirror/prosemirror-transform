@@ -87,12 +87,13 @@ function fitLeft($from, placed) {
 
 function fitRightJoin(content, parent, $from, $to, depth, openStart, openEnd) {
   let match, count = content.childCount, matchCount = count - (openEnd > 0 ? 1 : 0)
+  let parentNode = openStart < 0 ? parent : $from.node(depth)
   if (openStart < 0)
-    match = parent.contentMatchAt(matchCount)
+    match = parentNode.contentMatchAt(matchCount)
   else if (count == 1 && openEnd > 0)
-    match = $from.node(depth).contentMatchAt(openStart ? $from.index(depth) : $from.indexAfter(depth))
+    match = parentNode.contentMatchAt(openStart ? $from.index(depth) : $from.indexAfter(depth))
   else
-    match = $from.node(depth).contentMatchAt($from.indexAfter(depth))
+    match = parentNode.contentMatchAt($from.indexAfter(depth))
       .matchFragment(content, count > 0 && openStart ? 1 : 0, matchCount)
 
   let toNode = $to.node(depth)
@@ -122,6 +123,8 @@ function fitRightJoin(content, parent, $from, $to, depth, openStart, openEnd) {
   let toIndex = $to.index(depth)
   if (toIndex == toNode.childCount && !toNode.type.compatibleContent(parent.type)) return null
   let joinable = match.fillBefore(toNode.content, true, toIndex)
+  for (let i = toIndex; joinable && i < toNode.content.childCount; i++)
+    if (!parentNode.type.allowsMarks(toNode.content.child(i).marks)) joinable = null
   if (!joinable) return null
 
   if (openEnd > 0) {
@@ -183,17 +186,17 @@ function fitsTrivially($from, $to, slice) {
 function canMoveText($from, $to, slice) {
   if (!$to.parent.isTextblock) return false
 
+  let parent = slice.openEnd ? nodeRight(slice.content, slice.openEnd)
+      : $from.node($from.depth - (slice.openStart - slice.openEnd))
+  if (!parent.isTextblock) return false
+  for (let i = $to.index(); i < $to.parent.childCount; i++)
+    if (!parent.type.allowsMarks($to.parent.child(i).marks)) return false
   let match
-  if (!slice.openEnd) {
-    let parent = $from.node($from.depth - (slice.openStart - slice.openEnd))
-    if (!parent.isTextblock) return false
+  if (slice.openEnd) {
     match = parent.contentMatchAt(parent.childCount)
-    if (slice.size)
-      match = match.matchFragment(slice.content, slice.openStart ? 1 : 0)
   } else {
-    let parent = nodeRight(slice.content, slice.openEnd)
-    if (!parent.isTextblock) return false
     match = parent.contentMatchAt(parent.childCount)
+    if (slice.size) match = match.matchFragment(slice.content, slice.openStart ? 1 : 0)
   }
   match = match.matchFragment($to.parent.content, $to.index())
   return match && match.validEnd
