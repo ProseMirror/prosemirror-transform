@@ -1,3 +1,9 @@
+## 1.1.3 (2018-07-03)
+
+### Bug fixes
+
+Replacing from a code block into a paragraph that has marks, or similar scenarios that would join content with the wrong marks into a node, no longer crashes.
+
 ## 1.1.2 (2018-06-29)
 
 ### Bug fixes
