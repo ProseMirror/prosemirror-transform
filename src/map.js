@@ -216,7 +216,7 @@ export class Mapping {
     }
   }
 
-  // () → Mapping
+  // :: () → Mapping
   // Create an inverted version of this mapping.
   invert() {
     let inverse = new Mapping
