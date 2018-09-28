@@ -44,3 +44,16 @@ describe("Mapping", () => {
     testMapping(mk([2, 4, 0], [1, 0, 1], [3, 0, 4], {0: 2}), [0, 0], [1, 2], [4, 5], [6, 7], [7, 8])
   })
 })
+
+describe("StepRanges", () => {
+  it("maps new ranges", () => {
+    let stepRanges = new StepMap([5, 0, 4]).getRanges()
+    let mapping = mk([1, 0, 1], [8, 0, 4])
+    ist(!stepRanges.map(mapping).touches(5))
+    ist(stepRanges.map(mapping).touches(6))
+    ist(stepRanges.map(mapping).touches(5, 6))
+    ist(stepRanges.map(mapping).touches(14))
+    ist(stepRanges.map(mapping).touches(14, 15))
+    ist(!stepRanges.map(mapping).touches(15))
+  })
+})
