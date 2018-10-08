@@ -46,6 +46,71 @@ export class MapResult {
   }
 }
 
+class StepRanges {
+  constructor(ranges = []) {
+    this.ranges = ranges
+  }
+
+  map(mapping) {
+    let newRanges = []
+    for (let i = 0; i < this.ranges.length; i++) {
+      let newRange = this.ranges[i].map(mapping)
+      if (!newRange.deleted) newRanges.push(newRange)
+    }
+    return new StepRanges(newRanges)
+  }
+
+  touches(start, end = start) {
+    for (let i = 0; i < this.ranges.length; i++)
+      if (this.ranges[i].touches(start, end)) return true
+    return false
+  }
+
+  toString() {
+    return JSON.stringify(this.ranges)
+  }
+
+  static create(step, old = false) {
+    let ranges = []
+    step.forEach((oldStart, oldEnd, newStart, newEnd) => {
+      ranges.push(
+        Range.create(old ? oldStart : newStart, old ? oldEnd : newEnd)
+      )
+    })
+    return new StepRanges(ranges)
+  }
+}
+
+class Range {
+  constructor(start, end) {
+    this.start = start
+    this.end = end
+  }
+
+  map(mapping) {
+    return this.deleted
+      ? this
+      : new Range(
+        mapping.mapResult(this.start.pos),
+        mapping.mapResult(this.end.pos)
+      )
+  }
+
+  touches(start, end) {
+    return start <= this.end.pos && end >= this.start.pos
+  }
+
+  get deleted() {
+    return this.start.pos === this.end.pos
+      && this.start.deleted
+      && this.end.deleted
+  }
+
+  static create(start, end) {
+    return new Range(new MapResult(start), new MapResult(end))
+  }
+}
+
 // :: class extends Mappable
 // A map describing the deletions and insertions made by a step, which
 // can be used to find the correspondence between positions in the
@@ -66,6 +131,10 @@ export class StepMap {
     if (!this.inverted) for (let i = 0; i < index; i++)
       diff += this.ranges[i * 3 + 2] - this.ranges[i * 3 + 1]
     return this.ranges[index * 3] + diff + recoverOffset(value)
+  }
+
+  getRanges(old = false) {
+    return StepRanges.create(this, old)
   }
 
   // : (number, ?number) → MapResult
