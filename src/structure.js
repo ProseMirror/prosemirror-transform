@@ -189,7 +189,7 @@ Transform.prototype.split = function(pos, depth = 1, typesAfter) {
     let typeAfter = typesAfter && typesAfter[i]
     after = Fragment.from(typeAfter ? typeAfter.type.create(typeAfter.attrs, after) : $pos.node(d).copy(after))
   }
-  return this.step(new ReplaceStep(pos, pos, new Slice(before.append(after), depth, depth, true)))
+  return this.step(new ReplaceStep(pos, pos, new Slice(before.append(after), depth, depth), true))
 }
 
 // :: (Node, number) → bool

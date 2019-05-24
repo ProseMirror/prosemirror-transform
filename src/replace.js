@@ -273,7 +273,7 @@ class Frontier {
       for (let i = 0; i < result.content.childCount; i++) {
         let child = result.content.child(i)
         this.placeContent(child.content, 0,
-                          openEnd && i == result.content.childCount.length - 1 ? openEnd - 1 : 0,
+                          openEnd && i == result.content.childCount - 1 ? openEnd - 1 : 0,
                           pass, child)
       }
       result = Fragment.empty
