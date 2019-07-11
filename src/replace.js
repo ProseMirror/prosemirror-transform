@@ -291,7 +291,7 @@ class Frontier {
         let open = this.open[d], wrap
 
         // If pass > 1, it is allowed to wrap the node to help find a
-        // fit, so if findWrappeing returns something, we add open
+        // fit, so if findWrapping returns something, we add open
         // nodes to the frontier for that wrapping.
         if (pass > 1 && (wrap = open.match.findWrapping(child.type)) &&
             !(parent && wrap.length && wrap[wrap.length - 1] == parent.type)) {
