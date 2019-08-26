@@ -1,3 +1,13 @@
+## 1.1.4 (2019-08-26)
+
+### Bug fixes
+
+[`Mapping.invert`](https://prosemirror.net/docs/ref/#transform.Mapping.invert) is now part of the documented API (it was intented to be public from the start, but a typo prevented it from showing up in the docs).
+
+Fix an issue where a replace could needlessly drop content when the first node of the slice didn't fit the target context.
+
+`replaceRange` now more aggressively expands the replaced region if `replace` fails to place the slice.
+
 ## 1.1.3 (2018-07-03)
 
 ### Bug fixes
