@@ -473,7 +473,15 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     }
   }
 
-  return this.replace(from, to, slice)
+  let startSteps = this.steps.length
+  for (let i = targetDepths.length - 1; i >= 0; i--) {
+    this.replace(from, to, slice)
+    if (this.steps.length > startSteps) break
+    let depth = targetDepths[i]
+    if (i < 0) continue
+    from = $from.before(depth); to = $to.after(depth)
+  }
+  return this
 }
 
 function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
