@@ -224,8 +224,11 @@ function nodeRight(content, depth) {
 // : (ResolvedPos, Slice) → [{content: Fragment, openEnd: number, depth: number}]
 function placeSlice($from, slice) {
   let frontier = new Frontier($from)
-  for (let pass = 1; slice.size && pass <= 3; pass++)
-    slice = frontier.placeSlice(slice.content, slice.openStart, slice.openEnd, pass)
+  for (let pass = 1; slice.size && pass <= 3; pass++) {
+    let value = frontier.placeSlice(slice.content, slice.openStart, slice.openEnd, pass)
+    if (pass == 3 && value != slice && value.size) pass = 0 // Restart if the 3rd pass made progress but left content
+    slice = value
+  }
   while (frontier.open.length) frontier.closeNode()
   return frontier.placed
 }
@@ -270,13 +273,9 @@ class Frontier {
     }
     let result = this.placeContent(fragment, openStart, openEnd, pass, parent)
     if (pass > 2 && result.size && openStart == 0) {
-      for (let i = 0; i < result.content.childCount; i++) {
-        let child = result.content.child(i)
-        this.placeContent(child.content, 0,
-                          openEnd && i == result.content.childCount - 1 ? openEnd - 1 : 0,
-                          pass, child)
-      }
-      result = Fragment.empty
+      let child = result.content.firstChild, single = result.content.childCount == 1
+      this.placeContent(child.content, 0, openEnd && single ? openEnd - 1 : 0, pass, child)
+      result = single ? Fragment.empty : new Slice(result.content.cutByIndex(1), 0, openEnd)
     }
     return result
   }
