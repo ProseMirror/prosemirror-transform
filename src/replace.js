@@ -489,8 +489,11 @@ function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
     let first = fragment.firstChild
     fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
   }
-  if (depth > newOpen)
-    fragment = parent.contentMatchAt(0).fillBefore(fragment, true).append(fragment)
+  if (depth > newOpen) {
+    let match = parent.contentMatchAt(0)
+    let start = match.fillBefore(fragment).append(fragment)
+    fragment = start.append(match.matchFragment(start).fillBefore(Fragment.empty, true))
+  }
   return fragment
 }
 
