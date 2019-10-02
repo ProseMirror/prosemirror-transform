@@ -1,3 +1,9 @@
+## 1.1.5 (2019-10-02)
+
+### Bug fixes
+
+Fix crash in building replace steps for open-ended slices with complicated node content expressions.
+
 ## 1.1.4 (2019-08-26)
 
 ### Bug fixes
