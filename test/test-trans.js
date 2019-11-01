@@ -757,5 +757,9 @@ describe("Transform", () => {
     it("deletes the open token when deleting from start to past end of block", () =>
        del(doc(h1("<a>foo"), p("b<b>ar")),
            doc(p("ar"))))
+
+    it("doesn't delete the open token when the range end is at end of its own block", () =>
+       del(doc(p("one"), h1("<a>two"), blockquote(p("three<b>")), p("four")),
+           doc(p("one"), h1(), p("four"))))
   })
 })
