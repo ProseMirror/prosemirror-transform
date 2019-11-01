@@ -1,3 +1,9 @@
+## 1.1.6 (2019-11-01)
+
+### Bug fixes
+
+Fixes an issue where deleting a range from the start of block A to the end of block B would leave you with an empty block of type B.
+
 ## 1.1.5 (2019-10-02)
 
 ### Bug fixes
