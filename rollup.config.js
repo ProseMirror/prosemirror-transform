@@ -1,4 +1,4 @@
-import buble from '@rollup/plugin-buble';
+import buble from '@rollup/plugin-buble'
 
 export default {
   input: './src/index.js',
@@ -9,4 +9,4 @@ export default {
   },
   plugins: [buble()],
   external(id) { return !/^[\.\/]/.test(id) }
-};
+}
