@@ -1,5 +1,5 @@
 const {Schema, Slice} = require("prosemirror-model")
-const {canSplit, liftTarget, findWrapping, Transform} = require("../dist")
+const {canSplit, liftTarget, findWrapping, Transform} = require("..")
 const {eq, schema: baseSchema} = require("prosemirror-test-builder")
 const ist = require("ist")
 

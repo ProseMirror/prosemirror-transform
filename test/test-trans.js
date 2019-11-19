@@ -1,7 +1,7 @@
 const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
        strong, code, a, img, br, hr, eq, builders} = require("prosemirror-test-builder")
 const {testTransform} = require("./trans")
-const {Transform, liftTarget, findWrapping} = require("../dist")
+const {Transform, liftTarget, findWrapping} = require("..")
 const {Slice, Fragment, Schema} = require("prosemirror-model")
 const ist = require("ist")
 

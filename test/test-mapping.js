@@ -1,5 +1,5 @@
 const ist = require("ist")
-const {Mapping, StepMap} = require("../dist")
+const {Mapping, StepMap} = require("..")
 
 function testMapping(mapping, ...cases) {
   let inverted = mapping.invert()

@@ -1,4 +1,4 @@
-const {Transform, Step, Mapping} = require("../dist")
+const {Transform, Step, Mapping} = require("..")
 const {eq} = require("prosemirror-test-builder")
 const ist = require("ist")
 

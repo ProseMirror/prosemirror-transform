@@ -1,5 +1,5 @@
 const {Slice, Fragment} = require("prosemirror-model")
-const {ReplaceStep, AddMarkStep, RemoveMarkStep} = require("../dist")
+const {ReplaceStep, AddMarkStep, RemoveMarkStep} = require("..")
 const ist = require("ist")
 const {eq, schema, doc, p} = require("prosemirror-test-builder")
 
