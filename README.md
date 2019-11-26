@@ -1,20 +1,20 @@
 # prosemirror-transform
 
-[ [**WEBSITE**](http://prosemirror.net) | [**ISSUES**](https://github.com/prosemirror/prosemirror/issues) | [**FORUM**](https://discuss.prosemirror.net) | [**GITTER**](https://gitter.im/ProseMirror/prosemirror) | [**CHANGELOG**](https://github.com/ProseMirror/prosemirror-transform/blob/master/CHANGELOG.md) ]
+[ [**WEBSITE**](https://prosemirror.net) | [**ISSUES**](https://github.com/prosemirror/prosemirror/issues) | [**FORUM**](https://discuss.prosemirror.net) | [**GITTER**](https://gitter.im/ProseMirror/prosemirror) | [**CHANGELOG**](https://github.com/ProseMirror/prosemirror-transform/blob/master/CHANGELOG.md) ]
 
-This is a [core module](http://prosemirror.net/docs/ref/#transform) of [ProseMirror](http://prosemirror.net).
+This is a [core module](https://prosemirror.net/docs/ref/#transform) of [ProseMirror](https://prosemirror.net).
 ProseMirror is a well-behaved rich semantic content editor based on
 contentEditable, with support for collaborative editing and custom
 document schemas.
 
-This [module](http://prosemirror.net/docs/ref/#transform) implements
-document [transforms](http://prosemirror\.net/docs/guide/#transform),
+This [module](https://prosemirror.net/docs/ref/#transform) implements
+document [transforms](https://prosemirror.net/docs/guide/#transform),
 which are used by the editor to treat changes as first-class values,
 which can be saved, shared, and reasoned about.
 
-The [project page](http://prosemirror.net) has more information, a
-number of [examples](http://prosemirror.net/examples/) and the
-[documentation](http://prosemirror.net/docs/).
+The [project page](https://prosemirror.net) has more information, a
+number of [examples](https://prosemirror.net/examples/) and the
+[documentation](https://prosemirror.net/docs/).
 
 This code is released under an
 [MIT license](https://github.com/prosemirror/prosemirror/tree/master/LICENSE).

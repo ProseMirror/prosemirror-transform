@@ -120,49 +120,49 @@ Allows adjacent nodes from an inserted slice to be placed in different parent no
 
 ### Bug fixes
 
-Fixes a crash in [`replace`](http://prosemirror.net/docs/ref/#transform.Transform.replace).
+Fixes a crash in [`replace`](https://prosemirror.net/docs/ref/#transform.Transform.replace).
 
 ## 1.0.1 (2017-11-10)
 
 ### Bug fixes
 
-The errors raised by [`Transform.step`](http://prosemirror.net/docs/ref/#transform.Transform.step) now properly inherit from Error.
+The errors raised by [`Transform.step`](https://prosemirror.net/docs/ref/#transform.Transform.step) now properly inherit from Error.
 
 ## 1.0.0 (2017-10-13)
 
 ### Bug fixes
 
-When [`setBlockType`](http://prosemirror.net/docs/ref/#transform.Transform.setBlockType) comes across a textblock that can't be changed due to schema constraints, it skips it instead of failing.
+When [`setBlockType`](https://prosemirror.net/docs/ref/#transform.Transform.setBlockType) comes across a textblock that can't be changed due to schema constraints, it skips it instead of failing.
 
-[`canSplit`](http://prosemirror.net/docs/ref/#transform.canSplit) now returns false when the requested split goes through isolating nodes.
+[`canSplit`](https://prosemirror.net/docs/ref/#transform.canSplit) now returns false when the requested split goes through isolating nodes.
 
 ## 0.24.0 (2017-09-25)
 
 ### Breaking changes
 
-The `setNodeType` method on transforms is now more descriptively called [`setNodeMarkup`](http://prosemirror.net/docs/ref/version/0.24.0.html#transform.Transform.setNodeMarkup). The old name will continue to work with a warning until the next release.
+The `setNodeType` method on transforms is now more descriptively called [`setNodeMarkup`](https://prosemirror.net/docs/ref/version/0.24.0.html#transform.Transform.setNodeMarkup). The old name will continue to work with a warning until the next release.
 
 ## 0.23.0 (2017-09-13)
 
 ### Breaking changes
 
-[`Step.toJSON`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.Step.toJSON) no longer has a default implementation.
+[`Step.toJSON`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.Step.toJSON) no longer has a default implementation.
 
-Steps no longer have an `offset` method. Map them through a map created with [`StepMap.offset`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.StepMap^offset) instead.
+Steps no longer have an `offset` method. Map them through a map created with [`StepMap.offset`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.StepMap^offset) instead.
 
-The `clearMarkup` method on [`Transform`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform) is no longer supported (you probably needed [`clearIncompatible`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.clearIncompatible) anyway).
+The `clearMarkup` method on [`Transform`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform) is no longer supported (you probably needed [`clearIncompatible`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.clearIncompatible) anyway).
 
 ### Bug fixes
 
 Pasting a list item at the start of a non-empty textblock now wraps the textblock in a list.
 
-Marks on open nodes at the left of a slice are no longer dropped by [`Transform.replace`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.replace).
+Marks on open nodes at the left of a slice are no longer dropped by [`Transform.replace`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.replace).
 
 ### New features
 
-`StepMap` now has a static method [`offset`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.StepMap^offset), which can be used to create a map that offsets all positions by a given distance.
+`StepMap` now has a static method [`offset`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.StepMap^offset), which can be used to create a map that offsets all positions by a given distance.
 
-Transform objects now have a [`clearIncompatible`](http://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.clearIncompatible) method that can help make sure a node's content matches another node type.
+Transform objects now have a [`clearIncompatible`](https://prosemirror.net/docs/ref/version/0.23.0.html#transform.Transform.clearIncompatible) method that can help make sure a node's content matches another node type.
 
 ## 0.22.2 (2017-07-06)
 
@@ -174,23 +174,23 @@ Fix another bug in the way `canSplit` interpreted its `typesAfter` argument.
 
 ### Bug fixes
 
-Fix crash in [`canSplit`](http://prosemirror.net/docs/ref/version/0.22.0.html#transform.canSplit) when an array containing null fields is passed as fourth argument.
+Fix crash in [`canSplit`](https://prosemirror.net/docs/ref/version/0.22.0.html#transform.canSplit) when an array containing null fields is passed as fourth argument.
 
 ## 0.22.0 (2017-06-29)
 
 ### Bug fixes
 
-[`canSplit`](http://prosemirror.net/docs/ref/version/0.22.0.html#transform.canSplit) now returns false when given custom after-split node types that don't match the content at that point.
+[`canSplit`](https://prosemirror.net/docs/ref/version/0.22.0.html#transform.canSplit) now returns false when given custom after-split node types that don't match the content at that point.
 
-Fixes [`canLift`](http://prosemirror.net/docs/ref/version/0.22.0.html#transform.canLift) incorrectly returning null when lifting into an isolating node.
+Fixes [`canLift`](https://prosemirror.net/docs/ref/version/0.22.0.html#transform.canLift) incorrectly returning null when lifting into an isolating node.
 
 ## 0.21.1 (2017-05-16)
 
 ### Bug fixes
 
-[`addMark`](http://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.addMark) no longer assumes marks always [exclude](http://prosemirror.net/docs/ref/version/0.21.0.html#model.MarkSpec.excludes) only themselves.
+[`addMark`](https://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.addMark) no longer assumes marks always [exclude](https://prosemirror.net/docs/ref/version/0.21.0.html#model.MarkSpec.excludes) only themselves.
 
-`replaceRange`](http://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.replaceRange) and [`deleteRange`](http://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.deleteRange) will no longer expand the range across isolating node boundaries.
+`replaceRange`](https://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.replaceRange) and [`deleteRange`](https://prosemirror.net/docs/ref/version/0.21.0.html#transform.Transform.deleteRange) will no longer expand the range across isolating node boundaries.
 
 ## 0.20.0 (2017-04-03)
 
@@ -202,13 +202,13 @@ Fixes issue where replacing would sometimes unexpectedly split nodes.
 
 ### New features
 
-[`Transform.setNodeType`](http://prosemirror.net/docs/ref/version/0.18.0.html#transform.Transform.setNodeType) now takes an optional argument to set the new node's attributes.
+[`Transform.setNodeType`](https://prosemirror.net/docs/ref/version/0.18.0.html#transform.Transform.setNodeType) now takes an optional argument to set the new node's attributes.
 
-Steps now provide an [`offset`](http://prosemirror.net/docs/ref/version/0.18.0.html#transform.Step.offset) method, which makes it possible to create a copy the step with its position offset by a given amount.
+Steps now provide an [`offset`](https://prosemirror.net/docs/ref/version/0.18.0.html#transform.Step.offset) method, which makes it possible to create a copy the step with its position offset by a given amount.
 
-[`docChanged`](http://prosemirror.net/docs/ref/version/0.18.0.html#transform.Transform.docChanged) is now a property on the `Transform` class, rather than its `Transaction` subclass.
+[`docChanged`](https://prosemirror.net/docs/ref/version/0.18.0.html#transform.Transform.docChanged) is now a property on the `Transform` class, rather than its `Transaction` subclass.
 
-`Mapping` instances now have [`invert`](http://prosemirror.net/docs/ref/version/0.18.0.html#transform.Mapping.invert) and [`appendMappingInverted`](http://prosemirror.net/docs/ref/version/0.18.0.html#transform.Mapping.appendMappingInverted) methods to make mapping through them in reverse easier.
+`Mapping` instances now have [`invert`](https://prosemirror.net/docs/ref/version/0.18.0.html#transform.Mapping.invert) and [`appendMappingInverted`](https://prosemirror.net/docs/ref/version/0.18.0.html#transform.Mapping.appendMappingInverted) methods to make mapping through them in reverse easier.
 
 ## 0.15.0 (2016-12-10)
 
@@ -220,11 +220,11 @@ Fix bug where pasted/inserted content would sometimes get incorrectly closed at 
 
 ### Bug fixes
 
-Fix issue where [`Transform.replace`](http://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replace) would, in specific circumstances, unneccessarily drop content.
+Fix issue where [`Transform.replace`](https://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replace) would, in specific circumstances, unneccessarily drop content.
 
 ### New features
 
-The new [`Transform`](http://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform) method [`replaceRange`](http://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replaceRange), [`replaceRangeWith`](http://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replaceRangeWith), and [`deleteRange`](http://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.deleteRange) provide a way to replace and delete content in a 'do what I mean' way, automatically expanding the replaced region over empty parent nodes and including the parent nodes in the inserted content when appropriate.
+The new [`Transform`](https://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform) method [`replaceRange`](https://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replaceRange), [`replaceRangeWith`](https://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.replaceRangeWith), and [`deleteRange`](https://prosemirror.net/docs/ref/version/0.13.0.html#transform.Transform.deleteRange) provide a way to replace and delete content in a 'do what I mean' way, automatically expanding the replaced region over empty parent nodes and including the parent nodes in the inserted content when appropriate.
 
 ## 0.12.1 (2016-11-01)
 
@@ -251,22 +251,22 @@ The `Remapping` class was renamed to `Mapping` and works differently
 (simpler, grows in only one direction, and has provision for mapping
 through only a part of it).
 
-[`Transform`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.Transform) objects now build up a `Mapping`
+[`Transform`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.Transform) objects now build up a `Mapping`
 instead of an array of maps.
 
-`PosMap` was renamed to [`StepMap`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.StepMap) to make it
+`PosMap` was renamed to [`StepMap`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.StepMap) to make it
 clearer that this applies only to a single step (as opposed to
-[`Mapping`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.Mapping).
+[`Mapping`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.Mapping).
 
-The arguments to [`canSplit`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.canSplit) and
-[`split`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.Transform.split) were changed to make it
+The arguments to [`canSplit`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.canSplit) and
+[`split`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.Transform.split) were changed to make it
 possible to specify multiple split-off node types for splits with a
 depth greater than 1.
 
-Rename `joinable` to [`canJoin`](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.canJoin).
+Rename `joinable` to [`canJoin`](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.canJoin).
 
 ### New features
 
-Steps can now be [merged](http://prosemirror.net/docs/ref/version/0.11.0.html#transform.Step.merge) in some
+Steps can now be [merged](https://prosemirror.net/docs/ref/version/0.11.0.html#transform.Step.merge) in some
 circumstances, which can be useful when storing a lot of them.
 
