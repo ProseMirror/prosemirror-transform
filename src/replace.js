@@ -526,7 +526,7 @@ Transform.prototype.deleteRange = function(from, to) {
     if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1))))
       return this.delete($from.before(depth), $to.after(depth))
   }
-  for (let d = 1; d <= $from.depth; d++) {
+  for (let d = 1; d <= $from.depth && d <= $to.depth; d++) {
     if (from - $from.start(d) == $from.depth - d && to > $from.end(d) && $to.end(d) - to != $to.depth - d)
       return this.delete($from.before(d), to)
   }
