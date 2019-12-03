@@ -1,3 +1,9 @@
+## 1.2.3 (2019-12-03)
+
+### Bug fixes
+
+Fix a crash in `deleteRange` that occurred when deleting a region that spans to the ends of two nodes at different depths.
+
 ## 1.2.2 (2019-11-20)
 
 ### Bug fixes
