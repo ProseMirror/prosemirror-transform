@@ -212,18 +212,20 @@ function joinable(a, b) {
 export function joinPoint(doc, pos, dir = -1) {
   let $pos = doc.resolve(pos)
   for (let d = $pos.depth;; d--) {
-    let before, after
+    let before, after, index = $pos.index(d)
     if (d == $pos.depth) {
       before = $pos.nodeBefore
       after = $pos.nodeAfter
     } else if (dir > 0) {
       before = $pos.node(d + 1)
-      after = $pos.node(d).maybeChild($pos.index(d) + 1)
+      index++
+      after = $pos.node(d).maybeChild(index)
     } else {
-      before = $pos.node(d).maybeChild($pos.index(d) - 1)
+      before = $pos.node(d).maybeChild(index - 1)
       after = $pos.node(d + 1)
     }
-    if (before && !before.isTextblock && joinable(before, after)) return pos
+    if (before && !before.isTextblock && joinable(before, after) &&
+        $pos.node(d).canReplace(index, index + 1)) return pos
     if (d == 0) break
     pos = dir < 0 ? $pos.before(d) : $pos.after(d)
   }
