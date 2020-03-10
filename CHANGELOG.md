@@ -1,3 +1,9 @@
+## 1.2.4 (2020-03-10)
+
+### Bug fixes
+
+Fix `joinPoint` to return check whether the parent node allows a given join.
+
 ## 1.2.3 (2019-12-03)
 
 ### Bug fixes
