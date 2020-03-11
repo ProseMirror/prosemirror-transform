@@ -648,6 +648,21 @@ describe("Transform", () => {
       tr.replace(0, tr.doc.content.size, tr.doc.slice(6, tr.doc.content.size))
       ist(tr.doc, hb.doc(hb.h(), hb.b(hb.p("One"))), eq)
     })
+
+    it("xxx", () => {
+      let s = new Schema({
+        nodes: schema.spec.nodes.append({
+          title: {content: "text*"},
+          doc: {content: "title? block*"}
+        })
+      })
+      let tr = new Transform(s.node("doc", null, s.node("title", null, s.text("hi"))))
+      tr.replace(1, 1, s.node("bullet_list", null, [
+        s.node("list_item", null, s.node("paragraph", null, s.text("one"))),
+        s.node("list_item", null, s.node("paragraph", null, s.text("two")))
+      ]).slice(2, 12))
+      ist(tr.steps.length, 0, ">")
+    })
   })
 
   describe("replaceRange", () => {
