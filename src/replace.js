@@ -162,11 +162,13 @@ class Fitter {
 
   findCloseLevel() {
     scan: for (let i = Math.min(this.frontier.length - 1, this.$to.depth); i >= 0; i--) {
-      let fit = this.frontier[i].match.fillBefore(this.$to.node(i).content, true, this.$to.index(i))
-      if (!fit) continue
+      let {content} = this.$to.node(i), index = this.$to.index(i)
+      let fit = this.frontier[i].match.fillBefore(content, true, index)
+      if (!fit || invalidMarks(this.frontier[i].type, content, index)) continue
       for (let d = i - 1; d >= 0; d--) {
-        let here = this.frontier[d].match.fillBefore(this.$to.node(d).content, true, this.$to.indexAfter(d))
-        if (!here || here.childCount) continue scan
+        let {content} = this.$to.node(d), index = this.$to.indexAfter(d)
+        let here = this.frontier[d].match.fillBefore(content, true, index)
+        if (!here || here.childCount || invalidMarks(this.frontier[d].type, content, index)) continue scan
       }
       return {depth: i, fit}
     }
@@ -236,6 +238,12 @@ function openAcrossTo(slice, depth) {
     content = content.firstChild.content
   }
   return true
+}
+
+function invalidMarks(type, fragment, start) {
+  for (let i = start; i < fragment.childCount; i++)
+    if (!type.allowsMarks(fragment.child(i).marks)) return true
+  return false
 }
 
 // :: (number, number, Slice) → this
