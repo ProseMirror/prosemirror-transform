@@ -51,6 +51,26 @@ function fitsTrivially($from, $to, slice) {
     $from.parent.canReplace($from.index(), $to.index(), slice.content)
 }
 
+// Algorithm for 'placing' the elements of a slice into a gap:
+//
+// We consider the content of each node that is open to the left to be
+// independently placeable. I.e. in <p("foo"), p("bar")>, when the
+// paragraph on the left is open, "foo" can be placed (somewhere on
+// the left side of the replacement gap) independently from p("bar").
+//
+// This class tracks the state of the placement progress in the
+// following properties:
+//
+//  - `frontier` holds a stack of `{type, match}` objects that
+//    represent the open side of the replacement. It starts at
+//    `$from`, then moves forward as content is placed, and is finally
+//    reconciled with `$to`.
+//
+//  - `unplaced` is a slice that represents the content that hasn't
+//    been placed yet.
+//
+//  - `placed` is a fragment of placed content. Its open-start value
+//    is implicit in `$from`, and its open-end value in `frontier`.
 class Fitter {
   constructor($from, $to, slice) {
     this.$to = $to
@@ -74,30 +94,43 @@ class Fitter {
   get depth() { return this.frontier.length - 1 }
 
   fit() {
+    // As long as there's unplaced content, try to place some of it.
+    // If that fails, either increase the open score of the unplaced
+    // slice, or drop nodes from it, and then try again.
     while (this.unplaced.size) {
       let fit = this.findFittable()
       if (fit) this.placeNodes(fit)
       else this.openMore() || this.dropNode()
     }
+    // When there's inline content directly after the frontier _and_
+    // directly after `this.$to`, we must generate a `ReplaceAround`
+    // step that pulls that content into the node after the frontier.
+    // That means the fitting must be done to the end of the textblock
+    // node after `this.$to`, not `this.$to` itself.
     let moveInline = this.mustMoveInline(), placedSize = this.placed.size - this.depth - this.$from.depth
     let $from = this.$from, $to = moveInline < 0 ? this.$to : $from.doc.resolve(moveInline)
-    if (this.close($to)) {
+    if (this.close($to)) { // If closing to `$to` succeeded, create a step
       let content = this.placed, openStart = $from.depth, openEnd = $to.depth
-      while (openStart && openEnd && content.childCount == 1) {
+      while (openStart && openEnd && content.childCount == 1) { // Normalize by dropping open parent nodes
         content = content.firstChild.content
         openStart--; openEnd--
       }
       let slice = new Slice(content, openStart, openEnd)
       if (moveInline > -1)
         return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize)
-      if (slice.size || $from.pos != this.$to.pos)
+      if (slice.size || $from.pos != this.$to.pos) // Don't generate no-op steps
         return new ReplaceStep($from.pos, $to.pos, slice)
     }
     return null
   }
 
+  // Find a position on the start spine of `this.unplaced` that has
+  // content that can be moved somewhere on the frontier. Returns two
+  // depths, one for the slice and one for the frontier.
   findFittable() {
-    for (let pass = 0; pass < 2; pass++) {
+    // Only try wrapping nodes (pass 2) after finding a place without
+    // wrapping failed.
+    for (let pass = 1; pass <= 2; pass++) {
       for (let sliceDepth = this.unplaced.openStart; sliceDepth >= 0; sliceDepth--) {
         let fragment, parent
         if (sliceDepth) {
@@ -109,10 +142,15 @@ class Fitter {
         let first = fragment.firstChild
         for (let frontierDepth = this.depth; frontierDepth >= 0; frontierDepth--) {
           let {type, match} = this.frontier[frontierDepth], wrap, inject
-          if (pass == 0 && (first ? match.matchType(first.type) || (inject = match.fillBefore(Fragment.from(first), false))
+          // In pass 1, if the next node matches, or there is no next
+          // node but the parents look compatible, we've found a
+          // place.
+          if (pass == 1 && (first ? match.matchType(first.type) || (inject = match.fillBefore(Fragment.from(first), false))
                             : type.compatibleContent(parent.type)))
             return {sliceDepth, frontierDepth, parent, inject}
-          else if (pass == 1 && first && (wrap = match.findWrapping(first.type)))
+          // In pass 2, look for a set of wrapping nodes that make
+          // `first` fit here.
+          else if (pass == 2 && first && (wrap = match.findWrapping(first.type)))
             return {sliceDepth, frontierDepth, parent, wrap}
           // Don't continue looking further up if the parent node
           // would fit here.
@@ -143,7 +181,10 @@ class Fitter {
     }
   }
 
-  // : ({sliceDepth: number, frontierDepth: number, wrap: ?[NodeType]})
+  // : ({sliceDepth: number, frontierDepth: number, parent: ?Node, wrap: ?[NodeType], inject: ?Fragment})
+  // Move content from the unplaced slice at `sliceDepth` to the
+  // frontier node at `frontierDepth`. Close that frontier node when
+  // applicable.
   placeNodes({sliceDepth, frontierDepth, parent, inject, wrap}) {
     while (this.depth > frontierDepth) this.closeFrontierNode()
     if (wrap) for (let i = 0; i < wrap.length; i++) this.openFrontierNode(wrap[i])
@@ -156,7 +197,12 @@ class Fitter {
       for (let i = 0; i < inject.childCount; i++) add.push(inject.child(i))
       match = match.matchFragment(inject)
     }
+    // Computes the amount of (end) open nodes at the end of the
+    // fragment. When 0, the parent is open, but no more. When
+    // negative, nothing is open.
     let openEndCount = (fragment.size + sliceDepth) - (slice.content.size - slice.openEnd)
+    // Scan over the fragment, fitting as many child nodes as
+    // possible.
     while (taken < fragment.childCount) {
       let next = fragment.child(taken), matches = match.matchType(next.type)
       if (!matches) break
@@ -170,15 +216,21 @@ class Fitter {
     let toEnd = taken == fragment.childCount
     if (!toEnd) openEndCount = -1
 
+    // If the parent types match, and the entire node was moved, and
+    // it's not open, close this frontier node right away.
     if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type) this.closeFrontierNode()
     else this.frontier[frontierDepth].match = match
 
+    // Add new frontier nodes for any open nodes at the end.
     for (let i = 0, cur = fragment; i < openEndCount; i++) {
       let node = cur.lastChild
       this.frontier.push({type: node.type, match: node.contentMatchAt(node.childCount)})
       cur = node.content
     }
 
+    // Update `this.unplaced`. Drop the entire node from which we
+    // placed it we got to its end, otherwise just drop the placed
+    // nodes.
     this.unplaced = !toEnd ? new Slice(dropFromFragment(slice.content, sliceDepth, taken), slice.openStart, slice.openEnd)
       : sliceDepth == 0 ? Slice.empty
       : new Slice(dropFromFragment(slice.content, sliceDepth - 1, 1),
