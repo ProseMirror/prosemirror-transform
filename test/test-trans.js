@@ -649,7 +649,7 @@ describe("Transform", () => {
       ist(tr.doc, hb.doc(hb.h(), hb.b(hb.p("One"))), eq)
     })
 
-    it("xxx", () => {
+    it("doesn't fail when moving text would solve an unsatisfied content constraint", () => {
       let s = new Schema({
         nodes: schema.spec.nodes.append({
           title: {content: "text*"},

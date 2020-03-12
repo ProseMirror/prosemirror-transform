@@ -149,22 +149,26 @@ class Fitter {
     if (wrap) for (let i = 0; i < wrap.length; i++) this.openFrontierNode(wrap[i])
 
     let slice = this.unplaced, fragment = parent ? parent.content : slice.content
-    let openStart = slice.openStart - sliceDepth, openEnd = slice.openEnd - sliceDepth
+    let openStart = slice.openStart - sliceDepth
     let taken = 0, add = []
     let {match, type} = this.frontier[frontierDepth]
     if (inject) {
       for (let i = 0; i < inject.childCount; i++) add.push(inject.child(i))
       match = match.matchFragment(inject)
     }
+    let openEndCount = (fragment.size + sliceDepth) - (slice.content.size - slice.openEnd)
     while (taken < fragment.childCount) {
       let next = fragment.child(taken), matches = match.matchType(next.type)
       if (!matches) break
       taken++
-      match = matches
-      add.push(closeNode(next.mark(type.allowedMarks(next.marks)), taken == 1 ? openStart : 0))
+      if (taken > 1 || openStart == 0 || next.content.size) { // Drop empty open nodes
+        match = matches
+        add.push(closeNodeStart(next.mark(type.allowedMarks(next.marks)), taken == 1 ? openStart : 0,
+                                taken == fragment.childCount ? openEndCount : -1))
+      }
     }
     let toEnd = taken == fragment.childCount
-    let openEndCount = toEnd ? (fragment.size + sliceDepth) - (slice.content.size - slice.openEnd) : -1
+    if (!toEnd) openEndCount = -1
 
     if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type) this.closeFrontierNode()
     else this.frontier[frontierDepth].match = match
@@ -181,9 +185,6 @@ class Fitter {
                   sliceDepth - 1, openEndCount < 0 ? slice.openEnd : sliceDepth - 1)
     this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add))
   }
-
-  // FIXME remove
-  toString() { return this.placed + " before " + this.frontier.map(f => f.type.name) + " remaining " + this.unplaced }
 
   mustMoveInline() {
     if (!this.$to.parent.isTextblock) return -1
@@ -254,13 +255,15 @@ function contentAt(fragment, depth) {
   return fragment
 }
 
-function closeNode(node, openStart) {
+function closeNodeStart(node, openStart, openEnd) {
   if (openStart <= 0) return node
   let frag = node.content
   if (openStart > 1)
-    frag = frag.replaceChild(0, closeNode(frag.firstChild, openStart - 1))
-  if (openStart > 0)
-    frag = node.type.contentMatch.fillBefore(frag, false).append(frag)
+    frag = frag.replaceChild(0, closeNodeStart(frag.firstChild, openStart - 1, frag.childCount == 1 ? openEnd - 1 : 0))
+  if (openStart > 0) {
+    frag = node.type.contentMatch.fillBefore(frag).append(frag)
+    if (openEnd <= 0) frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment.empty, true))
+  }
   return node.copy(frag)
 }
 
