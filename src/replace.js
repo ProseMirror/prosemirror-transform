@@ -15,10 +15,7 @@ export function replaceStep(doc, from, to = from, slice = Slice.empty) {
   let $from = doc.resolve(from), $to = doc.resolve(to)
   // Optimization -- avoid work if it's obvious that it's not needed.
   if (fitsTrivially($from, $to, slice)) return new ReplaceStep(from, to, slice)
-
-  let fit = new Fitter($from, $to, slice).fit()
-  if (!fit) return null
-  return fit.size || from != to ? new ReplaceStep(from, to, fit) : null
+  return new Fitter($from, $to, slice).fit()
 }
 
 // :: (number, ?number, ?Slice) → this
@@ -65,7 +62,6 @@ class Fitter {
       let node = $from.node(i)
       this.frontier.push({
         type: node.type,
-        attrs: node.attrs,
         match: node.contentMatchAt($from.indexAfter(i))
       })
     }
@@ -75,33 +71,49 @@ class Fitter {
       this.placed = Fragment.from($from.node(i).copy(this.placed))
   }
 
+  get depth() { return this.frontier.length - 1 }
+
   fit() {
     while (this.unplaced.size) {
       let fit = this.findFittable()
       if (fit) this.placeNodes(fit)
-      else this.openMore() || this.dropNodes(this.unplaced.openStart)
+      else this.openMore() || this.dropNode()
     }
-    if (this.close()) {
-      let content = this.placed, openStart = this.$from.depth, openEnd = this.$to.depth
+    let canMove = this.canMoveInline(), placedSize = this.placed.size - this.depth - this.$from.depth
+    let $from = this.$from, $to = canMove < 0 ? this.$to : $from.doc.resolve(canMove)
+    if (this.close($to)) {
+      let content = this.placed, openStart = $from.depth, openEnd = $to.depth
       while (openStart && openEnd && content.childCount == 1) {
         content = content.firstChild.content
         openStart--; openEnd--
       }
-      return new Slice(content, openStart, openEnd)
+      let slice = new Slice(content, openStart, openEnd)
+      // FIXME don't create replace-around when a replace will do
+      if (canMove > -1)
+        return new ReplaceAroundStep($from.pos, canMove, this.$to.pos, this.$to.end(), slice, placedSize)
+      if (slice.size || $from.pos != this.$to.pos)
+        return new ReplaceStep($from.pos, $to.pos, slice)
     }
+    return null
   }
 
   findFittable() {
     for (let pass = 0; pass < 2; pass++) {
       for (let sliceDepth = this.unplaced.openStart; sliceDepth >= 0; sliceDepth--) {
-        let fragment = contentAt(this.unplaced.content, sliceDepth)
-        let first = fragment.firstChild, parent = !first && contentAt(this.unplaced.content, sliceDepth - 1).firstChild.type
-        for (let frontierDepth = this.frontier.length - 1; frontierDepth >= 0; frontierDepth--) {
+        let fragment, parent
+        if (sliceDepth) {
+          parent = contentAt(this.unplaced.content, sliceDepth - 1).firstChild
+          fragment = parent.content
+        } else {
+          fragment = this.unplaced.content
+        }
+        let first = fragment.firstChild
+        for (let frontierDepth = this.depth; frontierDepth >= 0; frontierDepth--) {
           let {type, match} = this.frontier[frontierDepth], wrap
-          if (pass == 0 && (first ? match.matchType(first.type) : type.compatibleContent(parent)))
-            return {sliceDepth, frontierDepth}
+          if (pass == 0 && (first ? match.matchType(first.type) : type.compatibleContent(parent.type)))
+            return {sliceDepth, frontierDepth, parent}
           else if (pass == 1 && first && (wrap = match.findWrapping(first.type)))
-            return {sliceDepth, frontierDepth, wrap}
+            return {sliceDepth, frontierDepth, parent, wrap}
         }
       }
     }
@@ -114,27 +126,25 @@ class Fitter {
     return true
   }
 
-  dropNodes(depth, count = 1) {
-    let {content, openEnd} = this.unplaced
-    while (depth >= 0 && contentAt(content, depth).childCount <= count) {
-      depth--
-      count = 1
-    }
-    if (depth < 0) {
-      this.unplaced = Slice.empty
+  dropNode() {
+    let {content, openStart, openEnd} = this.unplaced
+    let inner = contentAt(content, openStart)
+    if (inner.childCount <= 1 && openStart > 0) {
+      let openAtEnd = content.size - openStart <= openStart + inner.size
+      this.unplaced = new Slice(dropFromFragment(content, openStart - 1, 1), openStart - 1,
+                                openAtEnd ? openStart - 1 : openEnd)
     } else {
-      content = dropFromFragment(content, depth, count)
-      this.unplaced = new Slice(content, depth, openAcrossTo(this.unplaced, depth) ? depth : openEnd)
+      this.unplaced = new Slice(dropFromFragment(content, openStart, 1), openStart, openEnd)
     }
   }
 
   // : ({sliceDepth: number, frontierDepth: number, wrap: ?[NodeType]})
-  placeNodes({sliceDepth, frontierDepth, wrap}) {
-    while (this.frontier.length - 1 > frontierDepth) this.closeFrontierNode()
+  placeNodes({sliceDepth, frontierDepth, parent, wrap}) {
+    while (this.depth > frontierDepth) this.closeFrontierNode()
     if (wrap) for (let i = 0; i < wrap.length; i++) this.openFrontierNode(wrap[i])
 
-    let fragment = contentAt(this.unplaced.content, sliceDepth)
-    let openStart = this.unplaced.openStart - sliceDepth, openEnd = this.unplaced.openEnd - sliceDepth
+    let slice = this.unplaced, fragment = parent ? parent.content : slice.content
+    let openStart = slice.openStart - sliceDepth, openEnd = slice.openEnd - sliceDepth
     let taken = 0, add = []
     let {match, type} = this.frontier[frontierDepth]
     while (taken < fragment.childCount) {
@@ -145,53 +155,71 @@ class Fitter {
       add.push(closeNode(next.mark(type.allowedMarks(next.marks)),
                          taken == 1 ? openStart : 0, taken == fragment.childCount ? openEnd : 0))
     }
-    let openAtEnd = openAcrossTo(this.unplaced, sliceDepth)
-    this.frontier[frontierDepth].match = match
-    if (openAtEnd) {
-      for (let d = sliceDepth, node = fragment.lastChild; d <= this.unplaced.openEnd; d++)
-        this.frontier.push({type: node.type, attrs: node.attrs, match: node.contentMatchAt(node.childCount)})
-    } else {
-      this.closeFrontierNode()
+    let toEnd = taken == fragment.childCount
+    let openEndCount = toEnd ? (fragment.size + sliceDepth) - (slice.content.size - slice.openEnd) : -1
+
+    if (toEnd && openEndCount < 0 && parent.type == this.frontier[this.depth].type) this.closeFrontierNode()
+    else this.frontier[frontierDepth].match = match
+
+    for (let i = 0, cur = fragment; i < openEndCount; i++) {
+      let node = cur.lastChild
+      this.frontier.push({type: node.type, match: node.contentMatchAt(node.childCount)})
+      cur = node.content
     }
-    this.dropNodes(sliceDepth, taken)
+
+    this.unplaced = !toEnd ? new Slice(dropFromFragment(slice.content, sliceDepth, taken), slice.openStart, slice.openEnd)
+      : sliceDepth == 0 ? Slice.empty
+      : new Slice(dropFromFragment(slice.content, sliceDepth - 1, 1),
+                  sliceDepth - 1, openEndCount < 0 ? slice.openEnd : sliceDepth - 1)
     this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add))
   }
 
   // FIXME remove
   toString() { return this.placed + " before " + this.frontier.map(f => f.type.name) + " remaining " + this.unplaced }
 
-  findCloseLevel() {
-    scan: for (let i = Math.min(this.frontier.length - 1, this.$to.depth); i >= 0; i--) {
-      let {content} = this.$to.node(i), index = this.$to.index(i)
-      let fit = this.frontier[i].match.fillBefore(content, true, index)
-      if (!fit || invalidMarks(this.frontier[i].type, content, index)) continue
+  canMoveInline() {
+    if (!this.$to.parent.isTextblock) return -1
+    let top = this.frontier[this.depth]
+    if (!top.type.isTextblock || !contentAfterFits(this.$to, this.$to.depth, top.type, top.match, false)) return -1
+
+    let {depth} = this.$to, after = this.$to.after(depth)
+    while (depth > 1 && after == this.$to.end(--depth)) ++after
+    return after
+  }
+
+  findCloseLevel($to) {
+    scan: for (let i = Math.min(this.depth, $to.depth); i >= 0; i--) {
+      let {match, type} = this.frontier[i]
+      let fit = contentAfterFits($to, i, type, match, false)
+      if (!fit) continue
       for (let d = i - 1; d >= 0; d--) {
-        let {content} = this.$to.node(d), index = this.$to.indexAfter(d)
-        let here = this.frontier[d].match.fillBefore(content, true, index)
-        if (!here || here.childCount || invalidMarks(this.frontier[d].type, content, index)) continue scan
+        let {match, type} = this.frontier[d]
+        let matches = contentAfterFits($to, d, type, match, true)
+        if (!matches || matches.childCount) continue scan
       }
       return {depth: i, fit}
     }
   }
 
-  close() {
-    let close = this.findCloseLevel()
+  close($to) {
+    let close = this.findCloseLevel($to)
     if (!close) return false
 
-    while (this.frontier.length - 1 > close.depth) this.closeFrontierNode()
+    while (this.depth > close.depth) this.closeFrontierNode()
     if (close.fit.childCount) this.placed = addToFragment(this.placed, close.depth, close.fit)
-    for (let d = close.depth + 1; d <= this.$to.depth; d++) {
-      let node = this.$to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, this.$to.index(d))
+    for (let d = close.depth + 1; d <= $to.depth; d++) {
+      let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))
       this.openFrontierNode(node.type, add)
     }
     return true
   }
 
   openFrontierNode(type, content) {
-    let top = this.frontier[this.frontier.length - 1]
+    let top = this.frontier[this.depth]
+    if (top.type == type && type.name == "list_item") throw new Error("NOOOP")
     top.match = top.match.matchType(type)
-    this.placed = addToFragment(this.placed, this.frontier.length - 1, Fragment.from(type.create(null, content)))
-    this.frontier.push({type, attrs: null, match: type.contentMatch})
+    this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(null, content)))
+    this.frontier.push({type, match: type.contentMatch})
   }
 
   closeFrontierNode() {
@@ -231,13 +259,10 @@ function closeNode(node, openStart, openEnd) {
   return node.copy(frag)
 }
 
-function openAcrossTo(slice, depth) {
-  if (slice.openEnd < depth) return false
-  for (let d = 0, content = slice.content; d < depth; d++) {
-    if (content.childCount != 1) return false
-    content = content.firstChild.content
-  }
-  return true
+function contentAfterFits($to, depth, type, match, open) {
+  let {content} = $to.node(depth), index = open ? $to.indexAfter(depth) : $to.index(depth)
+  let fit = match.fillBefore(content, true, index)
+  return fit && !invalidMarks(type, content, index) ? fit : null
 }
 
 function invalidMarks(type, fragment, start) {
