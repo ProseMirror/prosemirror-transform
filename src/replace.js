@@ -278,7 +278,6 @@ class Fitter {
 
   openFrontierNode(type, content) {
     let top = this.frontier[this.depth]
-    if (top.type == type && type.name == "list_item") throw new Error("NOOOP")
     top.match = top.match.matchType(type)
     this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(null, content)))
     this.frontier.push({type, match: type.contentMatch})
