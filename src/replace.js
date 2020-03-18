@@ -271,15 +271,15 @@ class Fitter {
     if (close.fit.childCount) this.placed = addToFragment(this.placed, close.depth, close.fit)
     for (let d = close.depth + 1; d <= $to.depth; d++) {
       let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))
-      this.openFrontierNode(node.type, add)
+      this.openFrontierNode(node.type, node.attrs, add)
     }
     return true
   }
 
-  openFrontierNode(type, content) {
+  openFrontierNode(type, attrs, content) {
     let top = this.frontier[this.depth]
     top.match = top.match.matchType(type)
-    this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(null, content)))
+    this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(attrs, content)))
     this.frontier.push({type, match: type.contentMatch})
   }
 
