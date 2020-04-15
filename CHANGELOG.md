@@ -1,3 +1,9 @@
+## 1.2.5 (2020-04-15)
+
+### Bug fixes
+
+Rewrite the slice-fitting code used by `replaceStep` to handle a few more corner cases.
+
 ## 1.2.4 (2020-03-10)
 
 ### Bug fixes
