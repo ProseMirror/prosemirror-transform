@@ -84,7 +84,7 @@ export class StepMap {
         let side = !oldSize ? assoc : pos == start ? -1 : pos == end ? 1 : assoc
         let result = start + diff + (side < 0 ? 0 : newSize)
         if (simple) return result
-        let recover = makeRecover(i / 3, pos - start)
+        let recover = pos == (assoc < 0 ? start : end) ? null : makeRecover(i / 3, pos - start)
         return new MapResult(result, assoc < 0 ? pos != start : pos != end, recover)
       }
       diff += newSize - oldSize
@@ -239,26 +239,16 @@ export class Mapping {
   mapResult(pos, assoc = 1) { return this._map(pos, assoc, false) }
 
   _map(pos, assoc, simple) {
-    let deleted = false, recoverables = null
+    let deleted = false
 
     for (let i = this.from; i < this.to; i++) {
-      let map = this.maps[i], rec = recoverables && recoverables[i]
-      if (rec != null && map.touches(pos, rec)) {
-        pos = map.recover(rec)
-        continue
-      }
-
-      let result = map.mapResult(pos, assoc)
+      let map = this.maps[i], result = map.mapResult(pos, assoc)
       if (result.recover != null) {
         let corr = this.getMirror(i)
         if (corr != null && corr > i && corr < this.to) {
-          if (result.deleted) {
-            i = corr
-            pos = this.maps[corr].recover(result.recover)
-            continue
-          } else {
-            ;(recoverables || (recoverables = Object.create(null)))[corr] = result.recover
-          }
+          i = corr
+          pos = this.maps[corr].recover(result.recover)
+          continue
         }
       }
 
