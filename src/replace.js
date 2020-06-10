@@ -108,20 +108,20 @@ class Fitter {
     // That means the fitting must be done to the end of the textblock
     // node after `this.$to`, not `this.$to` itself.
     let moveInline = this.mustMoveInline(), placedSize = this.placed.size - this.depth - this.$from.depth
-    let $from = this.$from, $to = moveInline < 0 ? this.$to : $from.doc.resolve(moveInline)
-    if (this.close($to)) { // If closing to `$to` succeeded, create a step
-      let content = this.placed, openStart = $from.depth, openEnd = $to.depth
-      while (openStart && openEnd && content.childCount == 1) { // Normalize by dropping open parent nodes
-        content = content.firstChild.content
-        openStart--; openEnd--
-      }
-      let slice = new Slice(content, openStart, openEnd)
-      if (moveInline > -1)
-        return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize)
-      if (slice.size || $from.pos != this.$to.pos) // Don't generate no-op steps
-        return new ReplaceStep($from.pos, $to.pos, slice)
+    let $from = this.$from, $to = this.close(moveInline < 0 ? this.$to : $from.doc.resolve(moveInline))
+    if (!$to) return null
+
+    // If closing to `$to` succeeded, create a step
+    let content = this.placed, openStart = $from.depth, openEnd = $to.depth
+    while (openStart && openEnd && content.childCount == 1) { // Normalize by dropping open parent nodes
+      content = content.firstChild.content
+      openStart--; openEnd--
     }
-    return null
+    let slice = new Slice(content, openStart, openEnd)
+    if (moveInline > -1)
+      return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize)
+    if (slice.size || $from.pos != this.$to.pos) // Don't generate no-op steps
+      return new ReplaceStep($from.pos, $to.pos, slice)
   }
 
   // Find a position on the start spine of `this.unplaced` that has
@@ -239,7 +239,7 @@ class Fitter {
   }
 
   mustMoveInline() {
-    if (!this.$to.parent.isTextblock) return -1
+    if (!this.$to.parent.isTextblock || this.$to.end() == this.$to.pos) return -1
     let top = this.frontier[this.depth], level
     if (!top.type.isTextblock || !contentAfterFits(this.$to, this.$to.depth, top.type, top.match, false) ||
         (this.$to.depth == this.depth && (level = this.findCloseLevel(this.$to)) && level.depth == this.depth)) return -1
@@ -252,28 +252,30 @@ class Fitter {
   findCloseLevel($to) {
     scan: for (let i = Math.min(this.depth, $to.depth); i >= 0; i--) {
       let {match, type} = this.frontier[i]
-      let fit = contentAfterFits($to, i, type, match, false)
+      let dropInner = i < $to.depth && $to.end(i + 1) == $to.pos + ($to.depth - (i + 1))
+      let fit = contentAfterFits($to, i, type, match, dropInner)
       if (!fit) continue
       for (let d = i - 1; d >= 0; d--) {
         let {match, type} = this.frontier[d]
         let matches = contentAfterFits($to, d, type, match, true)
         if (!matches || matches.childCount) continue scan
       }
-      return {depth: i, fit}
+      return {depth: i, fit, move: dropInner ? $to.doc.resolve($to.after(i + 1)) : $to}
     }
   }
 
   close($to) {
     let close = this.findCloseLevel($to)
-    if (!close) return false
+    if (!close) return null
 
     while (this.depth > close.depth) this.closeFrontierNode()
     if (close.fit.childCount) this.placed = addToFragment(this.placed, close.depth, close.fit)
+    $to = close.move
     for (let d = close.depth + 1; d <= $to.depth; d++) {
       let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))
       this.openFrontierNode(node.type, node.attrs, add)
     }
-    return true
+    return $to
   }
 
   openFrontierNode(type, attrs, content) {
@@ -483,4 +485,3 @@ function coveredDepths($from, $to) {
   }
   return result
 }
-
