@@ -1,3 +1,9 @@
+## 1.2.6 (2020-06-10)
+
+### Bug fixes
+
+Fix an issue where creating a replace step would sometimes fail due to unmatchable close tokens after the replaced range.
+
 ## 1.2.5 (2020-04-15)
 
 ### Bug fixes
