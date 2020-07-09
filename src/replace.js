@@ -216,10 +216,12 @@ class Fitter {
     let toEnd = taken == fragment.childCount
     if (!toEnd) openEndCount = -1
 
+    this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add))
+    this.frontier[frontierDepth].match = match
+
     // If the parent types match, and the entire node was moved, and
     // it's not open, close this frontier node right away.
     if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type) this.closeFrontierNode()
-    else this.frontier[frontierDepth].match = match
 
     // Add new frontier nodes for any open nodes at the end.
     for (let i = 0, cur = fragment; i < openEndCount; i++) {
@@ -235,7 +237,6 @@ class Fitter {
       : sliceDepth == 0 ? Slice.empty
       : new Slice(dropFromFragment(slice.content, sliceDepth - 1, 1),
                   sliceDepth - 1, openEndCount < 0 ? slice.openEnd : sliceDepth - 1)
-    this.placed = addToFragment(this.placed, frontierDepth, Fragment.from(add))
   }
 
   mustMoveInline() {

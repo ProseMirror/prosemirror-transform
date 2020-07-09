@@ -693,6 +693,24 @@ describe("Transform", () => {
       ]).slice(1))
       ist(tr.steps.length, 0, ">")
     })
+
+    it("can handle replacing in nodes with fixed content", () => {
+      let s = new Schema({
+        nodes: {
+          doc: {content: "block+"},
+          a: {content: "inline*"},
+          b: {content: "inline*"},
+          block: {content: "a b"},
+          text: {group: "inline"}
+        }
+      })
+
+      let doc = s.node("doc", null, [
+        s.node("block", null, [s.node("a", null, [s.text("aa")]), s.node("b", null, [s.text("bb")])])
+      ])
+      let from = 3, to = doc.content.size
+      ist(new Transform(doc).replace(from, to, doc.slice(from, to)).doc, doc, eq)
+    })
   })
 
   describe("replaceRange", () => {
