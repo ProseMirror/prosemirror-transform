@@ -1,3 +1,9 @@
+## 1.2.7 (2020-07-09)
+
+### Bug fixes
+
+Fix an issue where in some cases replace fitting would insert an additional bogus node when fitting content into nodes with strict content restrictions.
+
 ## 1.2.6 (2020-06-10)
 
 ### Bug fixes
