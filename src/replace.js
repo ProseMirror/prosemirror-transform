@@ -221,7 +221,8 @@ class Fitter {
 
     // If the parent types match, and the entire node was moved, and
     // it's not open, close this frontier node right away.
-    if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type) this.closeFrontierNode()
+    if (toEnd && openEndCount < 0 && parent && parent.type == this.frontier[this.depth].type && this.frontier.length > 1)
+      this.closeFrontierNode()
 
     // Add new frontier nodes for any open nodes at the end.
     for (let i = 0, cur = fragment; i < openEndCount; i++) {
