@@ -1,6 +1,6 @@
 {
   "name": "prosemirror-transform",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "ProseMirror document transformations",
   "main": "dist/index.js",
   "module": "dist/index.es.js",

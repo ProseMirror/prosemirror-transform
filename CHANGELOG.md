@@ -1,3 +1,9 @@
+## 1.2.8 (2020-08-11)
+
+### Bug fixes
+
+Fix an issue where fitting a slice at the top level of the document would, in some circumstances, crash.
+
 ## 1.2.7 (2020-07-09)
 
 ### Bug fixes
