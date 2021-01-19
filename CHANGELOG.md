@@ -1,3 +1,9 @@
+## 1.2.9 (2021-01-19)
+
+### Bug fixes
+
+Fix an issue where `AddMarkStep` would mark inline nodes with content.
+
 ## 1.2.8 (2020-08-11)
 
 ### Bug fixes
