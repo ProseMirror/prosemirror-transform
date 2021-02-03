@@ -106,6 +106,18 @@ describe("Transform", () => {
        rem(doc(p("<a>hello, ", em("this is ", strong("much"), " ", a("markup<b>")))),
            null,
            doc(p("<a>hello, this is much markup"))))
+
+    it("can remove more than one mark of the same type from a block", () => {
+      let schema = new Schema({
+         nodes: {doc: {content: "text*"},
+               text: {}},
+         marks: {comment: {excludes: "", attrs: {id: {}}}}
+      })
+      let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("comment", {id: 1}), schema.mark("comment", {id: 2})])))
+      ist(tr.doc.firstChild.marks.length, 2)
+      tr.removeMark(0, 2, schema.marks["comment"])
+      ist(tr.doc.firstChild.marks.length, 0)
+    })
   })
 
   describe("insert", () => {
