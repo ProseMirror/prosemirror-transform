@@ -1,3 +1,9 @@
+## 1.2.10 (2021-02-05)
+
+### Bug fixes
+
+Fix an issue where `Transform.removeMark`, when given a mark type, would only remove the first instance from nodes that had multiple marks of the type.
+
 ## 1.2.9 (2021-01-19)
 
 ### Bug fixes
