@@ -1,3 +1,9 @@
+## 1.2.11 (2021-02-06)
+
+### Bug fixes
+
+Fix an issue in `Transform.removeMark` where the mark type was passed through to be removed instead of the mark itself.
+
 ## 1.2.10 (2021-02-05)
 
 ### Bug fixes
