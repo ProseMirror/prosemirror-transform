@@ -50,7 +50,7 @@ Transform.prototype.removeMark = function(from, to, mark = null) {
     if (mark instanceof MarkType) {
       let set = node.marks, found
       while (found = mark.isInSet(set)) {
-        ;(toRemove || (toRemove = [])).push(mark)
+        ;(toRemove || (toRemove = [])).push(found)
         set = found.removeFromSet(set)
       }
     } else if (mark) {
