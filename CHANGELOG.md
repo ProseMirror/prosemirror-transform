@@ -1,3 +1,9 @@
+## 1.2.12 (2021-02-20)
+
+### Bug fixes
+
+Fix a bug where merging replace steps with the `structure` flag could create steps that couldn't be applied.
+
 ## 1.2.11 (2021-02-06)
 
 ### Bug fixes
