@@ -42,7 +42,7 @@ export class ReplaceStep extends Step {
   }
 
   merge(other) {
-    if (!(other instanceof ReplaceStep) || other.structure != this.structure) return null
+    if (!(other instanceof ReplaceStep) || other.structure || this.structure) return null
 
     if (this.from + this.slice.size == other.from && !this.slice.openEnd && !other.slice.openStart) {
       let slice = this.slice.size + other.slice.size == 0 ? Slice.empty
