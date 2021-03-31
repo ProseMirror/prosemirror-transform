@@ -1,3 +1,9 @@
+## 1.3.0 (2021-03-31)
+
+### New features
+
+The various properties of subclasses of `Step` (`ReplaceStep`, `ReplaceAroundStep`, `AddMarkStep`, and `RemoveMarkStep`) are now part of the public interface.
+
 ## 1.2.12 (2021-02-20)
 
 ### Bug fixes
