@@ -15,8 +15,14 @@ export class ReplaceStep extends Step {
   // overwriting something they weren't supposed to).
   constructor(from, to, slice, structure) {
     super()
+    // :: number
+    // The start position of the replaced range.
     this.from = from
+    // :: number
+    // The end position of the replaced range.
     this.to = to
+    // :: Slice
+    // The slice to insert.
     this.slice = slice
     this.structure = !!structure
   }
@@ -84,11 +90,24 @@ export class ReplaceAroundStep extends Step {
   // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
   constructor(from, to, gapFrom, gapTo, slice, insert, structure) {
     super()
+    // :: number
+    // The start position of the replaced range.
     this.from = from
+    // :: number
+    // The end position of the replaced range.
     this.to = to
+    // :: number
+    // The start of preserved range.
     this.gapFrom = gapFrom
+    // :: number
+    // The end of preserved range.
     this.gapTo = gapTo
+    // :: Slice
+    // The slice to insert.
     this.slice = slice
+    // :: number
+    // The position in the slice where the preserved range should be
+    // inserted.
     this.insert = insert
     this.structure = !!structure
   }

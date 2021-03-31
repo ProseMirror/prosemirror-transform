@@ -17,8 +17,14 @@ export class AddMarkStep extends Step {
   // :: (number, number, Mark)
   constructor(from, to, mark) {
     super()
+    // :: number
+    // The start of the marked range.
     this.from = from
+    // :: number
+    // The end of the marked range.
     this.to = to
+    // :: Mark
+    // The mark to add.
     this.mark = mark
   }
 
@@ -69,8 +75,14 @@ export class RemoveMarkStep extends Step {
   // :: (number, number, Mark)
   constructor(from, to, mark) {
     super()
+    // :: number
+    // The start of the unmarked range.
     this.from = from
+    // :: number
+    // The end of the unmarked range.
     this.to = to
+    // :: Mark
+    // The mark to remove.
     this.mark = mark
   }
 
