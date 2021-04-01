@@ -1,3 +1,11 @@
+## 1.3.1 (2021-04-01)
+
+### Bug fixes
+
+Fix a crash in `Transform.replaceRange` when called with under specific circumstances.
+
+Fix an issue where `dropPoint` could return an invalid drop point.
+
 ## 1.3.0 (2021-03-31)
 
 ### New features
