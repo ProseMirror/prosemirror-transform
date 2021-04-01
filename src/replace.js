@@ -417,7 +417,7 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     this.replace(from, to, slice)
     if (this.steps.length > startSteps) break
     let depth = targetDepths[i]
-    if (i < 0) continue
+    if (depth < 0) continue
     from = $from.before(depth); to = $to.after(depth)
   }
   return this
