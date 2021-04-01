@@ -276,9 +276,14 @@ export function dropPoint(doc, pos, slice) {
     for (let d = $pos.depth; d >= 0; d--) {
       let bias = d == $pos.depth ? 0 : $pos.pos <= ($pos.start(d + 1) + $pos.end(d + 1)) / 2 ? -1 : 1
       let insertPos = $pos.index(d) + (bias > 0 ? 1 : 0)
-      if (pass == 1
-          ? $pos.node(d).canReplace(insertPos, insertPos, content)
-          : $pos.node(d).contentMatchAt(insertPos).findWrapping(content.firstChild.type))
+      let parent = $pos.node(d), fits = false
+      if (pass == 1) {
+        fits = parent.canReplace(insertPos, insertPos, content)
+      } else {
+        let wrapping = parent.contentMatchAt(insertPos).findWrapping(content.firstChild.type)
+        fits = wrapping && parent.canReplaceWith(insertPos, insertPos, wrapping[0].type)
+      }
+      if (fits)
         return bias == 0 ? $pos.pos : bias < 0 ? $pos.before(d + 1) : $pos.after(d + 1)
     }
   }
