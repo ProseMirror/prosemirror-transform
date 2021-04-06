@@ -281,7 +281,7 @@ export function dropPoint(doc, pos, slice) {
         fits = parent.canReplace(insertPos, insertPos, content)
       } else {
         let wrapping = parent.contentMatchAt(insertPos).findWrapping(content.firstChild.type)
-        fits = wrapping && parent.canReplaceWith(insertPos, insertPos, wrapping[0].type)
+        fits = wrapping && parent.canReplaceWith(insertPos, insertPos, wrapping[0])
       }
       if (fits)
         return bias == 0 ? $pos.pos : bias < 0 ? $pos.before(d + 1) : $pos.after(d + 1)
