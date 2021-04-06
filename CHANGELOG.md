@@ -1,3 +1,9 @@
+## 1.3.2 (2021-04-06)
+
+### Bug fixes
+
+Fix a regression in `dropPoint` that caused it to dereference undefined in some circumstances.
+
 ## 1.3.1 (2021-04-01)
 
 ### Bug fixes
