@@ -1,3 +1,9 @@
+## 1.3.3 (2021-09-29)
+
+### Bug fixes
+
+Fix an inconsistency in `deleteRange` where it would delete the parent node for ranges covering all textblocks in a given parent.
+
 ## 1.3.2 (2021-04-06)
 
 ### Bug fixes
