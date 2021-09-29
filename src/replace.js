@@ -483,7 +483,10 @@ function coveredDepths($from, $to) {
         $to.end(d) > $to.pos + ($to.depth - d) ||
         $from.node(d).type.spec.isolating ||
         $to.node(d).type.spec.isolating) break
-    if (start == $to.start(d)) result.push(d)
+    if (start == $to.start(d) ||
+        (d == $from.depth && d == $to.depth && $from.parent.inlineContent && $to.parent.inlineContent &&
+         d && $to.start(d - 1) == start - 1))
+      result.push(d)
   }
   return result
 }

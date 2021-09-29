@@ -826,8 +826,12 @@ describe("Transform", () => {
            doc(p("a"), p("b"))))
 
     it("expands to cover the whole document", () =>
-       del(doc(h1("<a>foo"), p("bar"), p("baz<b>")),
+       del(doc(h1("<a>foo"), p("bar"), blockquote(p("baz<b>"))),
            doc(p())))
+
+    it("doesn't expand beyond same-depth textblocks", () =>
+       del(doc(h1("<a>foo"), p("bar"), p("baz<b>")),
+           doc(h1())))
 
     it("deletes the open token when deleting from start to past end of block", () =>
        del(doc(h1("<a>foo"), p("b<b>ar")),
