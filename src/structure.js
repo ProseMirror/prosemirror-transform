@@ -103,8 +103,14 @@ function findWrappingInside(range, type) {
 // probably be computed with [`findWrapping`](#transform.findWrapping).
 Transform.prototype.wrap = function(range, wrappers) {
   let content = Fragment.empty
-  for (let i = wrappers.length - 1; i >= 0; i--)
+  for (let i = wrappers.length - 1; i >= 0; i--) {
+    if (content.size) {
+      let match = wrappers[i].type.contentMatch.matchFragment(content)
+      if (!match || !match.validEnd)
+        throw new RangeError("Wrapper type given to Transform.wrap does not form valid content of its parent wrapper")
+    }
     content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content))
+  }
 
   let start = range.start, end = range.end
   return this.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true))
