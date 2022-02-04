@@ -1,3 +1,9 @@
+## 1.3.4 (2022-02-04)
+
+### Bug fixes
+
+Make sure that constructing an empty `StepMap` returns `StepMap.empty`.
+
 ## 1.3.3 (2021-09-29)
 
 ### Bug fixes
