@@ -57,6 +57,7 @@ export class StepMap {
   // represented as an array of numbers, in which each group of three
   // represents a modified chunk as `[start, oldSize, newSize]`.
   constructor(ranges, inverted = false) {
+    if (!ranges.length && StepMap.empty) return StepMap.empty
     this.ranges = ranges
     this.inverted = inverted
   }
