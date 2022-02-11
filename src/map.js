@@ -139,6 +139,8 @@ export class StepMap {
   }
 }
 
+// :: StepMap
+// A StepMap that contains no changed ranges.
 StepMap.empty = new StepMap([])
 
 // :: class extends Mappable
