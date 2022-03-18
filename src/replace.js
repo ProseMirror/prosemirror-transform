@@ -335,6 +335,10 @@ function invalidMarks(type, fragment, start) {
   return false
 }
 
+function definesContent(type) {
+  return type.spec.defining || type.spec.definingForContent
+}
+
 // :: (number, number, Slice) → this
 // Replace a range of the document with a given slice, using `from`,
 // `to`, and the slice's [`openStart`](#model.Slice.openStart) property
@@ -342,9 +346,9 @@ function invalidMarks(type, fragment, start) {
 // grow the replaced area or close open nodes in the slice in order to
 // get a fit that is more in line with WYSIWYG expectations, by
 // dropping fully covered parent nodes of the replaced region when
-// they are marked [non-defining](#model.NodeSpec.defining), or
+// they are marked [non-defining as context](#model.NodeSpec.definingAsContext), or
 // including an open parent node from the slice that _is_ marked as
-// [defining](#model.NodeSpec.defining).
+// [defining its content](#model.NodeSpec.definingForContent).
 //
 // This is the method, for example, to handle paste. The similar
 // [`replace`](#transform.Transform.replace) method is a more
@@ -371,7 +375,7 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   // cross a defining node.
   for (let d = $from.depth, pos = $from.pos - 1; d > 0; d--, pos--) {
     let spec = $from.node(d).type.spec
-    if (spec.defining || spec.isolating) break
+    if (spec.defining || spec.definingAsContext || spec.isolating) break
     if (targetDepths.indexOf(d) > -1) preferredTarget = d
     else if ($from.before(d) == pos) targetDepths.splice(1, 0, -d)
   }
@@ -388,10 +392,12 @@ Transform.prototype.replaceRange = function(from, to, slice) {
   }
   // Back up if the node directly above openStart, or the node above
   // that separated only by a non-defining textblock node, is defining.
-  if (preferredDepth > 0 && leftNodes[preferredDepth - 1].type.spec.defining &&
+  if (preferredDepth > 0 && definesContent(leftNodes[preferredDepth - 1].type) &&
       $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 1].type)
     preferredDepth -= 1
-  else if (preferredDepth >= 2 && leftNodes[preferredDepth - 1].isTextblock && leftNodes[preferredDepth - 2].type.spec.defining &&
+  else if (preferredDepth >= 2 &&
+           leftNodes[preferredDepth - 1].isTextblock &&
+           definesContent(leftNodes[preferredDepth - 2].type) &&
            $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 2].type)
     preferredDepth -= 2
 
