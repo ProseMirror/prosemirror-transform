@@ -1,3 +1,9 @@
+## 1.4.0 (2022-03-21)
+
+### New features
+
+Node specs can now use the `definingForContent` and `definingAsContext` properties to opt in to specific parts of the existing `defining` behavior.
+
 ## 1.3.4 (2022-02-04)
 
 ### Bug fixes
