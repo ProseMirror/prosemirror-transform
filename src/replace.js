@@ -390,16 +390,14 @@ Transform.prototype.replaceRange = function(from, to, slice) {
     if (i == slice.openStart) break
     content = node.content
   }
-  // Back up if the node directly above openStart, or the node above
-  // that separated only by a non-defining textblock node, is defining.
-  if (preferredDepth > 0 && definesContent(leftNodes[preferredDepth - 1].type) &&
-      $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 1].type)
-    preferredDepth -= 1
-  else if (preferredDepth >= 2 &&
-           leftNodes[preferredDepth - 1].isTextblock &&
-           definesContent(leftNodes[preferredDepth - 2].type) &&
-           $from.node(preferredTargetIndex).type != leftNodes[preferredDepth - 2].type)
-    preferredDepth -= 2
+
+  // Back up preferredDepth to cover defining textblocks directly
+  // above it, possibly skipping a non-defining textblock.
+  for (let d = preferredDepth - 1; d >= 0; d--) {
+    let type = leftNodes[d].type, def = definesContent(type)
+    if (def && $from.node(preferredTargetIndex).type != type) preferredDepth = d
+    else if (def || !type.isTextblock) break
+  }
 
   for (let j = slice.openStart; j >= 0; j--) {
     let openDepth = (j + preferredDepth + 1) % (slice.openStart + 1)
