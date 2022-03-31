@@ -1,3 +1,9 @@
+## 1.4.1 (2022-03-31)
+
+### Bug fixes
+
+`replaceRange` will now close multiple defining parent nodes when appropriate.
+
 ## 1.4.0 (2022-03-21)
 
 ### New features
