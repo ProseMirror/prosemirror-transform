@@ -241,7 +241,7 @@ class Fitter {
   }
 
   mustMoveInline() {
-    if (!this.$to.parent.isTextblock || this.$to.end() == this.$to.pos) return -1
+    if (!this.$to.parent.isTextblock) return -1
     let top = this.frontier[this.depth], level
     if (!top.type.isTextblock || !contentAfterFits(this.$to, this.$to.depth, top.type, top.match, false) ||
         (this.$to.depth == this.depth && (level = this.findCloseLevel(this.$to)) && level.depth == this.depth)) return -1
