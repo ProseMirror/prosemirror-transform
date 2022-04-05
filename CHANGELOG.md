@@ -1,3 +1,9 @@
+## 1.4.2 (2022-04-05)
+
+### Bug fixes
+
+Make replacements that span to the end of a textblock more consistent with those ending in the middle of the block.
+
 ## 1.4.1 (2022-03-31)
 
 ### Bug fixes
