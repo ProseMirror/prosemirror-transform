@@ -141,7 +141,9 @@ export class ReplaceAroundStep extends Step {
   map(mapping) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     let gapFrom = mapping.map(this.gapFrom, -1), gapTo = mapping.map(this.gapTo, 1)
-    if ((from.deleted && to.deleted) || gapFrom < from.pos || gapTo > to.pos) return null
+    //gapFrom and gapTo must be inside the ranges of [from,to]
+    gapFrom = Math.max(from.pos,gapFrom), gapTo = Math.min(to.pos,gapTo);
+    if (from.deleted && to.deleted) return null
     return new ReplaceAroundStep(from.pos, to.pos, gapFrom, gapTo, this.slice, this.insert, this.structure)
   }
 
