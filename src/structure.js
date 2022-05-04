@@ -147,16 +147,22 @@ function canChangeType(doc, pos, type) {
 Transform.prototype.setNodeMarkup = function(pos, type, attrs, marks) {
   let node = this.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
-  if (!type) type = node.type
+  let notChangeDocStructure = false
+  if (!type) {
+    type = node.type
+    notChangeDocStructure = true
+  } else {
+    notChangeDocStructure = node.type === type
+  }
   let newNode = type.create(attrs, null, marks || node.marks)
   if (node.isLeaf)
-    return this.replaceWith(pos, pos + node.nodeSize, newNode)
+    return this.replaceWith(pos, pos + node.nodeSize, newNode, notChangeDocStructure)
 
   if (!type.validContent(node.content))
     throw new RangeError("Invalid content for node type " + type.name)
 
   return this.step(new ReplaceAroundStep(pos, pos + node.nodeSize, pos + 1, pos + node.nodeSize - 1,
-                                         new Slice(Fragment.from(newNode), 0, 0), 1, true))
+                                         new Slice(Fragment.from(newNode), 0, 0), 1, true, notChangeDocStructure))
 }
 
 // :: (Node, number, number, ?[?{type: NodeType, attrs: ?Object}]) → bool

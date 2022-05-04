@@ -16,6 +16,9 @@ const stepsByID = Object.create(null)
 // JSON-serialization identifier using
 // [`Step.jsonID`](#transform.Step^jsonID).
 export class Step {
+  constructor(changeDocStructure = false) {
+    this.changeDocStructure = changeDocStructure
+  }
   // :: (doc: Node) → StepResult
   // Applies this step to the given document, returning a result
   // object that either indicates failure, if the step can not be

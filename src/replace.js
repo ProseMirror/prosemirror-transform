@@ -9,20 +9,20 @@ import {insertPoint} from "./structure"
 // [step](#transform.Step) that inserts it. Will return null if
 // there's no meaningful way to insert the slice here, or inserting it
 // would be a no-op (an empty slice over an empty range).
-export function replaceStep(doc, from, to = from, slice = Slice.empty) {
+export function replaceStep(doc, from, to = from, slice = Slice.empty, notChangeDocStructure = false) {
   if (from == to && !slice.size) return null
 
   let $from = doc.resolve(from), $to = doc.resolve(to)
   // Optimization -- avoid work if it's obvious that it's not needed.
-  if (fitsTrivially($from, $to, slice)) return new ReplaceStep(from, to, slice)
-  return new Fitter($from, $to, slice).fit()
+  if (fitsTrivially($from, $to, slice)) return new ReplaceStep(from, to, slice,false, notChangeDocStructure)
+  return new Fitter($from, $to, slice).fit(notChangeDocStructure)
 }
 
 // :: (number, ?number, ?Slice) → this
 // Replace the part of the document between `from` and `to` with the
 // given `slice`.
-Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
-  let step = replaceStep(this.doc, from, to, slice)
+Transform.prototype.replace = function(from, to = from, slice = Slice.empty, notChangeDocStructure = false) {
+  let step = replaceStep(this.doc, from, to, slice, notChangeDocStructure)
   if (step) this.step(step)
   return this
 }
@@ -30,8 +30,8 @@ Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
 // :: (number, number, union<Fragment, Node, [Node]>) → this
 // Replace the given range with the given content, which may be a
 // fragment, node, or array of nodes.
-Transform.prototype.replaceWith = function(from, to, content) {
-  return this.replace(from, to, new Slice(Fragment.from(content), 0, 0))
+Transform.prototype.replaceWith = function(from, to, content, notChangeDocStructure = false) {
+  return this.replace(from, to, new Slice(Fragment.from(content), 0, 0), notChangeDocStructure)
 }
 
 // :: (number, number) → this
@@ -93,7 +93,7 @@ class Fitter {
 
   get depth() { return this.frontier.length - 1 }
 
-  fit() {
+  fit(notChangeDocStructure = false) {
     // As long as there's unplaced content, try to place some of it.
     // If that fails, either increase the open score of the unplaced
     // slice, or drop nodes from it, and then try again.
@@ -119,9 +119,9 @@ class Fitter {
     }
     let slice = new Slice(content, openStart, openEnd)
     if (moveInline > -1)
-      return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize)
+      return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize, false, notChangeDocStructure)
     if (slice.size || $from.pos != this.$to.pos) // Don't generate no-op steps
-      return new ReplaceStep($from.pos, $to.pos, slice)
+      return new ReplaceStep($from.pos, $to.pos, slice, false, notChangeDocStructure)
   }
 
   // Find a position on the start spine of `this.unplaced` that has

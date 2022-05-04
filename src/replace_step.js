@@ -13,8 +13,8 @@ export class ReplaceStep extends Step {
   // from and to is not just a sequence of closing and then opening
   // tokens (this is to guard against rebased replace steps
   // overwriting something they weren't supposed to).
-  constructor(from, to, slice, structure) {
-    super()
+  constructor(from, to, slice, structure, notChangeDocStructure = false) {
+    super(!notChangeDocStructure)
     // :: number
     // The start position of the replaced range.
     this.from = from
@@ -25,6 +25,7 @@ export class ReplaceStep extends Step {
     // The slice to insert.
     this.slice = slice
     this.structure = !!structure
+
   }
 
   apply(doc) {
@@ -34,6 +35,9 @@ export class ReplaceStep extends Step {
   }
 
   getMap() {
+    if (!this.changeDocStructure) {
+      return StepMap.empty
+    }
     return new StepMap([this.from, this.to - this.from, this.slice.size])
   }
 
@@ -64,7 +68,7 @@ export class ReplaceStep extends Step {
   }
 
   toJSON() {
-    let json = {stepType: "replace", from: this.from, to: this.to}
+    let json = {stepType: "replace", from: this.from, to: this.to, changeDocStructure: this.changeDocStructure}
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
     return json
@@ -73,7 +77,7 @@ export class ReplaceStep extends Step {
   static fromJSON(schema, json) {
     if (typeof json.from != "number" || typeof json.to != "number")
       throw new RangeError("Invalid input for ReplaceStep.fromJSON")
-    return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
+    return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure, !json.changeDocStructure,)
   }
 }
 
@@ -88,8 +92,8 @@ export class ReplaceAroundStep extends Step {
   // `insert` should be the point in the slice into which the content
   // of the gap should be moved. `structure` has the same meaning as
   // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
-  constructor(from, to, gapFrom, gapTo, slice, insert, structure) {
-    super()
+  constructor(from, to, gapFrom, gapTo, slice, insert, structure, notChangeDocStructure = false) {
+    super(!notChangeDocStructure)
     // :: number
     // The start position of the replaced range.
     this.from = from
@@ -126,6 +130,9 @@ export class ReplaceAroundStep extends Step {
   }
 
   getMap() {
+    if (!this.changeDocStructure) {
+      return StepMap.empty
+    }
     return new StepMap([this.from, this.gapFrom - this.from, this.insert,
                         this.gapTo, this.to - this.gapTo, this.slice.size - this.insert])
   }
@@ -147,7 +154,7 @@ export class ReplaceAroundStep extends Step {
 
   toJSON() {
     let json = {stepType: "replaceAround", from: this.from, to: this.to,
-                gapFrom: this.gapFrom, gapTo: this.gapTo, insert: this.insert}
+                gapFrom: this.gapFrom, gapTo: this.gapTo, insert: this.insert, changeDocStructure: this.changeDocStructure}
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
     return json
@@ -158,7 +165,7 @@ export class ReplaceAroundStep extends Step {
         typeof json.gapFrom != "number" || typeof json.gapTo != "number" || typeof json.insert != "number")
       throw new RangeError("Invalid input for ReplaceAroundStep.fromJSON")
     return new ReplaceAroundStep(json.from, json.to, json.gapFrom, json.gapTo,
-                                 Slice.fromJSON(schema, json.slice), json.insert, !!json.structure)
+                                 Slice.fromJSON(schema, json.slice), json.insert, !!json.structure, !json.changeDocStructure)
   }
 }
 
