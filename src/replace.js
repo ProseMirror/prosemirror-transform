@@ -271,8 +271,10 @@ class Fitter {
     if (!close) return null
 
     while (this.depth > close.depth) this.closeFrontierNode()
-    if (close.fit.childCount) this.placed = addToFragment(this.placed, close.depth, close.fit)
-    $to = close.move
+    if (close.fit.childCount) {
+      this.placed = addToFragment(this.placed, close.depth, close.fit)
+      $to = close.move
+    }
     for (let d = close.depth + 1; d <= $to.depth; d++) {
       let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))
       this.openFrontierNode(node.type, node.attrs, add)
