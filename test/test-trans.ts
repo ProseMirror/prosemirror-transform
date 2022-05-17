@@ -1,14 +1,14 @@
-const {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
-       strong, code, a, img, br, hr, eq, builders} = require("prosemirror-test-builder")
-const {testTransform} = require("./trans")
-const {Transform, liftTarget, findWrapping} = require("..")
-const {Slice, Fragment, Schema} = require("prosemirror-model")
-const ist = require("ist")
+import {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
+        strong, code, a, img, br, hr, eq, builders} from "prosemirror-test-builder"
+import {testTransform} from "./trans.js"
+import {Transform, liftTarget, findWrapping} from "prosemirror-transform"
+import {Slice, Fragment, Schema, Node, Mark, NodeType, Attrs} from "prosemirror-model"
+import ist from "ist"
 
 describe("Transform", () => {
   describe("addMark", () => {
-    function add(doc, mark, expect) {
-      testTransform(new Transform(doc).addMark(doc.tag.a, doc.tag.b, mark), expect)
+    function add(doc: Node, mark: Mark, expect: Node) {
+      testTransform(new Transform(doc).addMark((doc as any).tag.a, (doc as any).tag.b, mark), expect)
     }
 
     it("should add a mark", () =>
@@ -49,7 +49,7 @@ describe("Transform", () => {
       })
       let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("comment", {id: 10})])))
       tr.addMark(0, 2, schema.mark("comment", {id: 20}))
-      ist(tr.doc.firstChild.marks.length, 2)
+      ist(tr.doc.firstChild!.marks.length, 2)
     })
 
     it("can remove multiple excluded marks", () => {
@@ -60,16 +60,16 @@ describe("Transform", () => {
                 small1: {}, small2: {}}
       })
       let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("small1"), schema.mark("small2")])))
-      ist(tr.doc.firstChild.marks.length, 2)
+      ist(tr.doc.firstChild!.marks.length, 2)
       tr.addMark(0, 2, schema.mark("big"))
-      ist(tr.doc.firstChild.marks.length, 1)
-      ist(tr.doc.firstChild.marks[0].type.name, "big")
+      ist(tr.doc.firstChild!.marks.length, 1)
+      ist(tr.doc.firstChild!.marks[0].type.name, "big")
     })
   })
 
   describe("removeMark", () => {
-    function rem(doc, mark, expect) {
-      testTransform(new Transform(doc).removeMark(doc.tag.a, doc.tag.b, mark), expect)
+    function rem(doc: Node, mark: Mark | null, expect: Node) {
+      testTransform(new Transform(doc).removeMark((doc as any).tag.a, (doc as any).tag.b, mark), expect)
     }
 
     it("can cut a gap", () =>
@@ -114,21 +114,21 @@ describe("Transform", () => {
          marks: {comment: {excludes: "", attrs: {id: {}}}}
       })
       let tr = new Transform(schema.node("doc", null, schema.text("hi", [schema.mark("comment", {id: 1}), schema.mark("comment", {id: 2})])))
-      ist(tr.doc.firstChild.marks.length, 2)
+      ist(tr.doc.firstChild!.marks.length, 2)
       tr.removeMark(0, 2, schema.marks["comment"])
-      ist(tr.doc.firstChild.marks.length, 0)
+      ist(tr.doc.firstChild!.marks.length, 0)
     })
   })
 
   describe("insert", () => {
-    function ins(doc, nodes, expect) {
-      testTransform(new Transform(doc).insert(doc.tag.a, nodes), expect)
+    function ins(doc: Node, nodes: Node | Node[], expect: Node) {
+      testTransform(new Transform(doc).insert((doc as any).tag.a, nodes), expect)
     }
 
     it("can insert a break", () =>
        ins(doc(p("hello<a>there")),
            schema.node("hard_break"),
-           doc(p("hello", br, "<a>there"))))
+           doc(p("hello", br(), "<a>there"))))
 
     it("can insert an empty paragraph at the top", () =>
        ins(doc(p("one"), "<a>", p("two<2>")),
@@ -139,7 +139,7 @@ describe("Transform", () => {
        ins(doc(p("one"), "<a>", p("two<2>")),
            [schema.node("paragraph", null, [schema.text("hi")]),
             schema.node("horizontal_rule")],
-           doc(p("one"), p("hi"), hr, "<a>", p("two<2>"))))
+           doc(p("one"), p("hi"), hr(), "<a>", p("two<2>"))))
 
     it("can insert at the end of a blockquote", () =>
        ins(doc(blockquote(p("he<before>y"), "<a>"), p("after<after>")),
@@ -153,13 +153,13 @@ describe("Transform", () => {
 
     it("will wrap a node with the suitable parent", () =>
        ins(doc(p("foo<a>bar")),
-           schema.nodes.list_item.createAndFill(),
+           schema.nodes.list_item.createAndFill()!,
            doc(p("foo"), ol(li(p())), p("bar"))))
   })
 
   describe("delete", () => {
-    function del(doc, expect) {
-      testTransform(new Transform(doc).delete(doc.tag.a, doc.tag.b), expect)
+    function del(doc: Node, expect: Node) {
+      testTransform(new Transform(doc).delete((doc as any).tag.a, (doc as any).tag.b), expect)
     }
 
     it("can delete a word", () =>
@@ -175,8 +175,8 @@ describe("Transform", () => {
            doc(blockquote(p("a")), p("c<1>"))))
 
     it("doesn't join incompatible nodes", () =>
-       del(doc(pre("fo<a>o"), p("b<b>ar", img)),
-           doc(pre("fo"), p("ar", img))))
+       del(doc(pre("fo<a>o"), p("b<b>ar", img())),
+           doc(pre("fo"), p("ar", img()))))
 
     it("doesn't join when marks are incompatible", () =>
        del(doc(pre("fo<a>o"), p(em("b<b>ar"))),
@@ -184,8 +184,8 @@ describe("Transform", () => {
   })
 
   describe("join", () => {
-    function join(doc, expect) {
-      testTransform(new Transform(doc).join(doc.tag.a), expect)
+    function join(doc: Node, expect: Node) {
+      testTransform(new Transform(doc).join((doc as any).tag.a), expect)
     }
 
     it("can join blocks", () =>
@@ -214,11 +214,12 @@ describe("Transform", () => {
   })
 
   describe("split", () => {
-    function split(doc, expect, ...args) {
+    function split(doc: Node, expect: Node | "fail", depth?: number,
+                   typesAfter?: (null | {type: NodeType, attrs?: Attrs | null})[]) {
       if (expect == "fail")
-        ist.throws(() => new Transform(doc).split(doc.tag.a, ...args))
+        ist.throws(() => new Transform(doc).split((doc as any).tag.a, depth, typesAfter))
       else
-        testTransform(new Transform(doc).split(doc.tag.a, ...args), expect)
+        testTransform(new Transform(doc).split((doc as any).tag.a, depth, typesAfter), expect)
     }
 
     it("can split a textblock", () =>
@@ -269,9 +270,9 @@ describe("Transform", () => {
   })
 
   describe("lift", () => {
-    function lift(doc, expect) {
-      let range = doc.resolve(doc.tag.a).blockRange(doc.resolve(doc.tag.b || doc.tag.a))
-      testTransform(new Transform(doc).lift(range, liftTarget(range)), expect)
+    function lift(doc: Node, expect: Node) {
+      let range = doc.resolve((doc as any).tag.a).blockRange(doc.resolve((doc as any).tag.b || (doc as any).tag.a))
+      testTransform(new Transform(doc).lift(range!, liftTarget(range!)!), expect)
     }
 
     it("can lift a block out of the middle of its parent", () =>
@@ -312,9 +313,9 @@ describe("Transform", () => {
   })
 
   describe("wrap", () => {
-    function wrap(doc, expect, type, attrs) {
-      let range = doc.resolve(doc.tag.a).blockRange(doc.resolve(doc.tag.b || doc.tag.a))
-      testTransform(new Transform(doc).wrap(range, findWrapping(range, schema.nodes[type], attrs)), expect)
+    function wrap(doc: Node, expect: Node, type: string, attrs?: Attrs) {
+      let range = doc.resolve((doc as any).tag.a).blockRange(doc.resolve((doc as any).tag.b || (doc as any).tag.a))
+      testTransform(new Transform(doc).wrap(range!, findWrapping(range!, schema.nodes[type], attrs)!), expect)
     }
 
     it("can wrap in a blockquote", () =>
@@ -344,8 +345,8 @@ describe("Transform", () => {
   })
 
   describe("setBlockType", () => {
-    function type(doc, expect, nodeType, attrs) {
-      testTransform(new Transform(doc).setBlockType(doc.tag.a, doc.tag.b || doc.tag.a, schema.nodes[nodeType], attrs),
+    function type(doc: Node, expect: Node, nodeType: string, attrs?: Attrs) {
+      testTransform(new Transform(doc).setBlockType((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, schema.nodes[nodeType], attrs),
                     expect)
     }
 
@@ -376,20 +377,20 @@ describe("Transform", () => {
 
     it("works after another step", () => {
       let d = doc(p("f<x>oob<y>ar"), p("baz<a>"))
-      let tr = new Transform(d).delete(d.tag.x, d.tag.y), pos = tr.mapping.map(d.tag.a)
+      let tr = new Transform(d).delete((d as any).tag.x, (d as any).tag.y), pos = tr.mapping.map((d as any).tag.a)
       tr.setBlockType(pos, pos, schema.nodes.heading, {level: 1})
       testTransform(tr, doc(p("f<x><y>ar"), h1("baz<a>")))
     })
 
     it("skips nodes that can't be changed due to constraints", () =>
-       type(doc(p("<a>hello", img), p("okay"), ul(li(p("foo<b>")))),
+       type(doc(p("<a>hello", img()), p("okay"), ul(li(p("foo<b>")))),
             doc(pre("<a>hello"), pre("okay"), ul(li(p("foo<b>")))),
             "code_block"))
   })
 
   describe("setNodeMarkup", () => {
-    function markup(doc, expect, type, attrs) {
-      testTransform(new Transform(doc).setNodeMarkup(doc.tag.a, schema.nodes[type], attrs), expect)
+    function markup(doc: Node, expect: Node, type: string, attrs?: Attrs) {
+      testTransform(new Transform(doc).setNodeMarkup((doc as any).tag.a, schema.nodes[type], attrs), expect)
     }
 
     it("can change a textblock", () =>
@@ -398,15 +399,16 @@ describe("Transform", () => {
               "heading", {level: 1}))
 
     it("can change an inline node", () =>
-       markup(doc(p("foo<a>", img, "bar")),
+       markup(doc(p("foo<a>", img(), "bar")),
               doc(p("foo", img({src: "bar", alt: "y"}), "bar")),
               "image", {src: "bar", alt: "y"}))
   })
 
   describe("replace", () => {
-    function repl(doc, source, expect) {
-      let slice = !source ? Slice.empty : source instanceof Slice ? source : source.slice(source.tag.a, source.tag.b)
-      testTransform(new Transform(doc).replace(doc.tag.a, doc.tag.b || doc.tag.a, slice), expect)
+    function repl(doc: Node, source: Node | Slice | null, expect: Node) {
+      let slice = !source ? Slice.empty : source instanceof Slice ? source
+        : source.slice((source as any).tag.a, (source as any).tag.b)
+      testTransform(new Transform(doc).replace((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, slice), expect)
     }
 
     it("can delete text", () =>
@@ -496,8 +498,8 @@ describe("Transform", () => {
 
     it("can replace text with a break", () =>
        repl(doc(p("foo<a>b<inside>b<b>bar")),
-            doc(p("<a>", br, "<b>")),
-            doc(p("foo", br, "<inside>bar"))))
+            doc(p("<a>", br(), "<b>")),
+            doc(p("foo", br(), "<inside>bar"))))
 
     it("can join different blocks", () =>
        repl(doc(h1("hell<a>o"), p("by<b>e")),
@@ -571,7 +573,7 @@ describe("Transform", () => {
 
     it("does nothing when given an unfittable slice", () =>
        repl(p("<a>x"),
-            new Slice(Fragment.from([blockquote(), hr]), 0, 0),
+            new Slice(Fragment.from([blockquote(), hr()]), 0, 0),
             p("x")))
 
     it("doesn't drop content when things only fit at the top level", () =>
@@ -615,7 +617,7 @@ describe("Transform", () => {
         ms.node("paragraph", null, [ms.text("b")], [ms.mark("em")])
       ]).slice(1, 3))
       ist(tr.doc.childCount, 2)
-      ist(tr.doc.lastChild.marks.length, 1)
+      ist(tr.doc.lastChild!.marks.length, 1)
     })
 
     // A schema that enforces a heading and a body at the top level
@@ -629,7 +631,7 @@ describe("Transform", () => {
       p: {nodeType: "paragraph"},
       b: {nodeType: "body"},
       h: {nodeType: "heading", level: 1},
-    })
+    }) as any
 
     it("can unwrap a paragraph when replacing into a strict schema", () => {
       let tr = new Transform(hb.doc(hb.h("Head"), hb.b(hb.p("Content"))))
@@ -726,9 +728,10 @@ describe("Transform", () => {
   })
 
   describe("replaceRange", () => {
-    function repl(doc, source, expect) {
-      let slice = !source ? Slice.empty : source instanceof Slice ? source : source.slice(source.tag.a, source.tag.b, true)
-      testTransform(new Transform(doc).replaceRange(doc.tag.a, doc.tag.b || doc.tag.a, slice), expect)
+    function repl(doc: Node, source: Node, expect: Node) {
+      let slice = !source ? Slice.empty : source instanceof Slice ? source
+        : source.slice((source as any).tag.a, (source as any).tag.b, true)
+      testTransform(new Transform(doc).replaceRange((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, slice), expect)
     }
 
     it("replaces inline content", () =>
@@ -768,38 +771,38 @@ describe("Transform", () => {
   })
 
   describe("replaceRangeWith", () => {
-    function repl(doc, node, expect) {
-      testTransform(new Transform(doc).replaceRangeWith(doc.tag.a, doc.tag.b || doc.tag.a, node), expect)
+    function repl(doc: Node, node: Node, expect: Node) {
+      testTransform(new Transform(doc).replaceRangeWith((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, node), expect)
     }
 
     it("can insert an inline node", () =>
-       repl(doc(p("fo<a>o")), img(), doc(p("fo", img, "<a>o"))))
+       repl(doc(p("fo<a>o")), img(), doc(p("fo", img(), "<a>o"))))
 
     it("can replace content with an inline node", () =>
-       repl(doc(p("<a>fo<b>o")), img(), doc(p("<a>", img, "o"))))
+       repl(doc(p("<a>fo<b>o")), img(), doc(p("<a>", img(), "o"))))
 
     it("can replace a block node with an inline node", () =>
        repl(doc("<a>", blockquote(p("a")), "<b>"), img(), doc(p(img))))
 
     it("can replace a block node with a block node", () =>
-       repl(doc("<a>", blockquote(p("a")), "<b>"), hr(), doc(hr)))
+       repl(doc("<a>", blockquote(p("a")), "<b>"), hr(), doc(hr())))
 
     it("can insert a block quote in the middle of text", () =>
-       repl(doc(p("foo<a>bar")), hr(), doc(p("foo"), hr, p("bar"))))
+       repl(doc(p("foo<a>bar")), hr(), doc(p("foo"), hr(), p("bar"))))
 
     it("can replace empty parents with a block node", () =>
-       repl(doc(blockquote(p("<a>"))), hr(), doc(blockquote(hr))))
+       repl(doc(blockquote(p("<a>"))), hr(), doc(blockquote(hr()))))
 
     it("can move an inserted block forward out of parent nodes", () =>
-       repl(doc(h1("foo<a>")), hr(), doc(h1("foo"), hr)))
+       repl(doc(h1("foo<a>")), hr(), doc(h1("foo"), hr())))
 
     it("can move an inserted block backward out of parent nodes", () =>
        repl(doc(p("a"), blockquote(p("<a>b"))), hr(), doc(p("a"), blockquote(hr, p("b")))))
   })
 
   describe("deleteRange", () => {
-    function del(doc, expect) {
-      testTransform(new Transform(doc).deleteRange(doc.tag.a, doc.tag.b || doc.tag.a), expect)
+    function del(doc: Node, expect: Node) {
+      testTransform(new Transform(doc).deleteRange((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a), expect)
     }
 
     it("deletes the given range", () =>

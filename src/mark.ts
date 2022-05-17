@@ -1,49 +1,43 @@
-import {MarkType, Slice, Fragment} from "prosemirror-model"
+import {Mark, MarkType, Slice, Fragment, NodeType} from "prosemirror-model"
 
+import {Step} from "./step"
 import {Transform} from "./transform"
 import {AddMarkStep, RemoveMarkStep} from "./mark_step"
 import {ReplaceStep} from "./replace_step"
 
-// :: (number, number, Mark) → this
-// Add the given mark to the inline content between `from` and `to`.
-Transform.prototype.addMark = function(from, to, mark) {
-  let removed = [], added = [], removing = null, adding = null
-  this.doc.nodesBetween(from, to, (node, pos, parent) => {
+export function addMark(tr: Transform, from: number, to: number, mark: Mark) {
+  let removed: Step[] = [], added: Step[] = []
+  let removing: RemoveMarkStep | undefined, adding: AddMarkStep | undefined
+  tr.doc.nodesBetween(from, to, (node, pos, parent) => {
     if (!node.isInline) return
     let marks = node.marks
-    if (!mark.isInSet(marks) && parent.type.allowsMarkType(mark.type)) {
+    if (!mark.isInSet(marks) && parent!.type.allowsMarkType(mark.type)) {
       let start = Math.max(pos, from), end = Math.min(pos + node.nodeSize, to)
       let newSet = mark.addToSet(marks)
 
       for (let i = 0; i < marks.length; i++) {
         if (!marks[i].isInSet(newSet)) {
           if (removing && removing.to == start && removing.mark.eq(marks[i]))
-            removing.to = end
+            (removing as any).to = end
           else
             removed.push(removing = new RemoveMarkStep(start, end, marks[i]))
         }
       }
 
       if (adding && adding.to == start)
-        adding.to = end
+        (adding as any).to = end
       else
         added.push(adding = new AddMarkStep(start, end, mark))
     }
   })
 
-  removed.forEach(s => this.step(s))
-  added.forEach(s => this.step(s))
-  return this
+  removed.forEach(s => tr.step(s))
+  added.forEach(s => tr.step(s))
 }
 
-// :: (number, number, ?union<Mark, MarkType>) → this
-// Remove marks from inline nodes between `from` and `to`. When `mark`
-// is a single mark, remove precisely that mark. When it is a mark type,
-// remove all marks of that type. When it is null, remove all marks of
-// any type.
-Transform.prototype.removeMark = function(from, to, mark = null) {
-  let matched = [], step = 0
-  this.doc.nodesBetween(from, to, (node, pos) => {
+export function removeMark(tr: Transform, from: number, to: number, mark?: Mark | MarkType | null) {
+  let matched: {style: Mark, from: number, to: number, step: number}[] = [], step = 0
+  tr.doc.nodesBetween(from, to, (node, pos) => {
     if (!node.isInline) return
     step++
     let toRemove = null
@@ -75,34 +69,27 @@ Transform.prototype.removeMark = function(from, to, mark = null) {
       }
     }
   })
-  matched.forEach(m => this.step(new RemoveMarkStep(m.from, m.to, m.style)))
-  return this
+  matched.forEach(m => tr.step(new RemoveMarkStep(m.from, m.to, m.style)))
 }
 
-// :: (number, NodeType, ?ContentMatch) → this
-// Removes all marks and nodes from the content of the node at `pos`
-// that don't match the given new parent node type. Accepts an
-// optional starting [content match](#model.ContentMatch) as third
-// argument.
-Transform.prototype.clearIncompatible = function(pos, parentType, match = parentType.contentMatch) {
-  let node = this.doc.nodeAt(pos)
-  let delSteps = [], cur = pos + 1
+export function clearIncompatible(tr: Transform, pos: number, parentType: NodeType, match = parentType.contentMatch) {
+  let node = tr.doc.nodeAt(pos)!
+  let delSteps: Step[] = [], cur = pos + 1
   for (let i = 0; i < node.childCount; i++) {
     let child = node.child(i), end = cur + child.nodeSize
-    let allowed = match.matchType(child.type, child.attrs)
+    let allowed = match.matchType(child.type)
     if (!allowed) {
       delSteps.push(new ReplaceStep(cur, end, Slice.empty))
     } else {
       match = allowed
       for (let j = 0; j < child.marks.length; j++) if (!parentType.allowsMarkType(child.marks[j].type))
-        this.step(new RemoveMarkStep(cur, end, child.marks[j]))
+        tr.step(new RemoveMarkStep(cur, end, child.marks[j]))
     }
     cur = end
   }
   if (!match.validEnd) {
     let fill = match.fillBefore(Fragment.empty, true)
-    this.replace(cur, cur, new Slice(fill, 0, 0))
+    tr.replace(cur, cur, new Slice(fill!, 0, 0))
   }
-  for (let i = delSteps.length - 1; i >= 0; i--) this.step(delSteps[i])
-  return this
+  for (let i = delSteps.length - 1; i >= 0; i--) tr.step(delSteps[i])
 }

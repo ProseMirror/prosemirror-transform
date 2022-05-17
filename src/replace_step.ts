@@ -1,33 +1,31 @@
-import {Slice} from "prosemirror-model"
+import {Slice, Node, Schema} from "prosemirror-model"
 
 import {Step, StepResult} from "./step"
-import {StepMap} from "./map"
+import {StepMap, Mappable} from "./map"
 
-// ::- Replace a part of the document with a slice of new content.
+/// Replace a part of the document with a slice of new content.
 export class ReplaceStep extends Step {
-  // :: (number, number, Slice, ?bool)
-  // The given `slice` should fit the 'gap' between `from` and
-  // `to`—the depths must line up, and the surrounding nodes must be
-  // able to be joined with the open sides of the slice. When
-  // `structure` is true, the step will fail if the content between
-  // from and to is not just a sequence of closing and then opening
-  // tokens (this is to guard against rebased replace steps
-  // overwriting something they weren't supposed to).
-  constructor(from, to, slice, structure) {
+  /// The given `slice` should fit the 'gap' between `from` and
+  /// `to`—the depths must line up, and the surrounding nodes must be
+  /// able to be joined with the open sides of the slice. When
+  /// `structure` is true, the step will fail if the content between
+  /// from and to is not just a sequence of closing and then opening
+  /// tokens (this is to guard against rebased replace steps
+  /// overwriting something they weren't supposed to).
+  constructor(
+    /// The start position of the replaced range.
+    readonly from: number,
+    /// The end position of the replaced range.
+    readonly to: number,
+    /// The slice to insert.
+    readonly slice: Slice,
+    /// @internal
+    readonly structure = false
+  ) {
     super()
-    // :: number
-    // The start position of the replaced range.
-    this.from = from
-    // :: number
-    // The end position of the replaced range.
-    this.to = to
-    // :: Slice
-    // The slice to insert.
-    this.slice = slice
-    this.structure = !!structure
   }
 
-  apply(doc) {
+  apply(doc: Node) {
     if (this.structure && contentBetween(doc, this.from, this.to))
       return StepResult.fail("Structure replace would overwrite content")
     return StepResult.fromReplace(doc, this.from, this.to, this.slice)
@@ -37,17 +35,17 @@ export class ReplaceStep extends Step {
     return new StepMap([this.from, this.to - this.from, this.slice.size])
   }
 
-  invert(doc) {
+  invert(doc: Node) {
     return new ReplaceStep(this.from, this.from + this.slice.size, doc.slice(this.from, this.to))
   }
 
-  map(mapping) {
+  map(mapping: Mappable) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     if (from.deleted && to.deleted) return null
     return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice)
   }
 
-  merge(other) {
+  merge(other: Step) {
     if (!(other instanceof ReplaceStep) || other.structure || this.structure) return null
 
     if (this.from + this.slice.size == other.from && !this.slice.openEnd && !other.slice.openStart) {
@@ -63,14 +61,15 @@ export class ReplaceStep extends Step {
     }
   }
 
-  toJSON() {
-    let json = {stepType: "replace", from: this.from, to: this.to}
+  toJSON(): any {
+    let json: any = {stepType: "replace", from: this.from, to: this.to}
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
     return json
   }
 
-  static fromJSON(schema, json) {
+  /// @internal
+  static fromJSON(schema: Schema, json: any) {
     if (typeof json.from != "number" || typeof json.to != "number")
       throw new RangeError("Invalid input for ReplaceStep.fromJSON")
     return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure)
@@ -79,40 +78,35 @@ export class ReplaceStep extends Step {
 
 Step.jsonID("replace", ReplaceStep)
 
-// ::- Replace a part of the document with a slice of content, but
-// preserve a range of the replaced content by moving it into the
-// slice.
+/// Replace a part of the document with a slice of content, but
+/// preserve a range of the replaced content by moving it into the
+/// slice.
 export class ReplaceAroundStep extends Step {
-  // :: (number, number, number, number, Slice, number, ?bool)
-  // Create a replace-around step with the given range and gap.
-  // `insert` should be the point in the slice into which the content
-  // of the gap should be moved. `structure` has the same meaning as
-  // it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
-  constructor(from, to, gapFrom, gapTo, slice, insert, structure) {
+  /// Create a replace-around step with the given range and gap.
+  /// `insert` should be the point in the slice into which the content
+  /// of the gap should be moved. `structure` has the same meaning as
+  /// it has in the [`ReplaceStep`](#transform.ReplaceStep) class.
+  constructor(
+    /// The start position of the replaced range.
+    readonly from: number,
+    /// The end position of the replaced range.
+    readonly to: number,
+    /// The start of preserved range.
+    readonly gapFrom: number,
+    /// The end of preserved range.
+    readonly gapTo: number,
+    /// The slice to insert.
+    readonly slice: Slice,
+    /// The position in the slice where the preserved range should be
+    /// inserted.
+    readonly insert: number,
+    /// @internal
+    readonly structure = false
+  ) {
     super()
-    // :: number
-    // The start position of the replaced range.
-    this.from = from
-    // :: number
-    // The end position of the replaced range.
-    this.to = to
-    // :: number
-    // The start of preserved range.
-    this.gapFrom = gapFrom
-    // :: number
-    // The end of preserved range.
-    this.gapTo = gapTo
-    // :: Slice
-    // The slice to insert.
-    this.slice = slice
-    // :: number
-    // The position in the slice where the preserved range should be
-    // inserted.
-    this.insert = insert
-    this.structure = !!structure
   }
 
-  apply(doc) {
+  apply(doc: Node) {
     if (this.structure && (contentBetween(doc, this.from, this.gapFrom) ||
                            contentBetween(doc, this.gapTo, this.to)))
       return StepResult.fail("Structure gap-replace would overwrite content")
@@ -130,7 +124,7 @@ export class ReplaceAroundStep extends Step {
                         this.gapTo, this.to - this.gapTo, this.slice.size - this.insert])
   }
 
-  invert(doc) {
+  invert(doc: Node) {
     let gap = this.gapTo - this.gapFrom
     return new ReplaceAroundStep(this.from, this.from + this.slice.size + gap,
                                  this.from + this.insert, this.from + this.insert + gap,
@@ -138,22 +132,23 @@ export class ReplaceAroundStep extends Step {
                                  this.gapFrom - this.from, this.structure)
   }
 
-  map(mapping) {
+  map(mapping: Mappable) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     let gapFrom = mapping.map(this.gapFrom, -1), gapTo = mapping.map(this.gapTo, 1)
     if ((from.deleted && to.deleted) || gapFrom < from.pos || gapTo > to.pos) return null
     return new ReplaceAroundStep(from.pos, to.pos, gapFrom, gapTo, this.slice, this.insert, this.structure)
   }
 
-  toJSON() {
-    let json = {stepType: "replaceAround", from: this.from, to: this.to,
-                gapFrom: this.gapFrom, gapTo: this.gapTo, insert: this.insert}
+  toJSON(): any {
+    let json: any = {stepType: "replaceAround", from: this.from, to: this.to,
+                     gapFrom: this.gapFrom, gapTo: this.gapTo, insert: this.insert}
     if (this.slice.size) json.slice = this.slice.toJSON()
     if (this.structure) json.structure = true
     return json
   }
 
-  static fromJSON(schema, json) {
+  /// @internal
+  static fromJSON(schema: Schema, json: any) {
     if (typeof json.from != "number" || typeof json.to != "number" ||
         typeof json.gapFrom != "number" || typeof json.gapTo != "number" || typeof json.insert != "number")
       throw new RangeError("Invalid input for ReplaceAroundStep.fromJSON")
@@ -164,7 +159,7 @@ export class ReplaceAroundStep extends Step {
 
 Step.jsonID("replaceAround", ReplaceAroundStep)
 
-function contentBetween(doc, from, to) {
+function contentBetween(doc: Node, from: number, to: number) {
   let $from = doc.resolve(from), dist = to - from, depth = $from.depth
   while (dist > 0 && depth > 0 && $from.indexAfter(depth) == $from.node(depth).childCount) {
     depth--

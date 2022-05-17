@@ -1,7 +1,7 @@
-const {Schema, Slice} = require("prosemirror-model")
-const {canSplit, liftTarget, findWrapping, Transform} = require("..")
-const {eq, schema: baseSchema} = require("prosemirror-test-builder")
-const ist = require("ist")
+import {Schema, Slice, Node} from "prosemirror-model"
+import {canSplit, liftTarget, findWrapping, Transform} from "prosemirror-transform"
+import {eq, schema as baseSchema} from "prosemirror-test-builder"
+import ist from "ist"
 
 const schema = new Schema({
   nodes: {
@@ -14,7 +14,7 @@ const schema = new Schema({
     caption: {content: "text*", marks: ""},
     sect: {content: "head block* sect*"},
     closing: {content: "text*"},
-    text: baseSchema.spec.nodes.get("text"),
+    text: baseSchema.spec.nodes.get("text")!,
 
     fixed: {content: "head para closing", group: "block"}
   },
@@ -23,8 +23,8 @@ const schema = new Schema({
   }
 })
 
-function n(name, ...content) { return schema.nodes[name].create(null, content) }
-function t(str, em) { return schema.text(str, em ? [schema.mark("em")] : null) }
+function n(name: string, ...content: Node[]) { return schema.nodes[name].create(null, content) }
+function t(str: string, em = false) { return schema.text(str, em ? [schema.mark("em")] : null) }
 
 const doc = n("doc", // 0
               n("head", t("Head")), // 6
@@ -43,16 +43,16 @@ const doc = n("doc", // 0
                 n("para", t("Yes"))), // 92
               n("closing", t("fin"))) // 97
 
-function range(pos, end) {
+function range(pos: number, end?: number) {
   return doc.resolve(pos).blockRange(end == null ? undefined : doc.resolve(end))
 }
 
 describe("canSplit", () => {
-  function yes(pos, depth, after) {
-    return () => ist(canSplit(doc, pos, depth, after && [{type: schema.nodes[after]}]))
+  function yes(pos: number, depth?: number, after?: string) {
+    return () => ist(canSplit(doc, pos, depth, after == null ? undefined : [{type: schema.nodes[after]}]))
   }
-  function no(pos, depth, after) {
-    return () => ist(!canSplit(doc, pos, depth, after && [{type: schema.nodes[after]}]))
+  function no(pos: number, depth?: number, after?: string) {
+    return () => ist(!canSplit(doc, pos, depth, after == null ? undefined : [{type: schema.nodes[after]}]))
   }
 
   it("can't at start", no(0))
@@ -86,10 +86,10 @@ describe("canSplit", () => {
 })
 
 describe("liftTarget", () => {
-  function yes(pos) {
+  function yes(pos: number) {
     return () => { let r = range(pos); ist(r && liftTarget(r)) }
   }
-  function no(pos) {
+  function no(pos: number) {
     return () => { let r = range(pos); ist(!(r && liftTarget(r))) }
   }
 
@@ -102,11 +102,11 @@ describe("liftTarget", () => {
 })
 
 describe("findWrapping", () => {
-  function yes(pos, end, type) {
-    return () => { let r = range(pos, end); ist(findWrapping(r, schema.nodes[type])) }
+  function yes(pos: number, end: number, type: string) {
+    return () => { let r = range(pos, end); ist(r && findWrapping(r, schema.nodes[type])) }
   }
-  function no(pos, end, type) {
-    return () => { let r = range(pos, end); ist(!findWrapping(r, schema.nodes[type])) }
+  function no(pos: number, end: number, type: string) {
+    return () => { let r = range(pos, end); ist(!r || !findWrapping(r, schema.nodes[type])) }
   }
 
   it("can wrap the whole doc in a section", yes(0, 92, "sect"))
@@ -119,7 +119,7 @@ describe("findWrapping", () => {
 
 describe("Transform", () => {
   describe("replace", () => {
-    function repl(doc, from, to, content, openStart, openEnd, result) {
+    function repl(doc: Node, from: number, to: number, content: Node | null, openStart: number, openEnd: number, result: Node) {
       return () => {
         let slice = content ? new Slice(content.content, openStart, openEnd) : Slice.empty
         let tr = new Transform(doc).replace(from, to, slice)

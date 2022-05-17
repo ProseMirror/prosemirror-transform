@@ -1,7 +1,7 @@
-const ist = require("ist")
-const {Mapping, StepMap} = require("..")
+import ist from "ist"
+import {Mapping, StepMap} from "prosemirror-transform"
 
-function testMapping(mapping, ...cases) {
+function testMapping(mapping: Mapping, ...cases: [number, number, number?, boolean?][]) {
   let inverted = mapping.invert()
   for (let i = 0; i < cases.length; i++) {
     let [from, to, bias = 1, lossy] = cases[i]
@@ -10,11 +10,11 @@ function testMapping(mapping, ...cases) {
   }
 }
 
-function mk(...args) {
+function mk(...args: (number[] | {[from: number]: number})[]) {
   let mapping = new Mapping
   args.forEach(arg => {
     if (Array.isArray(arg)) mapping.appendMap(new StepMap(arg))
-    else for (let from in arg) mapping.setMirror(from, arg[from])
+    else for (let from in arg) mapping.setMirror(+from, arg[from])
   })
   return mapping
 }

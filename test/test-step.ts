@@ -1,11 +1,11 @@
-const {Slice, Fragment} = require("prosemirror-model")
-const {ReplaceStep, AddMarkStep, RemoveMarkStep} = require("..")
-const ist = require("ist")
-const {eq, schema, doc, p} = require("prosemirror-test-builder")
+import {Slice, Fragment} from "prosemirror-model"
+import {ReplaceStep, AddMarkStep, RemoveMarkStep} from "prosemirror-transform"
+import ist from "ist"
+import {eq, schema, doc, p} from "prosemirror-test-builder"
 
 const testDoc = doc(p("foobar"))
 
-function mkStep(from, to, val) {
+function mkStep(from: number, to: number, val: string | null) {
   if (val == "+em")
     return new AddMarkStep(from, to, schema.marks.em.create())
   else if (val == "-em")
@@ -16,15 +16,15 @@ function mkStep(from, to, val) {
 
 describe("Step", () => {
   describe("merge", () => {
-    function yes(from1, to1, val1, from2, to2, val2) {
+    function yes(from1: number, to1: number, val1: string | null, from2: number, to2: number, val2: string | null) {
       return () => {
         let step1 = mkStep(from1, to1, val1), step2 = mkStep(from2, to2, val2)
         let merged = step1.merge(step2)
         ist(merged)
-        ist(merged.apply(testDoc).doc, step2.apply(step1.apply(testDoc).doc).doc, eq)
+        ist(merged!.apply(testDoc).doc, step2.apply(step1.apply(testDoc).doc!).doc, eq)
       }
     }
-    function no(from1, to1, val1, from2, to2, val2) {
+    function no(from1: number, to1: number, val1: string | null, from2: number, to2: number, val2: string | null) {
       return () => {
         let step1 = mkStep(from1, to1, val1), step2 = mkStep(from2, to2, val2)
         ist(!step1.merge(step2))

@@ -1,15 +1,15 @@
-import {Fragment, Slice} from "prosemirror-model"
+import {Fragment, Slice, Node, ResolvedPos, NodeType, ContentMatch, Attrs} from "prosemirror-model"
 
+import {Step} from "./step"
 import {ReplaceStep, ReplaceAroundStep} from "./replace_step"
 import {Transform} from "./transform"
 import {insertPoint} from "./structure"
 
-// :: (Node, number, ?number, ?Slice) → ?Step
-// ‘Fit’ a slice into a given position in the document, producing a
-// [step](#transform.Step) that inserts it. Will return null if
-// there's no meaningful way to insert the slice here, or inserting it
-// would be a no-op (an empty slice over an empty range).
-export function replaceStep(doc, from, to = from, slice = Slice.empty) {
+/// ‘Fit’ a slice into a given position in the document, producing a
+/// [step](#transform.Step) that inserts it. Will return null if
+/// there's no meaningful way to insert the slice here, or inserting it
+/// would be a no-op (an empty slice over an empty range).
+export function replaceStep(doc: Node, from: number, to = from, slice = Slice.empty): Step | null {
   if (from == to && !slice.size) return null
 
   let $from = doc.resolve(from), $to = doc.resolve(to)
@@ -18,37 +18,17 @@ export function replaceStep(doc, from, to = from, slice = Slice.empty) {
   return new Fitter($from, $to, slice).fit()
 }
 
-// :: (number, ?number, ?Slice) → this
-// Replace the part of the document between `from` and `to` with the
-// given `slice`.
-Transform.prototype.replace = function(from, to = from, slice = Slice.empty) {
-  let step = replaceStep(this.doc, from, to, slice)
-  if (step) this.step(step)
-  return this
-}
-
-// :: (number, number, union<Fragment, Node, [Node]>) → this
-// Replace the given range with the given content, which may be a
-// fragment, node, or array of nodes.
-Transform.prototype.replaceWith = function(from, to, content) {
-  return this.replace(from, to, new Slice(Fragment.from(content), 0, 0))
-}
-
-// :: (number, number) → this
-// Delete the content between the given positions.
-Transform.prototype.delete = function(from, to) {
-  return this.replace(from, to, Slice.empty)
-}
-
-// :: (number, union<Fragment, Node, [Node]>) → this
-// Insert the given content at the given position.
-Transform.prototype.insert = function(pos, content) {
-  return this.replaceWith(pos, pos, content)
-}
-
-function fitsTrivially($from, $to, slice) {
+function fitsTrivially($from: ResolvedPos, $to: ResolvedPos, slice: Slice) {
   return !slice.openStart && !slice.openEnd && $from.start() == $to.start() &&
     $from.parent.canReplace($from.index(), $to.index(), slice.content)
+}
+
+interface Fittable {
+  sliceDepth: number
+  frontierDepth: number
+  parent: Node | null
+  inject?: Fragment | null
+  wrap?: readonly NodeType[]
 }
 
 // Algorithm for 'placing' the elements of a slice into a gap:
@@ -72,12 +52,14 @@ function fitsTrivially($from, $to, slice) {
 //  - `placed` is a fragment of placed content. Its open-start value
 //    is implicit in `$from`, and its open-end value in `frontier`.
 class Fitter {
-  constructor($from, $to, slice) {
-    this.$to = $to
-    this.$from = $from
-    this.unplaced = slice
+  frontier: {type: NodeType, match: ContentMatch}[] = []
+  placed: Fragment = Fragment.empty
 
-    this.frontier = []
+  constructor(
+    readonly $from: ResolvedPos,
+    readonly $to: ResolvedPos,
+    public unplaced: Slice
+  ) {
     for (let i = 0; i <= $from.depth; i++) {
       let node = $from.node(i)
       this.frontier.push({
@@ -86,7 +68,6 @@ class Fitter {
       })
     }
 
-    this.placed = Fragment.empty
     for (let i = $from.depth; i > 0; i--)
       this.placed = Fragment.from($from.node(i).copy(this.placed))
   }
@@ -114,7 +95,7 @@ class Fitter {
     // If closing to `$to` succeeded, create a step
     let content = this.placed, openStart = $from.depth, openEnd = $to.depth
     while (openStart && openEnd && content.childCount == 1) { // Normalize by dropping open parent nodes
-      content = content.firstChild.content
+      content = content.firstChild!.content
       openStart--; openEnd--
     }
     let slice = new Slice(content, openStart, openEnd)
@@ -122,31 +103,32 @@ class Fitter {
       return new ReplaceAroundStep($from.pos, moveInline, this.$to.pos, this.$to.end(), slice, placedSize)
     if (slice.size || $from.pos != this.$to.pos) // Don't generate no-op steps
       return new ReplaceStep($from.pos, $to.pos, slice)
+    return null
   }
 
   // Find a position on the start spine of `this.unplaced` that has
   // content that can be moved somewhere on the frontier. Returns two
   // depths, one for the slice and one for the frontier.
-  findFittable() {
+  findFittable(): Fittable | undefined {
     // Only try wrapping nodes (pass 2) after finding a place without
     // wrapping failed.
     for (let pass = 1; pass <= 2; pass++) {
       for (let sliceDepth = this.unplaced.openStart; sliceDepth >= 0; sliceDepth--) {
-        let fragment, parent
+        let fragment, parent = null
         if (sliceDepth) {
           parent = contentAt(this.unplaced.content, sliceDepth - 1).firstChild
-          fragment = parent.content
+          fragment = parent!.content
         } else {
           fragment = this.unplaced.content
         }
         let first = fragment.firstChild
         for (let frontierDepth = this.depth; frontierDepth >= 0; frontierDepth--) {
-          let {type, match} = this.frontier[frontierDepth], wrap, inject
+          let {type, match} = this.frontier[frontierDepth], wrap, inject: Fragment | null = null
           // In pass 1, if the next node matches, or there is no next
           // node but the parents look compatible, we've found a
           // place.
           if (pass == 1 && (first ? match.matchType(first.type) || (inject = match.fillBefore(Fragment.from(first), false))
-                            : type.compatibleContent(parent.type)))
+                            : parent && type.compatibleContent(parent.type)))
             return {sliceDepth, frontierDepth, parent, inject}
           // In pass 2, look for a set of wrapping nodes that make
           // `first` fit here.
@@ -163,7 +145,7 @@ class Fitter {
   openMore() {
     let {content, openStart, openEnd} = this.unplaced
     let inner = contentAt(content, openStart)
-    if (!inner.childCount || inner.firstChild.isLeaf) return false
+    if (!inner.childCount || inner.firstChild!.isLeaf) return false
     this.unplaced = new Slice(content, openStart + 1,
                               Math.max(openEnd, inner.size + openStart >= content.size - openEnd ? openStart + 1 : 0))
     return true
@@ -181,11 +163,10 @@ class Fitter {
     }
   }
 
-  // : ({sliceDepth: number, frontierDepth: number, parent: ?Node, wrap: ?[NodeType], inject: ?Fragment})
   // Move content from the unplaced slice at `sliceDepth` to the
   // frontier node at `frontierDepth`. Close that frontier node when
   // applicable.
-  placeNodes({sliceDepth, frontierDepth, parent, inject, wrap}) {
+  placeNodes({sliceDepth, frontierDepth, parent, inject, wrap}: Fittable) {
     while (this.depth > frontierDepth) this.closeFrontierNode()
     if (wrap) for (let i = 0; i < wrap.length; i++) this.openFrontierNode(wrap[i])
 
@@ -195,7 +176,7 @@ class Fitter {
     let {match, type} = this.frontier[frontierDepth]
     if (inject) {
       for (let i = 0; i < inject.childCount; i++) add.push(inject.child(i))
-      match = match.matchFragment(inject)
+      match = match.matchFragment(inject)!
     }
     // Computes the amount of (end) open nodes at the end of the
     // fragment. When 0, the parent is open, but no more. When
@@ -226,7 +207,7 @@ class Fitter {
 
     // Add new frontier nodes for any open nodes at the end.
     for (let i = 0, cur = fragment; i < openEndCount; i++) {
-      let node = cur.lastChild
+      let node = cur.lastChild!
       this.frontier.push({type: node.type, match: node.contentMatchAt(node.childCount)})
       cur = node.content
     }
@@ -251,7 +232,7 @@ class Fitter {
     return after
   }
 
-  findCloseLevel($to) {
+  findCloseLevel($to: ResolvedPos) {
     scan: for (let i = Math.min(this.depth, $to.depth); i >= 0; i--) {
       let {match, type} = this.frontier[i]
       let dropInner = i < $to.depth && $to.end(i + 1) == $to.pos + ($to.depth - (i + 1))
@@ -266,7 +247,7 @@ class Fitter {
     }
   }
 
-  close($to) {
+  close($to: ResolvedPos) {
     let close = this.findCloseLevel($to)
     if (!close) return null
 
@@ -274,95 +255,79 @@ class Fitter {
     if (close.fit.childCount) this.placed = addToFragment(this.placed, close.depth, close.fit)
     $to = close.move
     for (let d = close.depth + 1; d <= $to.depth; d++) {
-      let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))
+      let node = $to.node(d), add = node.type.contentMatch.fillBefore(node.content, true, $to.index(d))!
       this.openFrontierNode(node.type, node.attrs, add)
     }
     return $to
   }
 
-  openFrontierNode(type, attrs, content) {
+  openFrontierNode(type: NodeType, attrs: Attrs | null = null, content?: Fragment) {
     let top = this.frontier[this.depth]
-    top.match = top.match.matchType(type)
+    top.match = top.match.matchType(type)!
     this.placed = addToFragment(this.placed, this.depth, Fragment.from(type.create(attrs, content)))
     this.frontier.push({type, match: type.contentMatch})
   }
 
   closeFrontierNode() {
-    let open = this.frontier.pop()
-    let add = open.match.fillBefore(Fragment.empty, true)
+    let open = this.frontier.pop()!
+    let add = open.match.fillBefore(Fragment.empty, true)!
     if (add.childCount) this.placed = addToFragment(this.placed, this.frontier.length, add)
   }
 }
 
-function dropFromFragment(fragment, depth, count) {
-  if (depth == 0) return fragment.cutByIndex(count)
-  return fragment.replaceChild(0, fragment.firstChild.copy(dropFromFragment(fragment.firstChild.content, depth - 1, count)))
+function dropFromFragment(fragment: Fragment, depth: number, count: number): Fragment {
+  if (depth == 0) return fragment.cutByIndex(count, fragment.childCount)
+  return fragment.replaceChild(0, fragment.firstChild!.copy(dropFromFragment(fragment.firstChild!.content, depth - 1, count)))
 }
 
-function addToFragment(fragment, depth, content) {
+function addToFragment(fragment: Fragment, depth: number, content: Fragment): Fragment {
   if (depth == 0) return fragment.append(content)
   return fragment.replaceChild(fragment.childCount - 1,
-                               fragment.lastChild.copy(addToFragment(fragment.lastChild.content, depth - 1, content)))
+                               fragment.lastChild!.copy(addToFragment(fragment.lastChild!.content, depth - 1, content)))
 }
 
-function contentAt(fragment, depth) {
-  for (let i = 0; i < depth; i++) fragment = fragment.firstChild.content
+function contentAt(fragment: Fragment, depth: number) {
+  for (let i = 0; i < depth; i++) fragment = fragment.firstChild!.content
   return fragment
 }
 
-function closeNodeStart(node, openStart, openEnd) {
+function closeNodeStart(node: Node, openStart: number, openEnd: number) {
   if (openStart <= 0) return node
   let frag = node.content
   if (openStart > 1)
-    frag = frag.replaceChild(0, closeNodeStart(frag.firstChild, openStart - 1, frag.childCount == 1 ? openEnd - 1 : 0))
+    frag = frag.replaceChild(0, closeNodeStart(frag.firstChild!, openStart - 1, frag.childCount == 1 ? openEnd - 1 : 0))
   if (openStart > 0) {
-    frag = node.type.contentMatch.fillBefore(frag).append(frag)
-    if (openEnd <= 0) frag = frag.append(node.type.contentMatch.matchFragment(frag).fillBefore(Fragment.empty, true))
+    frag = node.type.contentMatch.fillBefore(frag)!.append(frag)
+    if (openEnd <= 0) frag = frag.append(node.type.contentMatch.matchFragment(frag)!.fillBefore(Fragment.empty, true)!)
   }
   return node.copy(frag)
 }
 
-function contentAfterFits($to, depth, type, match, open) {
+function contentAfterFits($to: ResolvedPos, depth: number, type: NodeType, match: ContentMatch, open: boolean) {
   let node = $to.node(depth), index = open ? $to.indexAfter(depth) : $to.index(depth)
   if (index == node.childCount && !type.compatibleContent(node.type)) return null
   let fit = match.fillBefore(node.content, true, index)
   return fit && !invalidMarks(type, node.content, index) ? fit : null
 }
 
-function invalidMarks(type, fragment, start) {
+function invalidMarks(type: NodeType, fragment: Fragment, start: number) {
   for (let i = start; i < fragment.childCount; i++)
     if (!type.allowsMarks(fragment.child(i).marks)) return true
   return false
 }
 
-function definesContent(type) {
+function definesContent(type: NodeType) {
   return type.spec.defining || type.spec.definingForContent
 }
 
-// :: (number, number, Slice) → this
-// Replace a range of the document with a given slice, using `from`,
-// `to`, and the slice's [`openStart`](#model.Slice.openStart) property
-// as hints, rather than fixed start and end points. This method may
-// grow the replaced area or close open nodes in the slice in order to
-// get a fit that is more in line with WYSIWYG expectations, by
-// dropping fully covered parent nodes of the replaced region when
-// they are marked [non-defining as context](#model.NodeSpec.definingAsContext), or
-// including an open parent node from the slice that _is_ marked as
-// [defining its content](#model.NodeSpec.definingForContent).
-//
-// This is the method, for example, to handle paste. The similar
-// [`replace`](#transform.Transform.replace) method is a more
-// primitive tool which will _not_ move the start and end of its given
-// range, and is useful in situations where you need more precise
-// control over what happens.
-Transform.prototype.replaceRange = function(from, to, slice) {
-  if (!slice.size) return this.deleteRange(from, to)
+export function replaceRange(tr: Transform, from: number, to: number, slice: Slice) {
+  if (!slice.size) return tr.deleteRange(from, to)
 
-  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+  let $from = tr.doc.resolve(from), $to = tr.doc.resolve(to)
   if (fitsTrivially($from, $to, slice))
-    return this.step(new ReplaceStep(from, to, slice))
+    return tr.step(new ReplaceStep(from, to, slice))
 
-  let targetDepths = coveredDepths($from, this.doc.resolve(to))
+  let targetDepths = coveredDepths($from, tr.doc.resolve(to))
   // Can't replace the whole document, so remove 0 if it's present
   if (targetDepths[targetDepths.length - 1] == 0) targetDepths.pop()
   // Negative numbers represent not expansion over the whole node at
@@ -385,7 +350,7 @@ Transform.prototype.replaceRange = function(from, to, slice) {
 
   let leftNodes = [], preferredDepth = slice.openStart
   for (let content = slice.content, i = 0;; i++) {
-    let node = content.firstChild
+    let node = content.firstChild!
     leftNodes.push(node)
     if (i == slice.openStart) break
     content = node.content
@@ -410,76 +375,63 @@ Transform.prototype.replaceRange = function(from, to, slice) {
       if (targetDepth < 0) { expand = false; targetDepth = -targetDepth }
       let parent = $from.node(targetDepth - 1), index = $from.index(targetDepth - 1)
       if (parent.canReplaceWith(index, index, insert.type, insert.marks))
-        return this.replace($from.before(targetDepth), expand ? $to.after(targetDepth) : to,
+        return tr.replace($from.before(targetDepth), expand ? $to.after(targetDepth) : to,
                             new Slice(closeFragment(slice.content, 0, slice.openStart, openDepth),
                                       openDepth, slice.openEnd))
     }
   }
 
-  let startSteps = this.steps.length
+  let startSteps = tr.steps.length
   for (let i = targetDepths.length - 1; i >= 0; i--) {
-    this.replace(from, to, slice)
-    if (this.steps.length > startSteps) break
+    tr.replace(from, to, slice)
+    if (tr.steps.length > startSteps) break
     let depth = targetDepths[i]
     if (depth < 0) continue
     from = $from.before(depth); to = $to.after(depth)
   }
-  return this
 }
 
-function closeFragment(fragment, depth, oldOpen, newOpen, parent) {
+function closeFragment(fragment: Fragment, depth: number, oldOpen: number, newOpen: number, parent?: Node) {
   if (depth < oldOpen) {
-    let first = fragment.firstChild
+    let first = fragment.firstChild!
     fragment = fragment.replaceChild(0, first.copy(closeFragment(first.content, depth + 1, oldOpen, newOpen, first)))
   }
   if (depth > newOpen) {
-    let match = parent.contentMatchAt(0)
-    let start = match.fillBefore(fragment).append(fragment)
-    fragment = start.append(match.matchFragment(start).fillBefore(Fragment.empty, true))
+    let match = parent!.contentMatchAt(0)!
+    let start = match.fillBefore(fragment)!.append(fragment)
+    fragment = start.append(match.matchFragment(start)!.fillBefore(Fragment.empty, true)!)
   }
   return fragment
 }
 
-// :: (number, number, Node) → this
-// Replace the given range with a node, but use `from` and `to` as
-// hints, rather than precise positions. When from and to are the same
-// and are at the start or end of a parent node in which the given
-// node doesn't fit, this method may _move_ them out towards a parent
-// that does allow the given node to be placed. When the given range
-// completely covers a parent node, this method may completely replace
-// that parent node.
-Transform.prototype.replaceRangeWith = function(from, to, node) {
-  if (!node.isInline && from == to && this.doc.resolve(from).parent.content.size) {
-    let point = insertPoint(this.doc, from, node.type)
+export function replaceRangeWith(tr: Transform, from: number, to: number, node: Node) {
+  if (!node.isInline && from == to && tr.doc.resolve(from).parent.content.size) {
+    let point = insertPoint(tr.doc, from, node.type)
     if (point != null) from = to = point
   }
-  return this.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
+  tr.replaceRange(from, to, new Slice(Fragment.from(node), 0, 0))
 }
 
-// :: (number, number) → this
-// Delete the given range, expanding it to cover fully covered
-// parent nodes until a valid replace is found.
-Transform.prototype.deleteRange = function(from, to) {
-  let $from = this.doc.resolve(from), $to = this.doc.resolve(to)
+export function deleteRange(tr: Transform, from: number, to: number) {
+  let $from = tr.doc.resolve(from), $to = tr.doc.resolve(to)
   let covered = coveredDepths($from, $to)
   for (let i = 0; i < covered.length; i++) {
     let depth = covered[i], last = i == covered.length - 1
     if ((last && depth == 0) || $from.node(depth).type.contentMatch.validEnd)
-      return this.delete($from.start(depth), $to.end(depth))
+      return tr.delete($from.start(depth), $to.end(depth))
     if (depth > 0 && (last || $from.node(depth - 1).canReplace($from.index(depth - 1), $to.indexAfter(depth - 1))))
-      return this.delete($from.before(depth), $to.after(depth))
+      return tr.delete($from.before(depth), $to.after(depth))
   }
   for (let d = 1; d <= $from.depth && d <= $to.depth; d++) {
     if (from - $from.start(d) == $from.depth - d && to > $from.end(d) && $to.end(d) - to != $to.depth - d)
-      return this.delete($from.before(d), to)
+      return tr.delete($from.before(d), to)
   }
-  return this.delete(from, to)
+  tr.delete(from, to)
 }
 
-// : (ResolvedPos, ResolvedPos) → [number]
 // Returns an array of all depths for which $from - $to spans the
 // whole content of the nodes at that depth.
-function coveredDepths($from, $to) {
+function coveredDepths($from: ResolvedPos, $to: ResolvedPos) {
   let result = [], minDepth = Math.min($from.depth, $to.depth)
   for (let d = minDepth; d >= 0; d--) {
     let start = $from.start(d)
