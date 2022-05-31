@@ -41,7 +41,7 @@ export class ReplaceStep extends Step {
 
   map(mapping: Mappable) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
-    if (from.deleted && to.deleted) return null
+    if (from.deletedAcross && to.deletedAcross) return null
     return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice)
   }
 
@@ -135,7 +135,7 @@ export class ReplaceAroundStep extends Step {
   map(mapping: Mappable) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     let gapFrom = mapping.map(this.gapFrom, -1), gapTo = mapping.map(this.gapTo, 1)
-    if ((from.deleted && to.deleted) || gapFrom < from.pos || gapTo > to.pos) return null
+    if ((from.deletedAcross && to.deletedAcross) || gapFrom < from.pos || gapTo > to.pos) return null
     return new ReplaceAroundStep(from.pos, to.pos, gapFrom, gapTo, this.slice, this.insert, this.structure)
   }
 
