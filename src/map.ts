@@ -33,6 +33,8 @@ function makeRecover(index: number, offset: number) { return index + offset * fa
 function recoverIndex(value: number) { return value & lower16 }
 function recoverOffset(value: number) { return (value - (value & lower16)) / factor16 }
 
+const DEL_BEFORE = 1, DEL_AFTER = 2, DEL_ACROSS = 4, DEL_SIDE = 8
+
 /// An object representing a mapped position with extra
 /// information.
 export class MapResult {
@@ -40,12 +42,27 @@ export class MapResult {
   constructor(
     /// The mapped version of the position.
     readonly pos: number,
-    /// Tells you whether the position was deleted, that is, whether
-    /// the step removed its surroundings from the document.
-    readonly deleted: boolean = false,
     /// @internal
-    readonly recover: number | null = null
+    readonly delInfo: number,
+    /// @internal
+    readonly recover: number | null
   ) {}
+
+  /// Tells you whether the position was deleted, that is, whether the
+  /// step removed the token on the side queried (via the `assoc`)
+  /// argument from the document.
+  get deleted() { return (this.delInfo & DEL_SIDE) > 0 }
+
+  /// Tells you whether the token before the mapped position was deleted.
+  get deletedBefore() { return (this.delInfo & (DEL_BEFORE | DEL_ACROSS)) > 0 }
+
+  /// True when the token after the mapped position was deleted.
+  get deletedAfter() { return (this.delInfo & (DEL_AFTER | DEL_ACROSS)) > 0 }
+
+  /// Tells whether any of the steps mapped through deletes across the
+  /// position (including both the token before and after the
+  /// position).
+  get deletedAcross() { return (this.delInfo & DEL_ACROSS) > 0 }
 }
 
 /// A map describing the deletions and insertions made by a step, which
@@ -89,11 +106,13 @@ export class StepMap implements Mappable {
         let result = start + diff + (side < 0 ? 0 : newSize)
         if (simple) return result
         let recover = pos == (assoc < 0 ? start : end) ? null : makeRecover(i / 3, pos - start)
-        return new MapResult(result, assoc < 0 ? pos != start : pos != end, recover)
+        let del = pos == start ? DEL_AFTER : pos == end ? DEL_BEFORE : DEL_ACROSS
+        if (assoc < 0 ? pos != start : pos != end) del |= DEL_SIDE
+        return new MapResult(result, del, recover)
       }
       diff += newSize - oldSize
     }
-    return simple ? pos + diff : new MapResult(pos + diff)
+    return simple ? pos + diff : new MapResult(pos + diff, 0, null)
   }
 
   /// @internal
@@ -234,7 +253,7 @@ export class Mapping implements Mappable {
 
   /// @internal
   _map(pos: number, assoc: number, simple: boolean) {
-    let deleted = false
+    let delInfo = 0
 
     for (let i = this.from; i < this.to; i++) {
       let map = this.maps[i], result = map.mapResult(pos, assoc)
@@ -247,10 +266,10 @@ export class Mapping implements Mappable {
         }
       }
 
-      if (result.deleted) deleted = true
+      delInfo |= result.delInfo
       pos = result.pos
     }
 
-    return simple ? pos : new MapResult(pos, deleted)
+    return simple ? pos : new MapResult(pos, delInfo, null)
   }
 }
