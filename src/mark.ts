@@ -9,7 +9,7 @@ export function addMark(tr: Transform, from: number, to: number, mark: Mark) {
   let removed: Step[] = [], added: Step[] = []
   let removing: RemoveMarkStep | undefined, adding: AddMarkStep | undefined
   tr.doc.nodesBetween(from, to, (node, pos, parent) => {
-    if (!node.isInline) return
+    if (!node.isInline && !node.isLeaf) return
     let marks = node.marks
     if (!mark.isInSet(marks) && parent!.type.allowsMarkType(mark.type)) {
       let start = Math.max(pos, from), end = Math.min(pos + node.nodeSize, to)
@@ -38,7 +38,7 @@ export function addMark(tr: Transform, from: number, to: number, mark: Mark) {
 export function removeMark(tr: Transform, from: number, to: number, mark?: Mark | MarkType | null) {
   let matched: {style: Mark, from: number, to: number, step: number}[] = [], step = 0
   tr.doc.nodesBetween(from, to, (node, pos) => {
-    if (!node.isInline) return
+    if (!node.isInline && !node.isLeaf) return
     step++
     let toRemove = null
     if (mark instanceof MarkType) {

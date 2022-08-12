@@ -7,7 +7,7 @@ function mapFragment(fragment: Fragment, f: (child: Node, parent: Node, i: numbe
   for (let i = 0; i < fragment.childCount; i++) {
     let child = fragment.child(i)
     if (child.content.size) child = child.copy(mapFragment(child.content, f, child))
-    if (child.isInline) child = f(child, parent, i)
+    if (child.isInline || child.isLeaf) child = f(child, parent, i)
     mapped.push(child)
   }
   return Fragment.fromArray(mapped)
