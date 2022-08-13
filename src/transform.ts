@@ -6,6 +6,7 @@ import {addMark, removeMark, clearIncompatible} from "./mark"
 import {replaceStep, replaceRange, replaceRangeWith, deleteRange} from "./replace"
 import {lift, wrap, setBlockType, setNodeMarkup, split, join} from "./structure"
 import {AttrStep} from "./attr_step"
+import {AddNodeMarkStep, RemoveNodeMarkStep} from "./mark_step"
 
 /// @internal
 export let TransformError = class extends Error {}
@@ -180,6 +181,25 @@ export class Transform {
   /// Set a single attribute on a given node to a new value.
   setNodeAttribute(pos: number, attr: string, value: any): this {
     this.step(new AttrStep(pos, attr, value))
+    return this
+  }
+
+  /// Add a mark to the node at position `pos`.
+  addNodeMark(pos: number, mark: Mark): this {
+    this.step(new AddNodeMarkStep(pos, mark))
+    return this
+  }
+
+  /// Remove a mark (or a mark of the given type) from the node at
+  /// position `pos`.
+  removeNodeMark(pos: number, mark: Mark | MarkType): this {
+    if (!(mark instanceof Mark)) {
+      let node = this.doc.nodeAt(pos)
+      if (!node) throw new RangeError("No node at position " + pos)
+      mark = mark.isInSet(node.marks)!
+      if (!mark) return this
+    }
+    this.step(new RemoveNodeMarkStep(pos, mark))
     return this
   }
 

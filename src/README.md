@@ -20,6 +20,9 @@ called a [`Transform`](#transform.Transform).
 @ReplaceAroundStep
 @AddMarkStep
 @RemoveMarkStep
+@AddNodeMarkStep
+@RemoveNodeMarkStep
+@AttrStep
 
 ### Position Mapping
 

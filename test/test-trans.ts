@@ -2,7 +2,7 @@ import {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
         strong, code, a, img, br, hr, eq, builders} from "prosemirror-test-builder"
 import {testTransform} from "./trans.js"
 import {Transform, liftTarget, findWrapping} from "prosemirror-transform"
-import {Slice, Fragment, Schema, Node, Mark, NodeType, Attrs} from "prosemirror-model"
+import {Slice, Fragment, Schema, Node, Mark, MarkType, NodeType, Attrs} from "prosemirror-model"
 import ist from "ist"
 
 function tag(node: Node, tag: string): number {
@@ -847,6 +847,36 @@ describe("Transform", () => {
     it("doesn't delete the open token when the range end is at end of its own block", () =>
        del(doc(p("one"), h1("<a>two"), blockquote(p("three<b>")), p("four")),
            doc(p("one"), h1(), p("four"))))
+  })
+
+  describe("addNodeMark", () => {
+    function add(doc: Node, mark: Mark, expect: Node) {
+      testTransform(new Transform(doc).addNodeMark(tag(doc, "a"), mark), expect)
+    }
+
+    it("adds a mark", () =>
+      add(doc(p("<a>", img())), schema.mark("em"), doc(p("<a>", em(img())))))
+
+    it("doesn't duplicate a mark", () =>
+      add(doc(p("<a>", em(img()))), schema.mark("em"), doc(p("<a>", em(img())))))
+
+    it("replaces a mark", () =>
+      add(doc(p("<a>", a(img()))), schema.mark("link", {href: "x"}), doc(p("<a>", a({href: "x"}, img())))))
+  })
+
+  describe("removeNodeMark", () => {
+    function rm(doc: Node, mark: Mark | MarkType, expect: Node) {
+      testTransform(new Transform(doc).removeNodeMark(tag(doc, "a"), mark), expect)
+    }
+
+    it("removes a mark", () =>
+      rm(doc(p("<a>", em(img()))), schema.mark("em"), doc(p("<a>", img()))))
+
+    it("doesn't do anything when there is no mark", () =>
+      rm(doc(p("<a>", img())), schema.mark("em"), doc(p("<a>", img()))))
+
+    it("can remove a mark from multiple marks", () =>
+      rm(doc(p("<a>", em(a(img())))), schema.mark("em"), doc(p("<a>", a(img())))))
   })
 
   describe("setNodeAttribute", () => {

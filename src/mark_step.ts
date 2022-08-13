@@ -126,3 +126,99 @@ export class RemoveMarkStep extends Step {
 }
 
 Step.jsonID("removeMark", RemoveMarkStep)
+
+/// Add a mark to a specific node.
+export class AddNodeMarkStep extends Step {
+  /// Create a node mark step.
+  constructor(
+    /// The position of the target node.
+    readonly pos: number,
+    /// The mark to add.
+    readonly mark: Mark
+  ) {
+    super()
+  }
+
+  apply(doc: Node) {
+    let node = doc.nodeAt(this.pos)
+    if (!node) return StepResult.fail("No node at mark step's position")
+    let updated = node.type.create(node.attrs, null, this.mark.addToSet(node.marks))
+    return StepResult.fromReplace(doc, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1))
+  }
+
+  invert(doc: Node): Step {
+    let node = doc.nodeAt(this.pos)
+    if (node) {
+      let newSet = this.mark.addToSet(node.marks)
+      if (newSet.length == node.marks.length) {
+        for (let i = 0; i < node.marks.length; i++)
+          if (!node.marks[i].isInSet(newSet))
+            return new AddNodeMarkStep(this.pos, node.marks[i])
+        return new AddNodeMarkStep(this.pos, this.mark)
+      }
+    }
+    return new RemoveNodeMarkStep(this.pos, this.mark)
+  }
+
+  map(mapping: Mappable): Step | null {
+    let pos = mapping.mapResult(this.pos, 1)
+    return pos.deletedAfter ? null : new AddNodeMarkStep(pos.pos, this.mark)
+  }
+
+  toJSON(): any {
+    return {stepType: "addNodeMark", pos: this.pos, mark: this.mark.toJSON()}
+  }
+
+  /// @internal
+  static fromJSON(schema: Schema, json: any) {
+    if (typeof json.pos != "number")
+      throw new RangeError("Invalid input for AddNodeMarkStep.fromJSON")
+    return new AddNodeMarkStep(json.pos, schema.markFromJSON(json.mark))
+  }
+}
+
+Step.jsonID("addNodeMark", AddNodeMarkStep)
+
+/// Remove a mark from a specific node.
+export class RemoveNodeMarkStep extends Step {
+  /// Create a mark-removing step.
+  constructor(
+    /// The position of the target node.
+    readonly pos: number,
+    /// The mark to remove.
+    readonly mark: Mark
+  ) {
+    super()
+  }
+
+  apply(doc: Node) {
+    let node = doc.nodeAt(this.pos)
+    if (!node) return StepResult.fail("No node at mark step's position")
+    let updated = node.type.create(node.attrs, null, this.mark.removeFromSet(node.marks))
+    return StepResult.fromReplace(doc, this.pos, this.pos + 1, new Slice(Fragment.from(updated), 0, node.isLeaf ? 0 : 1))
+  }
+
+  invert(doc: Node): Step {
+    let node = doc.nodeAt(this.pos)
+    if (!node || !this.mark.isInSet(node.marks)) return this
+    return new AddNodeMarkStep(this.pos, this.mark)
+  }
+
+  map(mapping: Mappable): Step | null {
+    let pos = mapping.mapResult(this.pos, 1)
+    return pos.deletedAfter ? null : new RemoveNodeMarkStep(pos.pos, this.mark)
+  }
+
+  toJSON(): any {
+    return {stepType: "removeNodeMark", pos: this.pos, mark: this.mark.toJSON()}
+  }
+
+  /// @internal
+  static fromJSON(schema: Schema, json: any) {
+    if (typeof json.pos != "number")
+      throw new RangeError("Invalid input for RemoveNodeMarkStep.fromJSON")
+    return new RemoveNodeMarkStep(json.pos, schema.markFromJSON(json.mark))
+  }
+}
+
+Step.jsonID("removeNodeMark", RemoveNodeMarkStep)
