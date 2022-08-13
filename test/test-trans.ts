@@ -5,10 +5,14 @@ import {Transform, liftTarget, findWrapping} from "prosemirror-transform"
 import {Slice, Fragment, Schema, Node, Mark, NodeType, Attrs} from "prosemirror-model"
 import ist from "ist"
 
+function tag(node: Node, tag: string): number {
+  return (node as any).tag[tag]
+}
+
 describe("Transform", () => {
   describe("addMark", () => {
     function add(doc: Node, mark: Mark, expect: Node) {
-      testTransform(new Transform(doc).addMark((doc as any).tag.a, (doc as any).tag.b, mark), expect)
+      testTransform(new Transform(doc).addMark(tag(doc, "a"), tag(doc, "b"), mark), expect)
     }
 
     it("should add a mark", () =>
@@ -69,7 +73,7 @@ describe("Transform", () => {
 
   describe("removeMark", () => {
     function rem(doc: Node, mark: Mark | null, expect: Node) {
-      testTransform(new Transform(doc).removeMark((doc as any).tag.a, (doc as any).tag.b, mark), expect)
+      testTransform(new Transform(doc).removeMark(tag(doc, "a"), tag(doc, "b"), mark), expect)
     }
 
     it("can cut a gap", () =>
@@ -122,7 +126,7 @@ describe("Transform", () => {
 
   describe("insert", () => {
     function ins(doc: Node, nodes: Node | Node[], expect: Node) {
-      testTransform(new Transform(doc).insert((doc as any).tag.a, nodes), expect)
+      testTransform(new Transform(doc).insert(tag(doc, "a"), nodes), expect)
     }
 
     it("can insert a break", () =>
@@ -159,7 +163,7 @@ describe("Transform", () => {
 
   describe("delete", () => {
     function del(doc: Node, expect: Node) {
-      testTransform(new Transform(doc).delete((doc as any).tag.a, (doc as any).tag.b), expect)
+      testTransform(new Transform(doc).delete(tag(doc, "a"), tag(doc, "b")), expect)
     }
 
     it("can delete a word", () =>
@@ -185,7 +189,7 @@ describe("Transform", () => {
 
   describe("join", () => {
     function join(doc: Node, expect: Node) {
-      testTransform(new Transform(doc).join((doc as any).tag.a), expect)
+      testTransform(new Transform(doc).join(tag(doc, "a")), expect)
     }
 
     it("can join blocks", () =>
@@ -217,9 +221,9 @@ describe("Transform", () => {
     function split(doc: Node, expect: Node | "fail", depth?: number,
                    typesAfter?: (null | {type: NodeType, attrs?: Attrs | null})[]) {
       if (expect == "fail")
-        ist.throws(() => new Transform(doc).split((doc as any).tag.a, depth, typesAfter))
+        ist.throws(() => new Transform(doc).split(tag(doc, "a"), depth, typesAfter))
       else
-        testTransform(new Transform(doc).split((doc as any).tag.a, depth, typesAfter), expect)
+        testTransform(new Transform(doc).split(tag(doc, "a"), depth, typesAfter), expect)
     }
 
     it("can split a textblock", () =>
@@ -271,7 +275,7 @@ describe("Transform", () => {
 
   describe("lift", () => {
     function lift(doc: Node, expect: Node) {
-      let range = doc.resolve((doc as any).tag.a).blockRange(doc.resolve((doc as any).tag.b || (doc as any).tag.a))
+      let range = doc.resolve(tag(doc, "a")).blockRange(doc.resolve(tag(doc, "b") || tag(doc, "a")))
       testTransform(new Transform(doc).lift(range!, liftTarget(range!)!), expect)
     }
 
@@ -314,7 +318,7 @@ describe("Transform", () => {
 
   describe("wrap", () => {
     function wrap(doc: Node, expect: Node, type: string, attrs?: Attrs) {
-      let range = doc.resolve((doc as any).tag.a).blockRange(doc.resolve((doc as any).tag.b || (doc as any).tag.a))
+      let range = doc.resolve(tag(doc, "a")).blockRange(doc.resolve(tag(doc, "b") || tag(doc, "a")))
       testTransform(new Transform(doc).wrap(range!, findWrapping(range!, schema.nodes[type], attrs)!), expect)
     }
 
@@ -346,7 +350,7 @@ describe("Transform", () => {
 
   describe("setBlockType", () => {
     function type(doc: Node, expect: Node, nodeType: string, attrs?: Attrs) {
-      testTransform(new Transform(doc).setBlockType((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, schema.nodes[nodeType], attrs),
+      testTransform(new Transform(doc).setBlockType(tag(doc, "a"), tag(doc, "b") || tag(doc, "a"), schema.nodes[nodeType], attrs),
                     expect)
     }
 
@@ -390,7 +394,7 @@ describe("Transform", () => {
 
   describe("setNodeMarkup", () => {
     function markup(doc: Node, expect: Node, type: string, attrs?: Attrs) {
-      testTransform(new Transform(doc).setNodeMarkup((doc as any).tag.a, schema.nodes[type], attrs), expect)
+      testTransform(new Transform(doc).setNodeMarkup(tag(doc, "a"), schema.nodes[type], attrs), expect)
     }
 
     it("can change a textblock", () =>
@@ -408,7 +412,7 @@ describe("Transform", () => {
     function repl(doc: Node, source: Node | Slice | null, expect: Node) {
       let slice = !source ? Slice.empty : source instanceof Slice ? source
         : source.slice((source as any).tag.a, (source as any).tag.b)
-      testTransform(new Transform(doc).replace((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, slice), expect)
+      testTransform(new Transform(doc).replace(tag(doc, "a"), tag(doc, "b") || tag(doc, "a"), slice), expect)
     }
 
     it("can delete text", () =>
@@ -731,7 +735,7 @@ describe("Transform", () => {
     function repl(doc: Node, source: Node, expect: Node) {
       let slice = !source ? Slice.empty : source instanceof Slice ? source
         : source.slice((source as any).tag.a, (source as any).tag.b, true)
-      testTransform(new Transform(doc).replaceRange((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, slice), expect)
+      testTransform(new Transform(doc).replaceRange(tag(doc, "a"), tag(doc, "b") || tag(doc, "a"), slice), expect)
     }
 
     it("replaces inline content", () =>
@@ -772,7 +776,7 @@ describe("Transform", () => {
 
   describe("replaceRangeWith", () => {
     function repl(doc: Node, node: Node, expect: Node) {
-      testTransform(new Transform(doc).replaceRangeWith((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a, node), expect)
+      testTransform(new Transform(doc).replaceRangeWith(tag(doc, "a"), tag(doc, "b") || tag(doc, "a"), node), expect)
     }
 
     it("can insert an inline node", () =>
@@ -802,7 +806,7 @@ describe("Transform", () => {
 
   describe("deleteRange", () => {
     function del(doc: Node, expect: Node) {
-      testTransform(new Transform(doc).deleteRange((doc as any).tag.a, (doc as any).tag.b || (doc as any).tag.a), expect)
+      testTransform(new Transform(doc).deleteRange(tag(doc, "a"), tag(doc, "b") || tag(doc, "a")), expect)
     }
 
     it("deletes the given range", () =>
@@ -843,5 +847,14 @@ describe("Transform", () => {
     it("doesn't delete the open token when the range end is at end of its own block", () =>
        del(doc(p("one"), h1("<a>two"), blockquote(p("three<b>")), p("four")),
            doc(p("one"), h1(), p("four"))))
+  })
+
+  describe("setNodeAttribute", () => {
+    function set(doc: Node, attr: string, value: any, expect: Node) {
+      testTransform(new Transform(doc).setNodeAttribute(tag(doc, "a"), attr, value), expect)
+    }
+
+    it("sets an attribute", () =>
+      set(doc("<a>", h1("a")), "level", 2, doc("<a>", h2("a"))))
   })
 })

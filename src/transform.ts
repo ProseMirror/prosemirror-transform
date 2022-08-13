@@ -5,6 +5,7 @@ import {Step} from "./step"
 import {addMark, removeMark, clearIncompatible} from "./mark"
 import {replaceStep, replaceRange, replaceRangeWith, deleteRange} from "./replace"
 import {lift, wrap, setBlockType, setNodeMarkup, split, join} from "./structure"
+import {AttrStep} from "./attr_step"
 
 /// @internal
 export let TransformError = class extends Error {}
@@ -173,6 +174,12 @@ export class Transform {
   /// When `type` isn't given, the existing node type is preserved,
   setNodeMarkup(pos: number, type?: NodeType | null, attrs: Attrs | null = null, marks: readonly Mark[] = []): this {
     setNodeMarkup(this, pos, type, attrs, marks)
+    return this
+  }
+
+  /// Set a single attribute on a given node to a new value.
+  setNodeAttribute(pos: number, attr: string, value: any): this {
+    this.step(new AttrStep(pos, attr, value))
     return this
   }
 
