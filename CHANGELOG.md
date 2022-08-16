@@ -1,3 +1,11 @@
+## 1.7.0 (2022-08-16)
+
+### New features
+
+The new `AttrStep` (and `Transform.setNodeAttribute`) can be used to set individual attributes on a node.
+
+`AddNodeMarkStep` and `RemoveNodeMarkStep` can now be used to add and remove marks on individual nodes. `Transform.addNodeMark`/`removeNodeMark` provide an interface to these in transform objects.
+
 ## 1.6.0 (2022-06-01)
 
 ### Bug fixes
