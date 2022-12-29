@@ -110,10 +110,21 @@ class Fitter {
   // content that can be moved somewhere on the frontier. Returns two
   // depths, one for the slice and one for the frontier.
   findFittable(): Fittable | undefined {
+    let startDepth = this.unplaced.openStart
+    for (let cur = this.unplaced.content, d = 0, openEnd = this.unplaced.openEnd; d < startDepth; d++) {
+      let node = cur.firstChild!
+      if (cur.childCount > 1) openEnd = 0
+      if (node.type.spec.isolating && openEnd <= d) {
+        startDepth = d
+        break
+      }
+      cur = node.content
+    }
+
     // Only try wrapping nodes (pass 2) after finding a place without
     // wrapping failed.
     for (let pass = 1; pass <= 2; pass++) {
-      for (let sliceDepth = this.unplaced.openStart; sliceDepth >= 0; sliceDepth--) {
+      for (let sliceDepth = pass == 1 ? startDepth : this.unplaced.openStart; sliceDepth >= 0; sliceDepth--) {
         let fragment, parent = null
         if (sliceDepth) {
           parent = contentAt(this.unplaced.content, sliceDepth - 1).firstChild

@@ -729,6 +729,28 @@ describe("Transform", () => {
       let from = 3, to = doc.content.size
       ist(new Transform(doc).replace(from, to, doc.slice(from, to)).doc, doc, eq)
     })
+
+    it("keeps isolating nodes together", () => {
+      let s = new Schema({
+        nodes: schema.spec.nodes.append({
+          iso: {
+            group: "block",
+            content: "block+",
+            isolating: true
+          }
+        })
+      })
+      let doc = s.node("doc", null, [s.node("paragraph", null, [s.text("one")])])
+      let iso = Fragment.from(s.node("iso", null, [s.node("paragraph", null, s.text("two"))]))
+      ist(new Transform(doc).replace(2, 3, new Slice(iso, 2, 0)).doc,
+          s.node("doc", null, [
+            s.node("paragraph", null, [s.text("o")]),
+            s.node("iso", null, [s.node("paragraph", null, s.text("two"))]),
+            s.node("paragraph", null, [s.text("e")])
+          ]), eq)
+      ist(new Transform(doc).replace(2, 3, new Slice(iso, 2, 2)).doc,
+          s.node("doc", null, [s.node("paragraph", null, [s.text("otwoe")])]), eq)
+    })
   })
 
   describe("replaceRange", () => {
