@@ -173,7 +173,7 @@ export class Transform {
 
   /// Change the type, attributes, and/or marks of the node at `pos`.
   /// When `type` isn't given, the existing node type is preserved,
-  setNodeMarkup(pos: number, type?: NodeType | null, attrs: Attrs | null = null, marks: readonly Mark[] = []): this {
+  setNodeMarkup(pos: number, type?: NodeType | null, attrs: Attrs | null = null, marks?: readonly Mark[]): this {
     setNodeMarkup(this, pos, type, attrs, marks)
     return this
   }

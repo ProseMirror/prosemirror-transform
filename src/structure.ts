@@ -135,7 +135,7 @@ function canChangeType(doc: Node, pos: number, type: NodeType) {
 /// Change the type, attributes, and/or marks of the node at `pos`.
 /// When `type` isn't given, the existing node type is preserved,
 export function setNodeMarkup(tr: Transform, pos: number, type: NodeType | undefined | null,
-                              attrs: Attrs | null, marks: readonly Mark[]) {
+                              attrs: Attrs | null, marks: readonly Mark[] | undefined) {
   let node = tr.doc.nodeAt(pos)
   if (!node) throw new RangeError("No node at given position")
   if (!type) type = node.type
