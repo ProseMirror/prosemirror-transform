@@ -1,3 +1,11 @@
+## 1.7.1 (2023-01-20)
+
+### Bug fixes
+
+Keep content in isolating nodes inside their parent when fitting a replace step.
+
+`Transform.setNodeMarkup` will no longer clear the node's marks when it isn't given an array of marks.
+
 ## 1.7.0 (2022-08-16)
 
 ### New features
