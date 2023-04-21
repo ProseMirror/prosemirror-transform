@@ -38,7 +38,7 @@ export function addMark(tr: Transform, from: number, to: number, mark: Mark) {
 export function removeMark(tr: Transform, from: number, to: number, mark?: Mark | MarkType | null) {
   let matched: {style: Mark, from: number, to: number, step: number}[] = [], step = 0
   tr.doc.nodesBetween(from, to, (node, pos) => {
-    if (!node.isInline) return
+    if (node.isInline && (to===from)) return
     step++
     let toRemove = null
     if (mark instanceof MarkType) {
