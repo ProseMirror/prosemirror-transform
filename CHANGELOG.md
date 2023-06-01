@@ -1,3 +1,9 @@
+## 1.7.3 (2023-06-01)
+
+### Bug fixes
+
+Fix a bug in `canSplit` that made it interpret the `typesAfter` argument incorrectly on splits of depth greater than 1.
+
 ## 1.7.2 (2023-05-17)
 
 ### Bug fixes
