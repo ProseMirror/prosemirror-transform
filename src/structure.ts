@@ -163,8 +163,10 @@ export function canSplit(doc: Node, pos: number, depth = 1,
     let node = $pos.node(d), index = $pos.index(d)
     if (node.type.spec.isolating) return false
     let rest = node.content.cutByIndex(index, node.childCount)
+    let overrideChild = typesAfter && typesAfter[i + 1]
+    if (overrideChild)
+      rest = rest.replaceChild(0, overrideChild.type.create(overrideChild.attrs))
     let after = (typesAfter && typesAfter[i]) || node
-    if (after != node) rest = rest.replaceChild(0, after.type.create(after.attrs))
     if (!node.canReplace(index + 1, node.childCount) || !after.type.validContent(rest))
       return false
   }
