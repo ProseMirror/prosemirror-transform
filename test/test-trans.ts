@@ -97,7 +97,7 @@ describe("Transform", () => {
            doc(p("hello link"))))
 
     it("doesn't remove a non-matching link", () =>
-       rem(doc(p("hello ", a("link"))),
+       rem(doc(p("<a>hello ", a("link<b>"))),
            schema.mark("link", {href: "bar"}),
            doc(p("hello ", a("link")))))
 
