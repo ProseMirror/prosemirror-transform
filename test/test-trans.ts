@@ -18,7 +18,7 @@ function tag(node: Node, tag: string): number {
 describe("Transform", () => {
   describe("addMark", () => {
     function add(doc: Node, mark: Mark, expect: Node) {
-      testTransform(new Transform(doc).addMark(tag(doc, "a"), tag$(doc, "b"), mark), expect)
+      testTransform(new Transform(doc).addMark(tag(doc, "a"), tag(doc, "b"), mark), expect)
     }
 
     it("should add a mark", () =>
@@ -79,7 +79,7 @@ describe("Transform", () => {
 
   describe("removeMark", () => {
     function rem(doc: Node, mark: Mark | null, expect: Node) {
-      testTransform(new Transform(doc).removeMark(tag(doc, "a"), tag$(doc, "b"), mark), expect)
+      testTransform(new Transform(doc).removeMark(tag(doc, "a"), tag(doc, "b"), mark), expect)
     }
 
     it("can cut a gap", () =>
@@ -169,7 +169,7 @@ describe("Transform", () => {
 
   describe("delete", () => {
     function del(doc: Node, expect: Node) {
-      testTransform(new Transform(doc).delete(tag(doc, "a"), tag$(doc, "b")), expect)
+      testTransform(new Transform(doc).delete(tag(doc, "a"), tag(doc, "b")), expect)
     }
 
     it("can delete a word", () =>
@@ -417,7 +417,7 @@ describe("Transform", () => {
   describe("replace", () => {
     function repl(doc: Node, source: Node | Slice | null, expect: Node) {
       let slice = !source ? Slice.empty : source instanceof Slice ? source
-        : source.slice(tag(source, "a"), tag(source "b"))
+        : source.slice(tag(source, "a"), tag(source, "b"))
       testTransform(new Transform(doc).replace(tag(doc, "a"), tag$(doc, "b") || tag(doc, "a"), slice), expect)
     }
 
