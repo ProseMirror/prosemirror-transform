@@ -1,3 +1,9 @@
+## 1.7.4 (2023-07-28)
+
+### Bug fixes
+
+When using `setBlockType` to convert a code block to a type of node that doesn't contain code, replace newlines with spaces.
+
 ## 1.7.3 (2023-06-01)
 
 ### Bug fixes
