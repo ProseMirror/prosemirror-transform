@@ -380,6 +380,16 @@ describe("Transform", () => {
             doc(pre("hello world")),
             "code_block"))
 
+    it("removes non-allowed nodes", () =>
+      type(doc(p("<a>one", img(), "two", img(), "three")),
+           doc(pre("onetwothree")),
+           "code_block"))
+
+    it("removes newlines in non-code", () =>
+      type(doc(pre("<a>one\ntwo\nthree")),
+           doc(p("one two three")),
+           "paragraph"))
+
     it("only clears markup when needed", () =>
        type(doc(p("hello<a> ", em("world"))),
             doc(h1("hello<a> ", em("world"))),
