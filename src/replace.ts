@@ -373,9 +373,9 @@ export function replaceRange(tr: Transform, from: number, to: number, slice: Sli
     let leftNode = leftNodes[d],
         type = leftNode.type,
         def = definesContent(type),
-        targetDepth = Math.max(Math.abs(preferredTarget) - 1, 0),
-        target = $from.node(targetDepth)
-    if (def && !leftNode.sameMarkup(target)) preferredDepth = d
+        targetDepth = Math.abs(preferredTarget) - 1,
+        parent = $from.node(targetDepth)
+    if (def && !leftNode.sameMarkup(parent)) preferredDepth = d
     else if (def || !type.isTextblock) break
   }
 
