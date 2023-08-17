@@ -359,7 +359,7 @@ export function replaceRange(tr: Transform, from: number, to: number, slice: Sli
   // target depth, starting with the preferred depths.
   let preferredTargetIndex = targetDepths.indexOf(preferredTarget)
 
-  let leftNodes = [], preferredDepth = slice.openStart
+  let leftNodes: Node[] = [], preferredDepth = slice.openStart
   for (let content = slice.content, i = 0;; i++) {
     let node = content.firstChild!
     leftNodes.push(node)
@@ -370,8 +370,12 @@ export function replaceRange(tr: Transform, from: number, to: number, slice: Sli
   // Back up preferredDepth to cover defining textblocks directly
   // above it, possibly skipping a non-defining textblock.
   for (let d = preferredDepth - 1; d >= 0; d--) {
-    let type = leftNodes[d].type, def = definesContent(type)
-    if (def && $from.node(preferredTargetIndex).type != type) preferredDepth = d
+    let leftNode = leftNodes[d],
+        type = leftNode.type,
+        def = definesContent(type),
+        targetDepth = Math.abs(preferredTarget) - 1,
+        parent = $from.node(targetDepth)
+    if (def && !leftNode.sameMarkup(parent)) preferredDepth = d
     else if (def || !type.isTextblock) break
   }
 
@@ -443,7 +447,7 @@ export function deleteRange(tr: Transform, from: number, to: number) {
 // Returns an array of all depths for which $from - $to spans the
 // whole content of the nodes at that depth.
 function coveredDepths($from: ResolvedPos, $to: ResolvedPos) {
-  let result = [], minDepth = Math.min($from.depth, $to.depth)
+  let result: number[] = [], minDepth = Math.min($from.depth, $to.depth)
   for (let d = minDepth; d >= 0; d--) {
     let start = $from.start(d)
     if (start < $from.pos - ($from.depth - d) ||

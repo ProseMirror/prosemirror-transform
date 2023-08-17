@@ -2,7 +2,7 @@ import {schema, doc, blockquote, pre, h1, h2, p, li, ol, ul, em,
         strong, code, a, img, br, hr, eq, builders} from "prosemirror-test-builder"
 import {testTransform} from "./trans.js"
 import {Transform, liftTarget, findWrapping} from "prosemirror-transform"
-import {Slice, Fragment, Schema, Node, Mark, MarkType, NodeType, Attrs} from "prosemirror-model"
+import {Slice, Fragment, Schema, Node, Mark, MarkType, NodeType, Attrs, NodeSpec} from "prosemirror-model"
 import ist from "ist"
 
 function tag$(node: Node, tag: string): number | null {
@@ -801,10 +801,88 @@ describe("Transform", () => {
             doc(ul(li(p("<a>one")), li(p("two<b>")))),
             doc(ul(li(p("one")), li(p("twofoo"))))))
 
+    it("keeps defining context when it doesn't matches the parent markup", () => {
+      let spec: NodeSpec = {
+        content: "block+",
+        group: "block",
+        definingForContent: true,
+        definingAsContext: false,
+        attrs: {
+          color: {
+            default: "black",
+          },
+        },
+        parseDOM: [
+          {
+            tag: "blockquote",
+            getAttrs(node) {
+              const dom = node as HTMLElement;
+              const color = dom.getAttribute("data-color") || "black";
+              return { color };
+            },
+          },
+        ],
+        toDOM(node) {
+          const color = node.attrs.color || "black";
+          return [
+            "blockquote",
+            { "data-color": color, style: `border-left: 5px solid ${color};` },
+            0,
+          ];
+        },
+        toDebugString(node) {
+          let color = node.attrs.color
+          let children: string[] = []
+          node.forEach(child => {
+            children.push(child.toString())
+          })
+          return `blockquote[${color}](${children.join(", ")})`;
+        },
+      };
+      let s = new Schema({
+        nodes: schema.spec.nodes.update("blockquote", spec),
+        marks: schema.spec.marks,
+      });
+      let { b1, b2, b3, b4, b5, b6, p, doc } = builders(s, {
+        b1: { nodeType: "blockquote", color: "#100" },
+        b2: { nodeType: "blockquote", color: "#200" },
+        b3: { nodeType: "blockquote", color: "#300" },
+        b4: { nodeType: "blockquote", color: "#400" },
+        b5: { nodeType: "blockquote", color: "#500" },
+        b6: { nodeType: "blockquote", color: "#600" },
+        p: { nodeType: "paragraph" },
+        doc: { nodeType: "doc" },
+      });
+
+      const source = doc(b1(p("<a>b1")), b2(p("b2<b>")))
+
+      const before1 = [b3(p("b3")), b4(p("<a>"))];
+      const before2 = [b5(p("b5"), ...before1)];
+      const before3 = [b6(p("b6"), ...before2)];
+
+      const expect1 = [b3(p("b3")), b1(p("b1")), b2(p("b2"))];
+      const expect2 = [b5(p("b5"), ...expect1)];
+      const expect3 = [b6(p("b6"), ...expect2)];
+
+      repl(doc(...before1), source, doc(...expect1));
+      repl(doc(...before2), source, doc(...expect2));
+      repl(doc(...before3), source, doc(...expect3))
+    });            
+
     it("drops defining context when it matches the parent structure", () =>
        repl(doc(blockquote(p("<a>"))),
             doc(blockquote(p("<a>one<b>"))),
             doc(blockquote(p("one")))))
+
+    it("drops defining context when it matches the parent structure in a nested context", () =>
+       repl(doc(ul(li(p("list1"), blockquote(p("<a>"))))),
+            doc(blockquote(p("<a>one<b>"))),
+            doc(ul(li(p("list1"), blockquote(p("one")))))));
+
+    it("drops defining context when it matches the parent structure in a deep nested context", () =>
+      repl(doc(ul(li(p("list1"), ul(li(p("list2"), blockquote(p("<a>"))))))),
+           doc(blockquote(p("<a>one<b>"))),
+           doc(ul(li(p("list1"), ul(li(p("list2"), blockquote(p("one")))))))));      
 
     it("closes open nodes at the start", () =>
        repl(doc("<a>", p("abc"), "<b>"),
