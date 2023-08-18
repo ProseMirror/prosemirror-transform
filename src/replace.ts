@@ -370,13 +370,9 @@ export function replaceRange(tr: Transform, from: number, to: number, slice: Sli
   // Back up preferredDepth to cover defining textblocks directly
   // above it, possibly skipping a non-defining textblock.
   for (let d = preferredDepth - 1; d >= 0; d--) {
-    let leftNode = leftNodes[d],
-        type = leftNode.type,
-        def = definesContent(type),
-        targetDepth = Math.abs(preferredTarget) - 1,
-        parent = $from.node(targetDepth)
-    if (def && !leftNode.sameMarkup(parent)) preferredDepth = d
-    else if (def || !type.isTextblock) break
+    let leftNode = leftNodes[d], def = definesContent(leftNode.type)
+    if (def && !leftNode.sameMarkup($from.node(Math.abs(preferredTarget) - 1))) preferredDepth = d
+    else if (def || !leftNode.type.isTextblock) break
   }
 
   for (let j = slice.openStart; j >= 0; j--) {
