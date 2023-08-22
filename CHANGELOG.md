@@ -1,3 +1,9 @@
+## 1.7.5 (2023-08-22)
+
+### Bug fixes
+
+Fix a failure in `replaceRange` to drop wrapper nodes when the same wrapper is already present.
+
 ## 1.7.4 (2023-07-28)
 
 ### Bug fixes
