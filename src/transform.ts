@@ -5,7 +5,7 @@ import {Step} from "./step"
 import {addMark, removeMark, clearIncompatible} from "./mark"
 import {replaceStep, replaceRange, replaceRangeWith, deleteRange} from "./replace"
 import {lift, wrap, setBlockType, setNodeMarkup, split, join} from "./structure"
-import {AttrStep} from "./attr_step"
+import {AttrStep, DocAttrStep} from "./attr_step"
 import {AddNodeMarkStep, RemoveNodeMarkStep} from "./mark_step"
 
 /// @internal
@@ -179,8 +179,16 @@ export class Transform {
   }
 
   /// Set a single attribute on a given node to a new value.
+  /// The `pos` addresses the document content. Use `setDocAttribute`
+  /// to set attributes on the document itself.
   setNodeAttribute(pos: number, attr: string, value: any): this {
     this.step(new AttrStep(pos, attr, value))
+    return this
+  }
+
+  /// Set a single attribute on the document to a new value.
+  setDocAttribute(attr: string, value: any): this {
+    this.step(new DocAttrStep(attr, value))
     return this
   }
 
