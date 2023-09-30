@@ -973,4 +973,22 @@ describe("Transform", () => {
     it("sets an attribute", () =>
       set(doc("<a>", h1("a")), "level", 2, doc("<a>", h2("a"))))
   })
+
+  describe("setDocAttribute", () => {
+    let schema = new Schema({
+      nodes: {doc: {content: "text*", attrs: {meta: {default: null}}},
+              text: {}},
+    })
+
+    let {doc} = builders(schema, {
+      doc: {nodeType: "doc"}
+    })
+
+    function set(doc: Node, attr: string, value: any, expect: Node) {
+      testTransform(new Transform(doc).setDocAttribute(attr, value), expect)
+    }
+
+    it("sets an attribute", () =>
+      set(doc(), "meta", "hello", doc({meta: "hello"})))
+  })
 })
