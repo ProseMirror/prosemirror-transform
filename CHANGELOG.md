@@ -1,3 +1,11 @@
+## 1.8.0 (2023-10-01)
+
+### New features
+
+The new `DocAttrStep` can be used to set attributes on the document's top node.
+
+`Transform.setDocAttribute` can be used to create a `DocAttrStep` in a transform.
+
 ## 1.7.5 (2023-08-22)
 
 ### Bug fixes
