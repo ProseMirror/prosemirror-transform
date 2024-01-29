@@ -1,28 +1,26 @@
-import ist from "ist";
-import { Fragment, Slice } from "prosemirror-model";
-import { blockquote, p } from "prosemirror-test-builder";
-import { ReplaceAroundStep, StepMap } from "prosemirror-transform";
+import ist from "ist"
+import {Node} from "prosemirror-model"
+import {doc, blockquote, p, schema, eq} from "prosemirror-test-builder"
+import {Transform} from "prosemirror-transform"
 
-describe("ReplaceAroundStep", () => {
-  it("can map if its from is positive", () => {
-    let slice = new Slice(Fragment.from(blockquote()), 0, 0);
-    // Wrap the content between 10 and 20 in a blockquote
-    let step = new ReplaceAroundStep(10, 20, 10, 20, slice, 1, true);
-    let mappedStep = step.map(StepMap.offset(100));
-    ist(mappedStep?.from, 110);
-    ist(mappedStep?.to, 120);
-    ist(mappedStep?.gapFrom, 110);
-    ist(mappedStep?.gapTo, 120);
-  });
+describe("ReplaceAroundStep.map", () => {
+  function test(doc: Node, change: (tr: Transform) => void, otherChange: (tr: Transform) => void, expected: Node) {
+    let trA = new Transform(doc), trB = new Transform(doc)
+    change(trA)
+    otherChange(trB)
+    let result = new Transform(trB.doc).step(trA.steps[0].map(trB.mapping)!).doc
+    ist(result, expected, eq)
+  }
 
-  it("can map if its from is 0", () => {
-    let slice = new Slice(Fragment.from(blockquote()), 0, 0);
-    // Wrap the content between 0 and 20 in a blockquote
-    let step = new ReplaceAroundStep(0, 20, 0, 20, slice, 1, true);
-    let mappedStep = step.map(StepMap.offset(100));
-    ist(mappedStep?.from, 100);
-    ist(mappedStep?.to, 120);
-    ist(mappedStep?.gapFrom, 100);
-    ist(mappedStep?.gapTo, 120);
-  });
-});
+  it("doesn't break wrap steps on insertions", () =>
+    test(doc(p("a")),
+         tr => tr.wrap(tr.doc.resolve(1).blockRange()!, [{type: schema.nodes.blockquote}]),
+         tr => tr.insert(0, p("b")),
+         doc(p("b"), blockquote(p("a")))))
+
+  it("doesn't overwrite content inserted at start of unwrap step", () =>
+    test(doc(blockquote(p("a"))),
+         tr => tr.lift(tr.doc.resolve(2).blockRange()!, 0),
+         tr => tr.insert(2, schema.text("x")),
+         doc(p("xa"))))
+})
