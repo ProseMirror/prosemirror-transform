@@ -1,3 +1,13 @@
+## 1.9.0 (2024-05-06)
+
+### Bug fixes
+
+Fix an issue in `ReplaceAroundStep.map` that broke mapping steps that wrapped content over steps that inserted content at the start of the step.
+
+### New features
+
+`setBlockMarkup` now uses the linebreak equivalent node defined in the schema.
+
 ## 1.8.0 (2023-10-01)
 
 ### New features
