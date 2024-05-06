@@ -24,7 +24,7 @@
     "url": "git://github.com/prosemirror/prosemirror-transform.git"
   },
   "dependencies": {
-    "prosemirror-model": "^1.0.0"
+    "prosemirror-model": "^1.21.0"
   },
   "devDependencies": {
     "@prosemirror/buildhelper": "^0.1.5",

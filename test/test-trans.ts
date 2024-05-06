@@ -356,7 +356,8 @@ describe("Transform", () => {
 
   describe("setBlockType", () => {
     function type(doc: Node, expect: Node, nodeType: string, attrs?: Attrs) {
-      testTransform(new Transform(doc).setBlockType(tag(doc, "a"), tag$(doc, "b") || tag(doc, "a"), schema.nodes[nodeType], attrs),
+      testTransform(new Transform(doc).setBlockType(tag(doc, "a"), tag$(doc, "b") || tag(doc, "a"),
+                                                    doc.type.schema.nodes[nodeType], attrs),
                     expect)
     }
 
@@ -406,6 +407,36 @@ describe("Transform", () => {
        type(doc(p("<a>hello", img()), p("okay"), ul(li(p("foo<b>")))),
             doc(pre("<a>hello"), pre("okay"), ul(li(p("foo<b>")))),
             "code_block"))
+
+    const linebreakSchema = new Schema({
+      nodes: schema.spec.nodes.update("hard_break", {...schema.spec.nodes.get("hard_break"), linebreakReplacement: true})
+    })
+    const lb = builders(linebreakSchema, {
+      p: {nodeType: "paragraph"},
+      pre: {nodeType: "code_block"},
+      br: {nodeType: "hard_break"},
+      h1: {nodeType: "heading", level: 1},
+    })
+
+    it("converts newlines to linebreak replacements when appropriate", () => {
+      type(lb.doc(lb.pre("<a>one\ntwo\nthree")),
+           lb.doc(lb.p("<a>one", lb.br(), "two", lb.br(), "three")),
+           "paragraph")
+
+      type(lb.doc(lb.p("<a>one\ntwo")),
+           lb.doc(lb.pre("<a>one\ntwo")),
+           "code_block")
+    })
+
+    it("converts linebreak replacements to newlines when appropriate", () => {
+      type(lb.doc(lb.p("<a>one", lb.br(), "two", lb.br(), "three")),
+           lb.doc(lb.pre("<a>one\ntwo\nthree")),
+           "code_block")
+
+      type(lb.doc(lb.p("<a>one", lb.br(), "two", lb.br(), "three")),
+           lb.doc(lb.h1("<a>one", lb.br(), "two", lb.br(), "three")),
+           "heading", {level: 1})
+    })
   })
 
   describe("setNodeMarkup", () => {
