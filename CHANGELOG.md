@@ -1,3 +1,9 @@
+## 1.10.0 (2024-08-13)
+
+### New features
+
+`setBlockType` can now take a function that computes attributes for the new nodes, instead of a static attribute object.
+
 ## 1.9.0 (2024-05-06)
 
 ### Bug fixes
