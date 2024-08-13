@@ -355,7 +355,7 @@ describe("Transform", () => {
   })
 
   describe("setBlockType", () => {
-    function type(doc: Node, expect: Node, nodeType: string, attrs?: Attrs) {
+    function type(doc: Node, expect: Node, nodeType: string, attrs?: Attrs | ((oldNode: Node) => Attrs)) {
       testTransform(new Transform(doc).setBlockType(tag(doc, "a"), tag$(doc, "b") || tag(doc, "a"),
                                                     doc.type.schema.nodes[nodeType], attrs),
                     expect)
@@ -437,6 +437,12 @@ describe("Transform", () => {
            lb.doc(lb.h1("<a>one", lb.br(), "two", lb.br(), "three")),
            "heading", {level: 1})
     })
+
+
+    it("can base attributes on previous attributes", () =>
+       type(doc("<a>", h1("a"), p("b"), "<b>"),
+            doc(h2("a"), h1("b")),
+            "heading", node => ({level: (node.attrs.level || 0) + 1})))
   })
 
   describe("setNodeMarkup", () => {

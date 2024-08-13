@@ -166,7 +166,7 @@ export class Transform {
 
   /// Set the type of all textblocks (partly) between `from` and `to` to
   /// the given node type with the given attributes.
-  setBlockType(from: number, to = from, type: NodeType, attrs: Attrs | null = null): this {
+  setBlockType(from: number, to = from, type: NodeType, attrs: Attrs | null | ((oldNode: Node) => Attrs) = null): this {
     setBlockType(this, from, to, type, attrs)
     return this
   }

@@ -112,11 +112,14 @@ export function wrap(tr: Transform, range: NodeRange, wrappers: readonly {type: 
   tr.step(new ReplaceAroundStep(start, end, start, end, new Slice(content, 0, 0), wrappers.length, true))
 }
 
-export function setBlockType(tr: Transform, from: number, to: number, type: NodeType, attrs: Attrs | null) {
+export function setBlockType(tr: Transform, from: number, to: number,
+                             type: NodeType, attrs: Attrs | null | ((oldNode: Node) => Attrs)) {
   if (!type.isTextblock) throw new RangeError("Type given to setBlockType should be a textblock")
   let mapFrom = tr.steps.length
   tr.doc.nodesBetween(from, to, (node, pos) => {
-    if (node.isTextblock && !node.hasMarkup(type, attrs) && canChangeType(tr.doc, tr.mapping.slice(mapFrom).map(pos), type)) {
+    let attrsHere = typeof attrs == "function" ? attrs(node) : attrs
+    if (node.isTextblock && !node.hasMarkup(type, attrsHere) &&
+        canChangeType(tr.doc, tr.mapping.slice(mapFrom).map(pos), type)) {
       let convertNewlines = null
       if (type.schema.linebreakReplacement) {
         let pre = type.whitespace == "pre", supportLinebreak = !!type.contentMatch.matchType(type.schema.linebreakReplacement)
@@ -129,7 +132,7 @@ export function setBlockType(tr: Transform, from: number, to: number, type: Node
       let mapping = tr.mapping.slice(mapFrom)
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1)
       tr.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1,
-                                      new Slice(Fragment.from(type.create(attrs, null, node.marks)), 0, 0), 1, true))
+                                      new Slice(Fragment.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true))
       if (convertNewlines === true) replaceNewlines(tr, node, pos, mapFrom)
       return false
     }
