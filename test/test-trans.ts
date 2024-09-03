@@ -970,6 +970,10 @@ describe("Transform", () => {
     it("doesn't delete the open token when the range end is at end of its own block", () =>
        del(doc(p("one"), h1("<a>two"), blockquote(p("three<b>")), p("four")),
            doc(p("one"), h1(), p("four"))))
+
+    it("doesn't break text-joining by inappropriate expansion", () =>
+       del(doc(ol(li(p("<a>One"), ol(li(p("Tw<b>o")))))),
+           doc(ol(li(p("o"))))))
   })
 
   describe("addNodeMark", () => {

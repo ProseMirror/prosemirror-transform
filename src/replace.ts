@@ -434,7 +434,8 @@ export function deleteRange(tr: Transform, from: number, to: number) {
       return tr.delete($from.before(depth), $to.after(depth))
   }
   for (let d = 1; d <= $from.depth && d <= $to.depth; d++) {
-    if (from - $from.start(d) == $from.depth - d && to > $from.end(d) && $to.end(d) - to != $to.depth - d)
+    if (from - $from.start(d) == $from.depth - d && to > $from.end(d) && $to.end(d) - to != $to.depth - d &&
+        $from.start(d - 1) == $to.start(d - 1) && $from.node(d - 1).canReplace($from.index(d - 1), $to.index(d - 1)))
       return tr.delete($from.before(d), to)
   }
   tr.delete(from, to)
