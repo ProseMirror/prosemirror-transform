@@ -132,7 +132,7 @@ export function setBlockType(tr: Transform, from: number, to: number,
       let mapping = tr.mapping.slice(mapFrom)
       let startM = mapping.map(pos, 1), endM = mapping.map(pos + node.nodeSize, 1)
       tr.step(new ReplaceAroundStep(startM, endM, startM + 1, endM - 1,
-                                      new Slice(Fragment.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true))
+                                    new Slice(Fragment.from(type.create(attrsHere, null, node.marks)), 0, 0), 1, true))
       if (convertNewlines === true) replaceNewlines(tr, node, pos, mapFrom)
       return false
     }
@@ -226,8 +226,22 @@ export function canJoin(doc: Node, pos: number): boolean {
     $pos.parent.canReplace(index, index + 1)
 }
 
+function canAppendWithSubstitutedLinebeaks(a: Node, b: Node) {
+  if (!b.content.size) a.type.compatibleContent(b.type)
+  let match: ContentMatch | null = a.contentMatchAt(a.childCount)
+  let {linebreakReplacement} = a.type.schema
+  for (let i = 0; i < b.childCount; i++) {
+    let child = b.child(i)
+    let type = child.type == linebreakReplacement ? a.type.schema.nodes.text : child.type
+    match = match.matchType(type)
+    if (!match) return false
+    if (!a.type.allowsMarks(child.marks)) return false
+  }
+  return match.validEnd
+}
+
 function joinable(a: Node | null, b: Node | null) {
-  return !!(a && b && !a.isLeaf && a.canAppend(b))
+  return !!(a && b && !a.isLeaf && canAppendWithSubstitutedLinebeaks(a, b))
 }
 
 /// Find an ancestor of the given position that can be joined to the
@@ -256,8 +270,27 @@ export function joinPoint(doc: Node, pos: number, dir = -1) {
 }
 
 export function join(tr: Transform, pos: number, depth: number) {
-  let step = new ReplaceStep(pos - depth, pos + depth, Slice.empty, true)
-  tr.step(step)
+  let convertNewlines = null
+  let {linebreakReplacement} = tr.doc.type.schema
+  if (linebreakReplacement) {
+    let before = tr.doc.resolve(pos - depth).node().type
+    let pre = before.whitespace == "pre"
+    let supportLinebreak = !!before.contentMatch.matchType(linebreakReplacement)
+    if (pre && !supportLinebreak) convertNewlines = false
+    else if (!pre && supportLinebreak) convertNewlines = true
+  }
+  let mapFrom = tr.steps.length
+  if (convertNewlines === false) {
+    let $after = tr.doc.resolve(pos + depth)
+    replaceLinebreaks(tr, $after.node(), $after.before(), mapFrom)
+  }
+  let mapping = tr.mapping.slice(mapFrom), start = mapping.map(pos - depth)
+  tr.step(new ReplaceStep(start, mapping.map(pos + depth, - 1), Slice.empty, true))
+  if (convertNewlines === true) {
+    let $full = tr.doc.resolve(start)
+    replaceNewlines(tr, $full.node(), $full.before(), tr.steps.length)
+  }
+  return tr
 }
 
 /// Try to find a point where a node of the given type can be inserted

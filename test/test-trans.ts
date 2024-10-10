@@ -193,6 +193,16 @@ describe("Transform", () => {
            doc(pre("fo"), p(em("ar")))))
   })
 
+  const linebreakSchema = new Schema({
+    nodes: schema.spec.nodes.update("hard_break", {...schema.spec.nodes.get("hard_break"), linebreakReplacement: true})
+  })
+  const lb = builders(linebreakSchema, {
+    p: {nodeType: "paragraph"},
+    pre: {nodeType: "code_block"},
+    br: {nodeType: "hard_break"},
+    h1: {nodeType: "heading", level: 1},
+  })
+
   describe("join", () => {
     function join(doc: Node, expect: Node) {
       testTransform(new Transform(doc).join(tag(doc, "a")), expect)
@@ -221,6 +231,14 @@ describe("Transform", () => {
     it("can join textblocks", () =>
        join(doc(p("foo"), "<a>", p("bar")),
             doc(p("foo<a>bar"))))
+
+    it("converts newlines to line breaks", () =>
+      join(lb.doc(lb.p("one"), "<a>", lb.pre("two\nthree")),
+           lb.doc(lb.p("one<a>two", lb.br(), "three"))))
+
+    it("converts line breaks to newlines", () =>
+      join(lb.doc(lb.pre("one"), "<a>", lb.p("two", lb.br(), "three")),
+           lb.doc(lb.pre("one<a>two\nthree"))))
   })
 
   describe("split", () => {
@@ -407,16 +425,6 @@ describe("Transform", () => {
        type(doc(p("<a>hello", img()), p("okay"), ul(li(p("foo<b>")))),
             doc(pre("<a>hello"), pre("okay"), ul(li(p("foo<b>")))),
             "code_block"))
-
-    const linebreakSchema = new Schema({
-      nodes: schema.spec.nodes.update("hard_break", {...schema.spec.nodes.get("hard_break"), linebreakReplacement: true})
-    })
-    const lb = builders(linebreakSchema, {
-      p: {nodeType: "paragraph"},
-      pre: {nodeType: "code_block"},
-      br: {nodeType: "hard_break"},
-      h1: {nodeType: "heading", level: 1},
-    })
 
     it("converts newlines to linebreak replacements when appropriate", () => {
       type(lb.doc(lb.pre("<a>one\ntwo\nthree")),
