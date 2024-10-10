@@ -1,3 +1,11 @@
+## 1.10.1 (2024-10-10)
+
+### Bug fixes
+
+Fix an issue where a `deleteRange` heuristic could produce unexpected deletion shapes.
+
+Make `Transform.join` convert between newlines and line break replacement nodes when necessary.
+
 ## 1.10.0 (2024-08-13)
 
 ### New features
