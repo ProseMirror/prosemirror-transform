@@ -226,7 +226,7 @@ export function canJoin(doc: Node, pos: number): boolean {
     $pos.parent.canReplace(index, index + 1)
 }
 
-function canAppendWithSubstitutedLinebeaks(a: Node, b: Node) {
+function canAppendWithSubstitutedLinebreaks(a: Node, b: Node) {
   if (!b.content.size) a.type.compatibleContent(b.type)
   let match: ContentMatch | null = a.contentMatchAt(a.childCount)
   let {linebreakReplacement} = a.type.schema
@@ -241,7 +241,7 @@ function canAppendWithSubstitutedLinebeaks(a: Node, b: Node) {
 }
 
 function joinable(a: Node | null, b: Node | null) {
-  return !!(a && b && !a.isLeaf && canAppendWithSubstitutedLinebeaks(a, b))
+  return !!(a && b && !a.isLeaf && canAppendWithSubstitutedLinebreaks(a, b))
 }
 
 /// Find an ancestor of the given position that can be joined to the
@@ -272,10 +272,10 @@ export function joinPoint(doc: Node, pos: number, dir = -1) {
 export function join(tr: Transform, pos: number, depth: number) {
   let convertNewlines = null
   let {linebreakReplacement} = tr.doc.type.schema
-  if (linebreakReplacement) {
-    let before = tr.doc.resolve(pos - depth).node().type
-    let pre = before.whitespace == "pre"
-    let supportLinebreak = !!before.contentMatch.matchType(linebreakReplacement)
+  let $before = tr.doc.resolve(pos - depth), beforeType = $before.node().type
+  if (linebreakReplacement && beforeType.inlineContent) {
+    let pre = beforeType.whitespace == "pre"
+    let supportLinebreak = !!beforeType.contentMatch.matchType(linebreakReplacement)
     if (pre && !supportLinebreak) convertNewlines = false
     else if (!pre && supportLinebreak) convertNewlines = true
   }
@@ -284,6 +284,9 @@ export function join(tr: Transform, pos: number, depth: number) {
     let $after = tr.doc.resolve(pos + depth)
     replaceLinebreaks(tr, $after.node(), $after.before(), mapFrom)
   }
+  if (beforeType.inlineContent)
+    clearIncompatible(tr, pos + depth - 1, beforeType,
+                      $before.node().contentMatchAt($before.index()), convertNewlines == null)
   let mapping = tr.mapping.slice(mapFrom), start = mapping.map(pos - depth)
   tr.step(new ReplaceStep(start, mapping.map(pos + depth, - 1), Slice.empty, true))
   if (convertNewlines === true) {
