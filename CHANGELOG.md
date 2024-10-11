@@ -1,3 +1,9 @@
+## 1.10.2 (2024-10-11)
+
+### Bug fixes
+
+Allow `Transform.join` to clear incompatible inline content from the node after the join.
+
 ## 1.10.1 (2024-10-10)
 
 ### Bug fixes
