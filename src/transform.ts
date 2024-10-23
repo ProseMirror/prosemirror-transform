@@ -215,7 +215,7 @@ export class Transform {
   /// greater than one, any number of nodes above that. By default, the
   /// parts split off will inherit the node type of the original node.
   /// This can be changed by passing an array of types and attributes to
-  /// use after the split.
+  /// use after the split (with the outermost nodes coming first).
   split(pos: number, depth = 1, typesAfter?: (null | {type: NodeType, attrs?: Attrs | null})[]) {
     split(this, pos, depth, typesAfter)
     return this
