@@ -173,9 +173,9 @@ export class Mapping implements Mappable {
   /// Create a new mapping with the given position maps.
   constructor(
     /// The step maps in this mapping.
-    readonly maps: StepMap[] = [],
+    public maps: readonly StepMap[] = [],
     /// @internal
-    public mirror?: number[],
+    public mirror?: readonly number[],
     /// The starting position in the `maps` array, used when `map` or
     /// `mapResult` is called.
     public from = 0,
@@ -197,7 +197,8 @@ export class Mapping implements Mappable {
   /// given, it should be the index of the step map that is the mirror
   /// image of this one.
   appendMap(map: StepMap, mirrors?: number) {
-    this.to = this.maps.push(map)
+    this.maps = this.maps.concat(map)
+    this.to = this.maps.length
     if (mirrors != null) this.setMirror(this.maps.length - 1, mirrors)
   }
 
@@ -221,7 +222,7 @@ export class Mapping implements Mappable {
   /// @internal
   setMirror(n: number, m: number) {
     if (!this.mirror) this.mirror = []
-    this.mirror.push(n, m)
+    this.mirror = this.mirror.concat(n, m)
   }
 
   /// Append the inverse of the given mapping to this one.
