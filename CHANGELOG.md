@@ -1,3 +1,9 @@
+## 1.10.3 (2025-03-04)
+
+### Bug fixes
+
+Make sure `Mapping.appendMap` doesn't mutate shared arrays passed to its constructor.
+
 ## 1.10.2 (2024-10-11)
 
 ### Bug fixes
