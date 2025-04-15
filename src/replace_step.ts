@@ -42,7 +42,7 @@ export class ReplaceStep extends Step {
   map(mapping: Mappable) {
     let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1)
     if (from.deletedAcross && to.deletedAcross) return null
-    return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice)
+    return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice, this.structure)
   }
 
   merge(other: Step) {
