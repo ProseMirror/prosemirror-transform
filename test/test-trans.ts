@@ -1012,6 +1012,18 @@ describe("Transform", () => {
 
     it("can remove a mark from multiple marks", () =>
       rm(doc(p("<a>", em(a(img())))), schema.mark("em"), doc(p("<a>", a(img())))))
+
+    it("can remove multiple instances of a mark type", () => {
+      let s = new Schema({
+        nodes: {doc: {content: "p+", marks: "comment"},
+                p: {content: "text*"},
+                text: {}},
+        marks: {comment: {excludes: "", attrs: {id: {}}}}
+      })
+      let doc = s.node("doc", null, [s.node("p", null, [s.text("abc")], [s.mark("comment", {id: 1}), s.mark("comment", {id: 2})])])
+      testTransform(new Transform(doc).removeNodeMark(0, s.marks.comment),
+                    s.node("doc", null, [s.node("p", null, [s.text("abc")])]))
+    })
   })
 
   describe("setNodeAttribute", () => {
