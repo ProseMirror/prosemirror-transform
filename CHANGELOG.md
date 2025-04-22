@@ -1,3 +1,11 @@
+## 1.10.4 (2025-04-22)
+
+### Bug fixes
+
+Fix a bug that caused mapping `ReplaceStep`s to reset their `structure` flag.
+
+Align `removeNodeMark`'s behavior to that of `removeMark`. When passing in a node type, it now removes all occurrences of that type.
+
 ## 1.10.3 (2025-03-04)
 
 ### Bug fixes
