@@ -338,7 +338,7 @@ export function replaceRange(tr: Transform, from: number, to: number, slice: Sli
   if (fitsTrivially($from, $to, slice))
     return tr.step(new ReplaceStep(from, to, slice))
 
-  let targetDepths = coveredDepths($from, tr.doc.resolve(to))
+  let targetDepths = coveredDepths($from, $to)
   // Can't replace the whole document, so remove 0 if it's present
   if (targetDepths[targetDepths.length - 1] == 0) targetDepths.pop()
   // Negative numbers represent not expansion over the whole node at
