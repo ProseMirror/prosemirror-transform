@@ -1,3 +1,9 @@
+## 1.10.5 (2025-11-11)
+
+### Bug fixes
+
+Fix a bug in `liftTarget` that caused it to fail to properly check content constraints when a lift would split a node.
+
 ## 1.10.4 (2025-04-22)
 
 ### Bug fixes
