@@ -99,6 +99,22 @@ describe("liftTarget", () => {
   it("can't in a figure caption", no(70))
   it("can from a quote", yes(76))
   it("can't in a section head", no(86))
+
+  it("notices unliftable content after or before", () => {
+    let s = new Schema({nodes: {
+      doc: {content: "section+"},
+      section: {content: "heading? p+"},
+      heading: {content: "p+"},
+      p: {content: "text*"},
+      text: {inline: true},
+    }})
+    let p = s.node("p", null, [s.text("A")])
+    let d = s.node("doc", null, [s.node("section", null, [s.node("heading", null, [p, p, p]), p])])
+    ist(liftTarget(d.resolve(3).blockRange()!), null)
+    ist(liftTarget(d.resolve(6).blockRange()!), null)
+    ist(liftTarget(d.resolve(3).blockRange(d.resolve(6))!), null)
+    ist(liftTarget(d.resolve(9).blockRange()!), 1)
+  })
 })
 
 describe("findWrapping", () => {

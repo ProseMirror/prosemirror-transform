@@ -15,12 +15,14 @@ function canCut(node: Node, start: number, end: number) {
 export function liftTarget(range: NodeRange): number | null {
   let parent = range.parent
   let content = parent.content.cutByIndex(range.startIndex, range.endIndex)
-  for (let depth = range.depth;; --depth) {
+  for (let depth = range.depth, contentBefore = 0, contentAfter = 0;; --depth) {
     let node = range.$from.node(depth)
-    let index = range.$from.index(depth), endIndex = range.$to.indexAfter(depth)
+    let index = range.$from.index(depth) + contentBefore, endIndex = range.$to.indexAfter(depth) - contentAfter
     if (depth < range.depth && node.canReplace(index, endIndex, content))
       return depth
     if (depth == 0 || node.type.spec.isolating || !canCut(node, index, endIndex)) break
+    if (index) contentBefore = 1
+    if (endIndex < node.childCount) contentAfter = 1
   }
   return null
 }
