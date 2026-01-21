@@ -1,3 +1,9 @@
+## 1.11.0 (2026-01-21)
+
+### New features
+
+The new `Tranform.changedRange` method gives you a document range that includes all changes made by the transform/transaction.
+
 ## 1.10.5 (2025-11-11)
 
 ### Bug fixes
