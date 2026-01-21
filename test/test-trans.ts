@@ -1052,4 +1052,33 @@ describe("Transform", () => {
     it("sets an attribute", () =>
       set(doc(), "meta", "hello", doc({meta: "hello"})))
   })
+
+  describe("changedRange", () => {
+    function r(tr: Transform) {
+      let ch = tr.changedRange()
+      return ch && ch.from + "-" + ch.to
+    }
+
+    it("returns null when there are no changes", () => {
+      let tr = new Transform(doc(p("hello")))
+      ist(r(tr), null)
+      tr.addMark(1, 3, schema.mark("strong"))
+      ist(r(tr), null)
+    })
+
+    it("returns a range when something changed", () => {
+      let tr = new Transform(doc(p("ab"))).insert(3, schema.text("c"))
+      ist(r(tr), "3-4")
+    })
+
+    it("can handle multiple steps that affect each other's position", () => {
+      let tr = new Transform(doc(p("ab"))).insert(3, schema.text("c")).insert(2, schema.text("d")).insert(1, schema.text("e"))
+      ist(r(tr), "1-6")
+    })
+
+    it("properly adjusts for deletions before an earlier step", () => {
+      let tr = new Transform(doc(p("abcde"))).insert(6, schema.text("f")).delete(1, 4)
+      ist(r(tr), "1-4")
+    })
+  })
 })
