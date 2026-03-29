@@ -982,6 +982,10 @@ describe("Transform", () => {
     it("doesn't break text-joining by inappropriate expansion", () =>
        del(doc(ol(li(p("<a>One"), ol(li(p("Tw<b>o")))))),
            doc(ol(li(p("o"))))))
+
+    it("will delete entire blocks when deleting from the start of one textblock to another", () =>
+      del(doc(blockquote(ol(li(p("a")), li(p("<a>b")), li(p("c")))), p("x"), p("<b>y")),
+          doc(blockquote(ol(li(p("a")))), p("y"))))
   })
 
   describe("addNodeMark", () => {

@@ -425,6 +425,22 @@ export function replaceRangeWith(tr: Transform, from: number, to: number, node: 
 
 export function deleteRange(tr: Transform, from: number, to: number) {
   let $from = tr.doc.resolve(from), $to = tr.doc.resolve(to)
+
+  // When the deleted range spans from the start of one textblock to
+  // the start of another one, move out of the start of both blocks.
+  if ($from.parent.isTextblock && $to.parent.isTextblock && $from.start() != $to.start() &&
+      $from.parentOffset == 0 && $to.parentOffset == 0) {
+    let shared = $from.sharedDepth(to), isolated = false
+    for (let d = $from.depth; d > shared; d--) if ($from.node(d).type.spec.isolating) isolated = true
+    for (let d = $to.depth; d > shared; d--) if ($to.node(d).type.spec.isolating) isolated = true
+    if (!isolated) {
+      for (let d = $from.depth; d > 0 && from == $from.start(d); d--) from = $from.before(d)
+      for (let d = $to.depth; d > 0 && to == $to.start(d); d--) to = $to.before(d)
+      $from = tr.doc.resolve(from)
+      $to = tr.doc.resolve(to)
+    }
+  }
+
   let covered = coveredDepths($from, $to)
   for (let i = 0; i < covered.length; i++) {
     let depth = covered[i], last = i == covered.length - 1
