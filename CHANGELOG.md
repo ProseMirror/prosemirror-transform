@@ -1,3 +1,13 @@
+## 1.12.0 (2026-03-30)
+
+### Bug fixes
+
+Handle deletions that go from the beginning of one textblock to the beginning of another specially, deleting the selected textblocks entirely.
+
+### New features
+
+`ReplaceStep.MAP_BIAS` can now be adjusted to change the way insertion steps are mapped over other insertions at the same place. The default behavior remains the same for the sake of backwards compatibility.
+
 ## 1.11.0 (2026-01-21)
 
 ### New features
